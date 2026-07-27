@@ -26,6 +26,8 @@ kotlinSerializationPlugin = "2.4.0"
 kspPlugin = "2.3.6"
 okhttp = "5.4.0"
 roomRuntime = "2.8.4"
+sqlite = "2.6.2"
+sqlcipher = "4.17.0"
 coil = "2.7.0"
 prism4j = "2.0.0"
 biometric = "1.1.0"
@@ -54,6 +56,8 @@ androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-view
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomRuntime" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomRuntime" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
+androidx-sqlite = { module = "androidx.sqlite:sqlite", version.ref = "sqlite" }
+sqlcipher-android = { group = "net.zetetic", name = "sqlcipher-android", version.ref = "sqlcipher" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 json = { module = "org.json:json", version.ref = "json" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }

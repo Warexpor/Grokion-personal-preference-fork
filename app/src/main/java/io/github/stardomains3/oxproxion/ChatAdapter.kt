@@ -793,8 +793,7 @@ class ChatAdapter(
                             e.printStackTrace()
                         }
 
-                        // Define the target folder path (keeping 'oxproxion')
-                        val path = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "oxproxion")
+                        val path = WorkspacePaths.workspaceDirForRead()
 
                         // Create intent to view the folder
                         val intent = Intent(Intent.ACTION_VIEW)

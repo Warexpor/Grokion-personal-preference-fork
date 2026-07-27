@@ -33,22 +33,8 @@ class EditModelDialogFragment : DialogFragment() {
         val switchTranscription = view.findViewById<MaterialSwitch>(R.id.switchTranscription) // NEW
         val switchIsFree  = view.findViewById<MaterialSwitch>(R.id.switchIsFree)
 
-        /* ----------  tint styling  ---------- */
-        val thumbTint = ColorStateList(
-            arrayOf(intArrayOf(android.R.attr.state_checked),
-                intArrayOf(-android.R.attr.state_checked)),
-            intArrayOf("#000000".toColorInt(), "#686868".toColorInt()))
-        val trackTint = ColorStateList(
-            arrayOf(intArrayOf(android.R.attr.state_checked),
-                intArrayOf(-android.R.attr.state_checked)),
-            intArrayOf("#FF7D8187".toColorInt(), "#000000".toColorInt()))
-
-        // Added switchTranscription and switchIsFree to the styling list
         listOf(switchVision, switchReason, switchLan, switchImage, switchTranscription, switchIsFree).forEach {
-            it.thumbTintList  = thumbTint
-            it.trackTintList  = trackTint
-            it.thumbTintMode  = PorterDuff.Mode.SRC_ATOP
-            it.trackTintMode  = PorterDuff.Mode.SRC_ATOP
+            it.applyGrokionSwitchStyle()
         }
 
         /* ----------  restore existing model  ---------- */

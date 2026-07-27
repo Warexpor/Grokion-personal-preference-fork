@@ -219,7 +219,7 @@ class PdfGenerator(private val context: Context) {
             val contentValues = ContentValues().apply {
                 put(MediaStore.MediaColumns.DISPLAY_NAME, "${System.currentTimeMillis()}.pdf")
                 put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
-                put(MediaStore.MediaColumns.RELATIVE_PATH, "${Environment.DIRECTORY_DOWNLOADS}/oxproxion")
+                put(MediaStore.MediaColumns.RELATIVE_PATH, WorkspacePaths.mediaStoreRelativePath())
                // put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
             }
             val uri = context.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
@@ -334,7 +334,7 @@ class PdfGenerator(private val context: Context) {
             val contentValues = ContentValues().apply {
                 put(MediaStore.MediaColumns.DISPLAY_NAME, "${System.currentTimeMillis()}.pdf")
                 put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
-                put(MediaStore.MediaColumns.RELATIVE_PATH, "${Environment.DIRECTORY_DOWNLOADS}/oxproxion")
+                put(MediaStore.MediaColumns.RELATIVE_PATH, WorkspacePaths.mediaStoreRelativePath())
                 //put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
             }
             val uri = context.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
@@ -377,8 +377,7 @@ class PdfGenerator(private val context: Context) {
         modelName: String,
         generatedImages: Map<Int, String>
     ): String? {
-        // 1. Define the oxproxion subfolder
-        val parentDir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "oxproxion")
+        val parentDir = WorkspacePaths.workspaceDirForWrite()
 
         // 2. Ensure the folder exists (creates it if it doesn't)
         if (!parentDir.exists()) {
@@ -530,8 +529,7 @@ class PdfGenerator(private val context: Context) {
     }
 
     private fun generatePdf(messages: List<FlexibleMessage>, modelName: String): String? {
-        // 1. Define the oxproxion subfolder
-        val parentDir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "oxproxion")
+        val parentDir = WorkspacePaths.workspaceDirForWrite()
 
         // 2. Ensure the folder exists (creates it if it doesn't)
         if (!parentDir.exists()) {

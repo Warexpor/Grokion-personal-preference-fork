@@ -7,7 +7,6 @@ import android.content.res.ColorStateList
 import android.graphics.PorterDuff
 import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
 import android.provider.Settings
 import android.view.View
 import android.widget.LinearLayout
@@ -17,10 +16,9 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import com.google.android.material.materialswitch.MaterialSwitch
-import androidx.core.net.toUri
-import java.io.File
 import kotlin.collections.remove
 
 class ToolsFragment : Fragment(R.layout.fragment_tools) {
@@ -68,23 +66,15 @@ class ToolsFragment : Fragment(R.layout.fragment_tools) {
         super.onViewCreated(view, savedInstanceState)
         sharedPreferencesHelper = SharedPreferencesHelper(requireContext())
 
-        // 👇 NEW: Ensure the oxproxion folder exists when fragment opens
-        ensureOxproxionFolderExists()
+        WorkspacePaths.ensureWorkspaceExists()
 
         val toolbar = view.findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.toolbar)
         toolbar.setNavigationOnClickListener { parentFragmentManager.popBackStack() }
         setupToolsList(view)
     }
 
-    // 👇 NEW: Helper to create the oxproxion folder if it doesn't exist
-    private fun ensureOxproxionFolderExists() {
-        val folderPath = File(
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-            "oxproxion"
-        )
-        if (!folderPath.exists()) {
-            folderPath.mkdirs()
-        }
+    private fun ensureWorkspaceFolderExists() {
+        WorkspacePaths.ensureWorkspaceExists()
     }
 
     private fun setupToolsList(rootView: View) {
@@ -94,7 +84,7 @@ class ToolsFragment : Fragment(R.layout.fragment_tools) {
         val enabledTools = sharedPreferencesHelper.getEnabledTools()
         val hasStoredPrefs = sharedPreferencesHelper.hasEnabledToolsStored()
         val effectiveEnabledSet = if (!hasStoredPrefs) {
-            ToolItem.getAllToolItems(emptySet()).map { it.name }.toSet()
+            emptySet()
         } else {
             enabledTools
         }
@@ -152,7 +142,7 @@ class ToolsFragment : Fragment(R.layout.fragment_tools) {
             if (needsPermission && !permissionGranted) {
                 // 👇 UPDATED: Show oxproxion-specific message for SAF tools
                 if (isSafTool) {
-                    permissionWarning.text = "Tap to select Download/oxproxion folder"
+                    permissionWarning.text = "Tap to select Download/grokion folder"
                 } else {
                     permissionWarning.text = "Permission required. Tap to grant."
                 }
@@ -161,7 +151,7 @@ class ToolsFragment : Fragment(R.layout.fragment_tools) {
                 row.setOnClickListener {
                     if (isSafTool) {
                         // 👇 UPDATED: Ensure folder exists before launching picker
-                        ensureOxproxionFolderExists()
+                        ensureWorkspaceFolderExists()
                         folderPickerLauncher.launch(null)
                     } else if (item.name == "get_location") {
                         locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -200,33 +190,7 @@ class ToolsFragment : Fragment(R.layout.fragment_tools) {
         return hasPermission
     }
 
-    private fun MaterialSwitch.styleSwitch() {
-        val thumbTintSelector = ColorStateList(
-            arrayOf(
-                intArrayOf(android.R.attr.state_checked),
-                intArrayOf(-android.R.attr.state_checked)
-            ),
-            intArrayOf(
-                "#000000".toColorInt(),
-                "#686868".toColorInt()
-            )
-        )
-        val trackTintSelector = ColorStateList(
-            arrayOf(
-                intArrayOf(android.R.attr.state_checked),
-                intArrayOf(-android.R.attr.state_checked)
-            ),
-            intArrayOf(
-                "#FF7D8187".toColorInt(),
-                "#000000".toColorInt()
-            )
-        )
-
-        trackTintList = trackTintSelector
-        thumbTintList = thumbTintSelector
-        thumbTintMode = PorterDuff.Mode.SRC_ATOP
-        trackTintMode = PorterDuff.Mode.SRC_ATOP
-    }
+    private fun MaterialSwitch.styleSwitch() = applyGrokionSwitchStyle()
 
     private fun refreshUI() {
         val container = view?.findViewById<LinearLayout>(R.id.tools_container)

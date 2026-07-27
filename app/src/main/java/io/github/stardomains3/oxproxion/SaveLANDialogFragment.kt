@@ -8,11 +8,14 @@ import android.view.ViewGroup
 import android.widget.Toast
 import android.widget.CheckBox
 import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.activityViewModels
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import androidx.core.graphics.drawable.toDrawable
 
 class SaveLANDialogFragment : DialogFragment() {
+
+    private val viewModel: ChatViewModel by activityViewModels()
 
     companion object {
         const val TAG = "SaveLANDialogFragment"
@@ -46,7 +49,7 @@ class SaveLANDialogFragment : DialogFragment() {
 
         // Load current values - SIMPLE
         prefs.getLanEndpoint()?.let { editTextUrl.setText(it) }
-        editTextApiKey.setText(prefs.getLanApiKey())  // Shows dummy or saved key
+        editTextApiKey.setText(prefs.getLanApiKey())
 
         val currentProvider = prefs.getLanProvider()
         when (currentProvider) {
@@ -125,9 +128,25 @@ class SaveLANDialogFragment : DialogFragment() {
                 !checkboxOmlx.isChecked && !checkboxOllama.isChecked && !checkboxLmStudio.isChecked && !checkboxLlamaCpp.isChecked && !checkboxMlxLm.isChecked && !checkboxHermesAgent.isChecked -> {
                     Toast.makeText(requireContext(), "Please select a server type", Toast.LENGTH_SHORT).show()
                 }
-                raw.startsWith("http://") || raw.startsWith("https://") || raw.contains("://") -> {
+                else -> {
+                    val endpointError = LanEndpointValidator.validate(raw)
+                    if (endpointError != null) {
+                        editTextUrl.error = endpointError
+                        return@setOnClickListener
+                    }
+
+                    val keyOk = prefs.setLanApiKey(apiKey?.takeIf { it.isNotBlank() })
+                    if (!keyOk) {
+                        Toast.makeText(
+                            requireContext(),
+                            "Failed to save LAN API key (encryption error). Endpoint not saved.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        return@setOnClickListener
+                    }
+
                     prefs.setLanEndpoint(raw)
-                    prefs.setLanApiKey(apiKey)  // SIMPLE - stores dummy if blank
+                    viewModel.refreshLanHttpClient()
 
                     val provider = when {
                         checkboxOllama.isChecked -> SharedPreferencesHelper.LAN_PROVIDER_OLLAMA
@@ -142,9 +161,6 @@ class SaveLANDialogFragment : DialogFragment() {
 
                     Toast.makeText(requireContext(), "LAN endpoint, provider, and API key saved", Toast.LENGTH_SHORT).show()
                     dismiss()
-                }
-                else -> {
-                    editTextUrl.error = "URL must contain a scheme (e.g. http:// or https://)"
                 }
             }
         }

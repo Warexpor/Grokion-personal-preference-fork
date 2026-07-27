@@ -1,6 +1,6 @@
-# oxproxion
+# Grokion
 
-oxproxion is a versatile and user-centric Android chat application designed to interact with various Large Language Models (LLMs). It provides a seamless interface for managing conversations, customizing bot personas, and saving chat histories.
+Grokion is a fork of [oxproxion](https://github.com/stardomains3/oxproxion) — a versatile, user-centric Android chat application for interacting with various Large Language Models (LLMs). It provides a seamless interface for managing conversations, customizing bot personas, and saving chat histories.
 
 ## ✨ Features
 
@@ -123,17 +123,18 @@ Here are some screenshots of the app in action:
 - **UI**: Android Jetpack, Material Components, View Binding
 - **Architecture**: MVVM (ViewModel, LiveData/StateFlow)
 - **Asynchronicity**: Kotlin Coroutines
-- **Database**: Jetpack Room for local storage
+- **Database**: Jetpack Room + SQLCipher (chat DB encrypted at rest)
 - **Networking**: Ktor HTTP Client
 - **Markdown Rendering**: Markwon
 
-##  Getting Started
+## Getting Started
 
 To build and run the project, follow these steps:
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/stardomains3/oxproxion.git
+    git clone https://github.com/Warexpor/oxproxion.git Grokion
+    cd Grokion
     ```
 2.  **Open in Android Studio:**
     Open the project in the latest version of Android Studio.
@@ -158,14 +159,16 @@ Network Configuration: Adjust your network environment, including firewall rules
 
 Connection: Ensure your LAN allows traffic between the app and the model server.
 
-Once you have your properly configured LAN endpoint for the server enter it at Settings->"LAN Settings" button.
+Once you have your properly configured LAN endpoint for the server enter it at Settings → "LAN Settings".
+
+For HTTPS LAN servers with a self-signed certificate, enable **Trust self-signed LAN TLS** in Settings (off by default). HTTP endpoints are limited to private/loopback/`.local` hosts.
 
 **Disclaimer:** This project is not affiliated with, endorsed by, or sponsored by OpenRouter.ai in any way.
 *   This open-source app is provided 'as-is' without any warranty, express or implied. Use at your own discretion.
 *   Review OpenRouter's and its model providers' pricing, privacy, and logging policies on their websites.
-*   oxproxion app does not have trackers, analytics, nor ads.
+*   Grokion does not have trackers, analytics, nor ads.
 *   This app is intended for use by persons 18 and over.
-*   Chats are stored unencrypted on device only.
+*   Chat history is stored on device only, encrypted at rest with SQLCipher (passphrase wrapped by Android Keystore). API keys are Keystore-encrypted. Cloud backup excludes prefs and the chat DB.
 
 If you find this app useful, please consider supporting its developer: [Buy Me a Coffee](https://www.buymeacoffee.com/oxproxion) ☕
 

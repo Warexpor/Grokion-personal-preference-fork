@@ -22,6 +22,7 @@ import android.os.Looper
 import android.provider.AlarmClock
 import android.provider.CalendarContract
 import android.provider.MediaStore
+import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -214,7 +215,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         return HttpClient(OkHttp) {
             install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
             install(DefaultRequest) {
-                header("User-Agent", "oxproxion/${BuildConfig.VERSION_NAME}")
+                header("User-Agent", "Grokion/${BuildConfig.VERSION_NAME}")
             }
             engine {
                 config {
@@ -231,30 +232,30 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     }
     private fun createLanHttpClient(): HttpClient {
         val timeoutMs = sharedPreferencesHelper.getTimeoutMinutes().toLong() * 60_000L
+        val trustSelfSignedLan = sharedPreferencesHelper.getTrustSelfSignedLan()
 
         return HttpClient(OkHttp) {
             install(ContentNegotiation) {
                 json(Json { ignoreUnknownKeys = true })
             }
             install(DefaultRequest) {
-                header("User-Agent", "oxproxion/${BuildConfig.VERSION_NAME}")
+                header("User-Agent", "Grokion/${BuildConfig.VERSION_NAME}")
             }
 
             engine {
                 config {
+                    if (trustSelfSignedLan) {
+                        val trustAllCerts = object : X509TrustManager {
+                            override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
+                            override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
+                            override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+                        }
+                        val sslContext = SSLContext.getInstance("SSL")
+                        sslContext.init(null, arrayOf(trustAllCerts), SecureRandom())
 
-                    // --- START SSL BYPASS (Strictly for LAN) ---
-                    val trustAllCerts = object : X509TrustManager {
-                        override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
-                        override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
-                        override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+                        sslSocketFactory(sslContext.socketFactory, trustAllCerts)
+                        hostnameVerifier { _, _ -> true }
                     }
-                    val sslContext = SSLContext.getInstance("SSL")
-                    sslContext.init(null, arrayOf(trustAllCerts), SecureRandom())
-
-                    sslSocketFactory(sslContext.socketFactory, trustAllCerts)
-                    hostnameVerifier { _, _ -> true }
-                    // --- END SSL BYPASS ---
 
                     addInterceptor(CompressionInterceptor(Gzip))
                     addInterceptor(BrotliInterceptor)
@@ -326,6 +327,8 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     private val _isPresetsExtendedEnabled = MutableLiveData<Boolean>()
     val isPresetsExtendedEnabled: LiveData<Boolean> = _isPresetsExtendedEnabled
     private var networkJob: Job? = null
+    /** Index of the in-flight assistant placeholder / streaming bubble in `_chatMessages`. */
+    private var streamingAssistantIndex: Int = -1
     private val _autosendEvent = MutableLiveData<Event<Unit>>()
     val autosendEvent: LiveData<Event<Unit>> = _autosendEvent
     private val _userScrolledDuringStream = MutableLiveData(false)
@@ -340,6 +343,61 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     val lanModels: LiveData<List<LlmModel>> = _lanModels
 
     private var lanFetchJob: Job? = null
+
+    private fun isAssistantPlaceholder(message: FlexibleMessage): Boolean {
+        if (message.role != "assistant") return false
+        val text = (message.content as? JsonPrimitive)?.contentOrNull ?: return false
+        return text == "working..." || text.isBlank()
+    }
+
+    private fun resolveAssistantSlot(list: List<FlexibleMessage>, thinkingMessage: FlexibleMessage?): Int {
+        if (thinkingMessage != null) {
+            val byIdentity = list.indexOf(thinkingMessage)
+            if (byIdentity != -1) return byIdentity
+        }
+        if (streamingAssistantIndex in list.indices && list[streamingAssistantIndex].role == "assistant") {
+            return streamingAssistantIndex
+        }
+        for (i in list.lastIndex downTo 0) {
+            if (isAssistantPlaceholder(list[i])) return i
+        }
+        return -1
+    }
+
+    private fun putAssistantMessage(list: MutableList<FlexibleMessage>, thinkingMessage: FlexibleMessage?, newMessage: FlexibleMessage) {
+        val index = resolveAssistantSlot(list, thinkingMessage)
+        if (index != -1) {
+            list[index] = newMessage
+            streamingAssistantIndex = index
+        } else {
+            list.add(newMessage)
+            streamingAssistantIndex = list.lastIndex
+        }
+    }
+
+    private fun removeAssistantPlaceholder(thinkingMessage: FlexibleMessage?) {
+        updateMessages { list ->
+            val index = resolveAssistantSlot(list, thinkingMessage)
+            if (index != -1 && isAssistantPlaceholder(list[index])) {
+                list.removeAt(index)
+            }
+            streamingAssistantIndex = -1
+        }
+    }
+
+    private fun startNetworkJob(block: suspend kotlinx.coroutines.CoroutineScope.() -> Unit) {
+        networkJob?.cancel()
+        val job = viewModelScope.launch {
+            try {
+                block()
+            } finally {
+                if (networkJob === coroutineContext[Job]) {
+                    networkJob = null
+                }
+            }
+        }
+        networkJob = job
+    }
 
     fun signalPresetApplied() {
         _presetAppliedEvent.value = Event(Unit)
@@ -412,6 +470,8 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             role = "assistant",
             content = JsonPrimitive("working...")
         )
+
+        private val ALLOWED_SETTINGS_ACTIONS = ToolExecutorPolicy.ALLOWED_SETTINGS_ACTIONS
     }
     //val generatedImages = mutableMapOf<Int, String>()
     private var pendingUserImageUri: String? = null  // String (toString())
@@ -541,7 +601,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                             content = json.encodeToString(JsonElement.serializer(), it.content)
                         )
                     }
-                    repository.insertSessionAndMessages(session, chatMessages)  // Replaces due to OnConflict.REPLACE
+                    ChatSessionSaver.save(repository, session, chatMessages)
                 }
             } else {
                 // New chat mode: Always full insert with new ID (sessionId is already non-null)
@@ -566,7 +626,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                         content = json.encodeToString(JsonElement.serializer(), it.content)
                     )
                 }
-                repository.insertSessionAndMessages(session, chatMessages)
+                ChatSessionSaver.save(repository, session, chatMessages)
             }
             // Set currentSessionId to the final ID (new or existing; sessionId is always non-null here)
             this@ChatViewModel.currentSessionId = sessionId
@@ -793,8 +853,8 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 return
             }
             activeChatUrl = "$lanEndpoint/v1/chat/completions"
-            val lanKey = sharedPreferencesHelper.getLanApiKey()
-            activeChatApiKey = if (lanKey.isNullOrBlank()) "any-non-empty-string" else lanKey
+            val lanKey = sharedPreferencesHelper.getLanApiKeyForRequest()
+            activeChatApiKey = lanKey
         }
 
         val thinkingMessage = THINKING_MESSAGE
@@ -830,12 +890,13 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         val uiMessages = _chatMessages.value?.toMutableList() ?: mutableListOf()
         uiMessages.add(userMessage)
         uiMessages.add(thinkingMessage)
+        streamingAssistantIndex = uiMessages.lastIndex
 
         _chatMessages.value = uiMessages
         _isAwaitingResponse.value = true
         _userScrolledDuringStream.value = false
 
-        networkJob = viewModelScope.launch {
+        startNetworkJob {
             try {
                 val modelForRequest =
                     _activeChatModel.value ?: throw IllegalStateException("No active chat model")
@@ -854,6 +915,11 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                         handleNonStreamedResponse(modelForRequest, messagesForApiRequest, thinkingMessage)
                     }
                 }
+            } catch (e: CancellationException) {
+                withContext(Dispatchers.Main) {
+                    removeAssistantPlaceholder(thinkingMessage)
+                }
+                throw e
             } catch (e: Throwable) {
                 handleError(e, thinkingMessage)
             } finally {
@@ -861,7 +927,6 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 if (_userScrolledDuringStream.value != true) {
                     _scrollToBottomEvent.postValue(Event(Unit))
                 }
-                networkJob = null
             }
         }
     }
@@ -911,7 +976,6 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                         _toastUiEvent.postValue(Event("LAN endpoint not configured"))
                         return@withContext null
                     }
-                    val lanKey = sharedPreferencesHelper.getLanApiKey()
                     val response = lanHttpClient.submitFormWithBinaryData(
                         url = "$lanEndpoint/v1/audio/transcriptions",
                         formData = formData {
@@ -922,7 +986,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                             append("model", modelId)
                         }
                     ) {
-                        header("Authorization", "Bearer ${if (lanKey.isNullOrBlank()) "any-non-empty-string" else lanKey}")
+                        header("Authorization", "Bearer ${sharedPreferencesHelper.getLanApiKeyForRequest()}")
                     }
                     if (!response.status.isSuccess()) {
                         val errorBody = try { response.bodyAsText() } catch (_: Exception) { "No details" }
@@ -946,10 +1010,11 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         val thinkingMessage = THINKING_MESSAGE
         val uiMessages = _chatMessages.value?.toMutableList() ?: mutableListOf()
         uiMessages.add(thinkingMessage)
+        streamingAssistantIndex = uiMessages.lastIndex
         _chatMessages.value = uiMessages
         _isAwaitingResponse.value = true
 
-        networkJob = viewModelScope.launch {
+        startNetworkJob {
             try {
                 val base64Audio = Base64.getEncoder().encodeToString(audioBytes)
 
@@ -978,15 +1043,21 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 // Replace thinking message with transcription result
                 withContext(Dispatchers.Main) {
                     updateMessages { list ->
-                        val index = list.indexOf(thinkingMessage)
-                        if (index != -1) {
-                            list[index] = FlexibleMessage(
+                        putAssistantMessage(
+                            list,
+                            thinkingMessage,
+                            FlexibleMessage(
                                 role = "assistant",
                                 content = JsonPrimitive(transcribedText)
                             )
-                        }
+                        )
                     }
                 }
+            } catch (e: CancellationException) {
+                withContext(Dispatchers.Main) {
+                    removeAssistantPlaceholder(thinkingMessage)
+                }
+                throw e
             } catch (e: Throwable) {
                 withContext(Dispatchers.Main) {
                     handleError(e, thinkingMessage)
@@ -994,7 +1065,6 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             } finally {
                 _isAwaitingResponse.postValue(false)
                 _scrollToBottomEvent.postValue(Event(Unit))
-                networkJob = null
             }
         }
     }
@@ -1008,13 +1078,12 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         val thinkingMessage = THINKING_MESSAGE
         val uiMessages = _chatMessages.value?.toMutableList() ?: mutableListOf()
         uiMessages.add(thinkingMessage)
+        streamingAssistantIndex = uiMessages.lastIndex
         _chatMessages.value = uiMessages
         _isAwaitingResponse.value = true
 
-        networkJob = viewModelScope.launch {
+        startNetworkJob {
             try {
-                val lanKey = sharedPreferencesHelper.getLanApiKey()
-
                 val response = lanHttpClient.submitFormWithBinaryData(
                     url = "$lanEndpoint/v1/audio/transcriptions",
                     formData = formData {
@@ -1024,9 +1093,9 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                         })
                         append("model", modelId)
                     }
-                ) {
-                    header("Authorization", "Bearer ${if (lanKey.isNullOrBlank()) "any-non-empty-string" else lanKey}")
-                }
+                    ) {
+                        header("Authorization", "Bearer ${sharedPreferencesHelper.getLanApiKeyForRequest()}")
+                    }
 
                 if (!response.status.isSuccess()) {
                     val errorBody = try { response.bodyAsText() } catch (_: Exception) { "No details" }
@@ -1036,18 +1105,23 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 val result = response.body<JsonObject>()
                 val transcribedText = result["text"]?.jsonPrimitive?.content ?: "No transcription received."
 
-                // Replace thinking message with transcription result
                 withContext(Dispatchers.Main) {
                     updateMessages { list ->
-                        val index = list.indexOf(thinkingMessage)
-                        if (index != -1) {
-                            list[index] = FlexibleMessage(
+                        putAssistantMessage(
+                            list,
+                            thinkingMessage,
+                            FlexibleMessage(
                                 role = "assistant",
                                 content = JsonPrimitive(transcribedText)
                             )
-                        }
+                        )
                     }
                 }
+            } catch (e: CancellationException) {
+                withContext(Dispatchers.Main) {
+                    removeAssistantPlaceholder(thinkingMessage)
+                }
+                throw e
             } catch (e: Throwable) {
                 withContext(Dispatchers.Main) {
                     handleError(e, thinkingMessage)
@@ -1055,7 +1129,6 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             } finally {
                 _isAwaitingResponse.postValue(false)
                 _scrollToBottomEvent.postValue(Event(Unit))
-                networkJob = null
             }
         }
     }
@@ -1131,6 +1204,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
         val uiMessages = _chatMessages.value?.toMutableList() ?: mutableListOf()
         uiMessages.add(THINKING_MESSAGE)
+        streamingAssistantIndex = uiMessages.lastIndex
         _chatMessages.value = uiMessages
 
         _isAwaitingResponse.value = true
@@ -1151,36 +1225,41 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 return
             }
             activeChatUrl = "$lanEndpoint/v1/chat/completions"
-            val lanKey = sharedPreferencesHelper.getLanApiKey()
-            activeChatApiKey = if (lanKey.isNullOrBlank()) "any-non-empty-string" else lanKey
+            val lanKey = sharedPreferencesHelper.getLanApiKeyForRequest()
+            activeChatApiKey = lanKey
         }
 
-        networkJob = viewModelScope.launch {
+        val thinkingMessage = THINKING_MESSAGE
+        startNetworkJob {
             try {
                 val modelForRequest =
                     _activeChatModel.value ?: throw IllegalStateException("No active chat model")
 
                 if (activeModelIsLan()) {
                     if (_isStreamingEnabled.value == true) {
-                        handleStreamedResponseLAN(modelForRequest, messagesForApiRequest, THINKING_MESSAGE)
+                        handleStreamedResponseLAN(modelForRequest, messagesForApiRequest, thinkingMessage)
                     } else {
-                        handleNonStreamedResponseLAN(modelForRequest, messagesForApiRequest, THINKING_MESSAGE)
+                        handleNonStreamedResponseLAN(modelForRequest, messagesForApiRequest, thinkingMessage)
                     }
                 } else {
                     if (_isStreamingEnabled.value == true) {
-                        handleStreamedResponse(modelForRequest, messagesForApiRequest, THINKING_MESSAGE)
+                        handleStreamedResponse(modelForRequest, messagesForApiRequest, thinkingMessage)
                     } else {
-                        handleNonStreamedResponse(modelForRequest, messagesForApiRequest, THINKING_MESSAGE)
+                        handleNonStreamedResponse(modelForRequest, messagesForApiRequest, thinkingMessage)
                     }
                 }
+            } catch (e: CancellationException) {
+                withContext(Dispatchers.Main) {
+                    removeAssistantPlaceholder(thinkingMessage)
+                }
+                throw e
             } catch (e: Throwable) {
-                handleError(e, THINKING_MESSAGE)
+                handleError(e, thinkingMessage)
             } finally {
                 _isAwaitingResponse.postValue(false)
                 if (_userScrolledDuringStream.value != true) {
                     _scrollToBottomEvent.postValue(Event(Unit))
                 }
-                networkJob = null
             }
         }
     }
@@ -1190,7 +1269,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 type = "function",
                 function = FunctionTool(
                     name = "make_file",
-                    description = "Creates a text file (e.g., .txt, .md, .html, .json) and saves it to the Download/oxproxion workspace. Content should be plain text or structured text. **Important:** Use RAW, UNESCAPED content in the 'content' parameter - it gets written directly to disk as-is via OutputStream. No HTML entities, no escaping needed. Only use when the user specifically asks for a file to be made.",
+                    description = "Creates a text file (e.g., .txt, .md, .html, .json) and saves it to the Download/grokion workspace. Content should be plain text or structured text. **Important:** Use RAW, UNESCAPED content in the 'content' parameter - it gets written directly to disk as-is via OutputStream. No HTML entities, no escaping needed. Only use when the user specifically asks for a file to be made.",
                     parameters = buildJsonObject {
                         put("type", "object")
                         putJsonObject("properties") {
@@ -1208,7 +1287,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                             }
                             putJsonObject("subfolder") {
                                 put("type", "string")
-                                put("description", "Optional subfolder inside the oxproxion workspace to save the file into (e.g., 'Skills', 'Notes'). Leave empty to save in the root oxproxion folder.")
+                                put("description", "Optional subfolder inside the Grokion workspace to save the file into (e.g., 'Skills', 'Notes'). Leave empty to save in the root grokion folder.")
                             }
                         }
                         putJsonArray("required") {
@@ -1359,7 +1438,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 type = "function",
                 function = FunctionTool(
                     name = "create_folder",
-                    description = "Creates a new subfolder in the Download/oxproxion workspace. Use this when the user explicitly asks to create a folder or organize files into a new directory.",
+                    description = "Creates a new subfolder in the Download/grokion workspace. Use this when the user explicitly asks to create a folder or organize files into a new directory.",
                     parameters = buildJsonObject {
                         put("type", "object")
                         putJsonObject("properties") {
@@ -1538,7 +1617,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 type = "function",
                 function = FunctionTool(
                     name = "delete_files",
-                    description = "Deletes one or more files(up to 9) from the Download/oxproxion workspace folder. Use this when the user wants to remove files.",
+                    description = "Deletes one or more files(up to 9) from the Download/grokion workspace folder. Use this when the user wants to remove files.",
                     parameters = buildJsonObject {
                         put("type", "object")
                         putJsonObject("properties") {
@@ -1563,7 +1642,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 type = "function",
                 function = FunctionTool(
                     name = "open_file",
-                    description = "Opens an existing file from the Download/oxproxion workspace using the system's default app (e.g., opens PDFs in a PDF viewer, images in gallery). Use this when the user wants to view a file.",
+                    description = "Opens an existing file from the Download/grokion workspace using the system's default app (e.g., opens PDFs in a PDF viewer, images in gallery). Use this when the user wants to view a file.",
                     parameters = buildJsonObject {
                         put("type", "object")
                         putJsonObject("properties") {
@@ -1691,14 +1770,14 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             Tool(
                 type = "function",
                 function = FunctionTool(
-                    name = "list_oxproxion_files",
-                    description = "Lists all files and subfolders in the Download/oxproxion folder or a specified subfolder. Returns names with relative paths (e.g., 'Skills/data.json'). Use this to find files before reading them.",
+                    name = "list_grokion_files",
+                    description = "Lists all files and subfolders in the Download/grokion folder or a specified subfolder. Returns names with relative paths (e.g., 'Skills/data.json'). Use this to find files before reading them.",
                     parameters = buildJsonObject {
                         put("type", "object")
                         putJsonObject("properties") {
                             putJsonObject("path") {
                                 put("type", "string")
-                                put("description", "Optional subfolder path to list (e.g., 'Skills'). Leave empty or omit to list the root Download/oxproxion folder.")
+                                put("description", "Optional subfolder path to list (e.g., 'Skills'). Leave empty or omit to list the root Download/grokion folder.")
                             }
                         }
                         putJsonArray("required") {} // Path is optional
@@ -1734,7 +1813,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 type = "function",
                 function = FunctionTool(
                     name = "edit_file",
-                    description = "Overwrites an existing file in the Download/oxproxion workspace with new content. Use this when the user wants to update, modify, or edit an existing file. IMPORTANT: You must provide the COMPLETE new content of the file, not just the changes. The entire file will be replaced.",
+                    description = "Overwrites an existing file in the Download/grokion workspace with new content. Use this when the user wants to update, modify, or edit an existing file. IMPORTANT: You must provide the COMPLETE new content of the file, not just the changes. The entire file will be replaced.",
                     parameters = buildJsonObject {
                         put("type", "object")
                         putJsonObject("properties") {
@@ -1761,8 +1840,8 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             Tool(
                 type = "function",
                 function = FunctionTool(
-                    name = "read_oxproxion_file",
-                    description = "Reads the contents of a single text file from the Download/oxproxion workspace. Only reads text-based files (e.g., .txt, .md, .json). Use list_oxproxion_files first to see available files and their paths.",
+                    name = "read_grokion_file",
+                    description = "Reads the contents of a single text file from the Download/grokion workspace. Only reads text-based files (e.g., .txt, .md, .json). Use list_grokion_files first to see available files and their paths.",
                     parameters = buildJsonObject {
                         put("type", "object")
                         putJsonObject("properties") {
@@ -1784,15 +1863,18 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         // Handle prefs for enabling/disabling tools
         val hasStoredPrefs = sharedPreferencesHelper.hasEnabledToolsStored()
 
+        if (!hasStoredPrefs) return emptyList()
 
-        // If no prefs stored yet (first use), enable all tools
-        if (!hasStoredPrefs) return allTools
-
-        // Otherwise, load and filter by user's explicit choices (empty stored set → no tools)
-        val enabledToolNames = sharedPreferencesHelper.getEnabledTools()
+        val enabledToolNames = ToolItem.effectiveEnabledTools(sharedPreferencesHelper.getEnabledTools())
         return allTools.filter { tool ->
             tool.function?.name in enabledToolNames
         }
+    }
+
+    private fun destructiveToolsBlockedMessage(): String {
+        val message = "Destructive tool blocked — enable in Settings"
+        _toastUiEvent.postValue(Event(message))
+        return message
     }
     private suspend fun handleToolCalls(
         toolCalls: List<ToolCall>,
@@ -1806,7 +1888,18 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         toolRecursionDepth++
 
         if (toolRecursionDepth > 8) {  // Prevent infinite recursion
-
+            withContext(Dispatchers.Main) {
+                updateMessages { list ->
+                    putAssistantMessage(
+                        list,
+                        thinkingMessage,
+                        FlexibleMessage(
+                            role = "assistant",
+                            content = JsonPrimitive("**Error:**\n---\nTool recursion limit reached.")
+                        )
+                    )
+                }
+            }
             return
         }
 
@@ -1872,16 +1965,19 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
                         // 1. Handle Specific Settings Page
                         if (!settingsAction.isNullOrBlank()) {
+                            if (!ToolExecutorPolicy.isAllowedSettingsAction(settingsAction)) {
+                                "Error: settings_action '$settingsAction' is not allowed."
+                            } else {
                             try {
                                 val intent = Intent(settingsAction).apply {
                                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    // Some settings intents need this flag to work from non-activity context
                                     addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
                                 }
                                 context.startActivity(intent)
                                 "Successfully opened settings page: $settingsAction"
                             } catch (e: Exception) {
                                 "Error opening settings page '$settingsAction'. It might not exist on this device. Error: ${e.message}"
+                            }
                             }
                         }
                         // 2. Handle Standard App Launch
@@ -2134,7 +2230,9 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 }
                 "edit_file" -> {
-                    try {
+                    if (!sharedPreferencesHelper.getAllowDestructiveTools()) {
+                        destructiveToolsBlockedMessage()
+                    } else try {
                         val arguments = json.decodeFromString<JsonObject>(toolCall.function.arguments)
                         val filepath = arguments["filepath"]?.jsonPrimitive?.contentOrNull
                         val content = arguments["content"]?.jsonPrimitive?.contentOrNull
@@ -2315,7 +2413,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                             // Use the new function instead of saveFileToDownloads
                             saveFileToOpenChatWorkspace(filename, content, mimeType, subfolder)
 
-                            val displayPath = if (subfolder.isNotBlank()) "oxproxion/$subfolder/$filename" else "oxproxion/$filename"
+                            val displayPath = WorkspacePaths.displayPath(filename, subfolder)
                             _toolUiEvent.postValue(Event("File saved to Downloads: $displayPath"))
                             "File “$filename” successfully created in Downloads/$displayPath."
                         }
@@ -2325,7 +2423,9 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 }
                 "delete_files" -> {
-                    try {
+                    if (!sharedPreferencesHelper.getAllowDestructiveTools()) {
+                        destructiveToolsBlockedMessage()
+                    } else try {
                         val arguments = json.decodeFromString<JsonObject>(toolCall.function.arguments)
                         val filepaths = parseFilepaths(arguments["filepaths"])
 
@@ -2428,7 +2528,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 }
 
 
-                "list_oxproxion_files" -> {
+                "list_oxproxion_files", "list_grokion_files" -> {
                     try {
                         val arguments = json.decodeFromString<JsonObject>(toolCall.function.arguments)
                         val path = arguments["path"]?.jsonPrimitive?.contentOrNull ?: ""
@@ -2438,7 +2538,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 }
 
-                "read_oxproxion_file" -> {
+                "read_oxproxion_file", "read_grokion_file" -> {
                     try {
                         val arguments = json.decodeFromString<JsonObject>(toolCall.function.arguments)
                         val filepath = arguments["filepath"]?.jsonPrimitive?.content
@@ -2495,6 +2595,18 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
     private suspend fun continueConversation(messages: List<FlexibleMessage>) {
         if (toolRecursionDepth > 12) {
+            withContext(Dispatchers.Main) {
+                updateMessages { list ->
+                    putAssistantMessage(
+                        list,
+                        null,
+                        FlexibleMessage(
+                            role = "assistant",
+                            content = JsonPrimitive("**Error:**\n---\nTool follow-up recursion limit reached.")
+                        )
+                    )
+                }
+            }
             return
         }
         toolCallsHandledForTurn = false
@@ -2505,7 +2617,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         )
 
         withContext(Dispatchers.Main) {
-            updateMessages { it.add(toolThinkingMessage) }
+            updateMessages { it.add(toolThinkingMessage); streamingAssistantIndex = it.lastIndex }
             _scrollToBottomEvent.value = Event(Unit)
         }
 
@@ -2518,6 +2630,11 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             } else {
                 handleNonStreamedResponse(modelForRequest, messages, toolThinkingMessage)
             }
+        } catch (e: CancellationException) {
+            withContext(Dispatchers.Main) {
+                removeAssistantPlaceholder(toolThinkingMessage)
+            }
+            throw e
         } catch (e: Throwable) {
             withContext(Dispatchers.Main) {
                 handleError(e, toolThinkingMessage)
@@ -2525,38 +2642,6 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private suspend fun continueConversationOLD(messages: List<FlexibleMessage>) { //Gemini fix
-        if (toolRecursionDepth > 8) {
-            return
-        }
-        toolCallsHandledForTurn = false
-
-        // 1. Create a new "working..." message so the user sees the AI is processing the tool data
-        val toolThinkingMessage = FlexibleMessage(
-            role = "assistant",
-            content = JsonPrimitive("working...")
-        )
-
-        // 2. Safely add the new bubble to the UI on the Main thread
-        withContext(Dispatchers.Main) {
-            updateMessages { it.add(toolThinkingMessage) }
-            _scrollToBottomEvent.value = Event(Unit)
-        }
-
-        // 3. Make the next network call within the SAME coroutine.
-        // We pass our new toolThinkingMessage so it gets replaced by the AI's final answer!
-        try {
-            val modelForRequest = _activeChatModel.value ?: throw IllegalStateException("No active chat model")
-            handleNonStreamedResponse(modelForRequest, messages, toolThinkingMessage)
-        } catch (e: Throwable) {
-            withContext(Dispatchers.Main) {
-                handleError(e, toolThinkingMessage)
-            }
-        }
-
-        // Notice we removed the 'networkJob = viewModelScope.launch' wrapper and the 'finally' block!
-        // The original sendUserMessage coroutine's finally block will handle cleanup once the whole chain finishes.
-    }
     private fun formatCitations(annotations: List<Annotation>?): String {
         if (annotations.isNullOrEmpty()) return ""
 
@@ -3144,46 +3229,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     private suspend fun forEachSseJsonPayload(
         channel: ByteReadChannel,
         onPayload: suspend (String) -> Unit
-    ) {
-        val dataLines = mutableListOf<String>()
-        suspend fun flushData() {
-            if (dataLines.isEmpty()) return
-            val payload = dataLines.joinToString("\n").trim()
-            dataLines.clear()
-            if (payload.isNotEmpty() &&
-                payload != "[DONE]" &&
-                !payload.equals("DONE", ignoreCase = true)
-            ) {
-                onPayload(payload)
-            }
-        }
-        try {
-            while (!channel.isClosedForRead) {
-                val line = channel.readLine() ?: break
-                when {
-                    line.isEmpty() -> flushData()
-                    line.startsWith(":") -> Unit // comment / keepalive
-                    line.startsWith("data:") -> {
-                        val value = when {
-                            line.startsWith("data: ") -> line.substring(6)
-                            line.startsWith("data:\t") -> line.substring(6)
-                            else -> line.substring(5).trimStart()
-                        }
-                        dataLines.add(value)
-                    }
-                    line.startsWith("event:") || line.startsWith("id:") || line.startsWith("retry:") -> Unit
-                    line.trimStart().startsWith("{") -> {
-                        flushData()
-                        onPayload(line.trim())
-                    }
-                    dataLines.isNotEmpty() -> dataLines.add(line)
-                }
-            }
-            flushData()
-        } catch (_: Exception) {
-            flushData()
-        }
-    }
+    ) = SseJsonReader.forEachJsonPayload(channel, onPayload)
 
     private fun parseStreamChunk(jsonString: String): StreamedChatResponse? {
         return try {
@@ -3572,8 +3618,8 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 httpClient.preparePost(activeChatUrl) {
                     header("Authorization", "Bearer $activeChatApiKey")
-                    header("HTTP-Referer", "https://github.com/stardomains3/oxproxion/")
-                    header("X-Title", "oxproxion")
+                    header("HTTP-Referer", "https://github.com/Warexpor/oxproxion")
+                    header("X-Title", "Grokion")
                     header(HttpHeaders.Accept, "text/event-stream")
                     contentType(ContentType.Application.Json)
                     setBody(chatRequest)
@@ -4106,8 +4152,8 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
                 val response = httpClient.post(activeChatUrl) {
                     header("Authorization", "Bearer $activeChatApiKey")
-                    header("HTTP-Referer", "https://github.com/stardomains3/oxproxion/")
-                    header("X-Title", "oxproxion")
+                    header("HTTP-Referer", "https://github.com/Warexpor/oxproxion")
+                    header("X-Title", "Grokion")
                     contentType(ContentType.Application.Json)
                     setBody(chatRequest)
                 }
@@ -4230,6 +4276,11 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         lanHttpClient = createLanHttpClient()
         llmService = LlmService(httpClient, activeChatUrl)
     }
+
+    fun refreshLanHttpClient() {
+        lanHttpClient.close()
+        lanHttpClient = createLanHttpClient()
+    }
     private fun handleSuccessResponse(
         chatResponse: ChatResponse,
         thinkingMessage: FlexibleMessage?,
@@ -4296,12 +4347,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         // Update the UI with the detailed message (similar to handleError)
         val errorMessage = FlexibleMessage(role = "assistant", content = JsonPrimitive(detailedMsg))
         updateMessages { list ->
-            if (thinkingMessage != null) {
-                val index = list.indexOf(thinkingMessage)
-                if (index != -1) list[index] = errorMessage
-            } else {
-                list.add(errorMessage)
-            }
+            putAssistantMessage(list, thinkingMessage, errorMessage)
         }
         if (ForegroundService.isRunningForeground && sharedPreferencesHelper.getNotiPreference()) {
             val apiIdentifier = activeChatModel.value ?: "Unknown Model"
@@ -4312,6 +4358,10 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun handleError(e: Throwable, thinkingMessage: FlexibleMessage?) {
+        if (e is CancellationException && e !is TimeoutCancellationException) {
+            removeAssistantPlaceholder(thinkingMessage)
+            return
+        }
         val errorMsg = when (e) {
             is ClientRequestException -> {
                 // Handle in a coroutine scope
@@ -4326,12 +4376,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     // Update the UI with the final error message
                     val finalErrorMessage = FlexibleMessage(role = "assistant", content = JsonPrimitive(errorText))
                     updateMessages { list ->
-                        if (thinkingMessage != null) {
-                            val index = list.indexOf(thinkingMessage)
-                            if (index != -1) list[index] = finalErrorMessage
-                        } else {
-                            list.add(finalErrorMessage)
-                        }
+                        putAssistantMessage(list, thinkingMessage, finalErrorMessage)
                     }
                 }
                 errorText // Return initial message for immediate display
@@ -4349,12 +4394,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     // Update the UI with the final error message
                     val finalErrorMessage = FlexibleMessage(role = "assistant", content = JsonPrimitive(errorText))
                     updateMessages { list ->
-                        if (thinkingMessage != null) {
-                            val index = list.indexOf(thinkingMessage)
-                            if (index != -1) list[index] = finalErrorMessage
-                        } else {
-                            list.add(finalErrorMessage)
-                        }
+                        putAssistantMessage(list, thinkingMessage, finalErrorMessage)
                     }
                 }
                 errorText // Return initial message for immediate display
@@ -4373,12 +4413,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         if (e !is ClientRequestException && e !is ServerResponseException) {
             val errorMessage = FlexibleMessage(role = "assistant", content = JsonPrimitive(errorMsg))
             updateMessages { list ->
-                if (thinkingMessage != null) {
-                    val index = list.indexOf(thinkingMessage)
-                    if (index != -1) list[index] = errorMessage
-                } else {
-                    list.add(errorMessage)
-                }
+                putAssistantMessage(list, thinkingMessage, errorMessage)
             }
         }
     }
@@ -4457,11 +4492,10 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 return null
             }
 
-            val lanKey = sharedPreferencesHelper.getLanApiKey()
             Triple(
                 activeModel.apiIdentifier,
                 "$lanEndpoint/v1/chat/completions",
-                if (lanKey.isNullOrBlank()) "any-non-empty-string" else lanKey
+                sharedPreferencesHelper.getLanApiKeyForRequest()
             )
         } else {
             val cloudModelId = _activeChatModel.value
@@ -4537,12 +4571,8 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             throw Exception("Invalid path: Directory traversal not allowed.")
         }
 
-        // Construct the relative path (e.g., "Downloads/oxproxion" or "Downloads/oxproxion/Skills")
-        val relativePath = if (safeSubfolder.isNotBlank()) {
-            "${Environment.DIRECTORY_DOWNLOADS}/oxproxion/$safeSubfolder"
-        } else {
-            "${Environment.DIRECTORY_DOWNLOADS}/oxproxion"
-        }
+        WorkspacePaths.ensureWorkspaceExists()
+        val relativePath = WorkspacePaths.mediaStoreRelativePath(safeSubfolder)
 
         val values = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
@@ -4603,8 +4633,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             throw Exception("Folder path cannot be empty.")
         }
 
-        // Construct the relative path (e.g., "Downloads/oxproxion/Archives")
-        val relativePath = "${Environment.DIRECTORY_DOWNLOADS}/oxproxion/$safeFolderPath"
+        val relativePath = WorkspacePaths.mediaStoreRelativePath(safeFolderPath)
 
         // Quirk: MediaStore only creates folders when a file is created inside them.
         // So, we create a temporary dummy file, then delete it. The folder remains!
@@ -4630,7 +4659,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         val values = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
             put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
-            put(MediaStore.MediaColumns.RELATIVE_PATH, "${Environment.DIRECTORY_DOWNLOADS}/oxproxion")
+            put(MediaStore.MediaColumns.RELATIVE_PATH, WorkspacePaths.mediaStoreRelativePath())
             //put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
         }
 
@@ -4728,7 +4757,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
             put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
             //put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
-            put(MediaStore.MediaColumns.RELATIVE_PATH, "${Environment.DIRECTORY_DOWNLOADS}/oxproxion")
+            put(MediaStore.MediaColumns.RELATIVE_PATH, WorkspacePaths.mediaStoreRelativePath())
         }
 
         val uri = getApplication<Application>().contentResolver
@@ -4822,8 +4851,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             if (lanEndpoint.isNullOrBlank()) return null
 
             requestUrl = "$lanEndpoint/v1/chat/completions"
-            val lanKey = sharedPreferencesHelper.getLanApiKey()
-            requestKey = if (lanKey.isNullOrBlank()) "any-non-empty-string" else lanKey
+            requestKey = sharedPreferencesHelper.getLanApiKeyForRequest()
             modelToUse = _activeChatModel.value ?: return null
         } else {
             if (activeChatApiKey.isBlank()) return null
@@ -4945,8 +4973,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             if (lanEndpoint.isNullOrBlank()) return null
 
             requestUrl = "$lanEndpoint/v1/chat/completions"
-            val lanKey = sharedPreferencesHelper.getLanApiKey()
-            requestKey = if (lanKey.isNullOrBlank()) "any-non-empty-string" else lanKey
+            requestKey = sharedPreferencesHelper.getLanApiKeyForRequest()
             modelToUse = _activeChatModel.value ?: return null
         } else {
             if (activeChatApiKey.isBlank()) return null
@@ -5217,7 +5244,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     |<dc:title>$title</dc:title>
                     |<dc:language>en</dc:language>
                     |<dc:identifier id="BookId" opf:scheme="UUID">$uuid</dc:identifier>
-                    |<dc:creator opf:role="aut">oxproxion AI</dc:creator>
+                    |<dc:creator opf:role="aut">Grokion AI</dc:creator>
                 |</metadata>
                 |<manifest>
                     |<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
@@ -5322,7 +5349,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     <dc:title>$title</dc:title>
                     <dc:language>en</dc:language>
                     <dc:identifier id="BookId" opf:scheme="UUID">$uuid</dc:identifier>
-                    <dc:creator opf:role="aut">oxproxion AI</dc:creator>
+                    <dc:creator opf:role="aut">Grokion AI</dc:creator>
                 </metadata>
                 <manifest>
                     <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
@@ -5397,7 +5424,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         val values = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
             put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
-            put(MediaStore.MediaColumns.RELATIVE_PATH, "${Environment.DIRECTORY_DOWNLOADS}/oxproxion")
+            put(MediaStore.MediaColumns.RELATIVE_PATH, WorkspacePaths.mediaStoreRelativePath())
             //put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
         }
 
@@ -5581,7 +5608,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     val values = ContentValues().apply {
                         put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
                         put(MediaStore.MediaColumns.MIME_TYPE, "image/png")
-                        put(MediaStore.MediaColumns.RELATIVE_PATH, "${Environment.DIRECTORY_DOWNLOADS}/oxproxion")
+                        put(MediaStore.MediaColumns.RELATIVE_PATH, WorkspacePaths.mediaStoreRelativePath())
                       //  put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
                     }
 
@@ -5699,12 +5726,10 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             if (lanEndpoint.isNullOrBlank()) {
                 throw IllegalStateException("LAN endpoint not configured. Please set it in settings.")
             }
-            val apiKey = sharedPreferencesHelper.getLanApiKey()
             try {
-                val response = httpClient.get("$lanEndpoint/v1/models") {
+                val response = lanHttpClient.get("$lanEndpoint/v1/models") {
                     timeout { requestTimeoutMillis = 10000 }
-                    // CRITICAL: You must include the Bearer token used in your curl command
-                    header("Authorization", "Bearer $apiKey")
+                    header("Authorization", "Bearer ${sharedPreferencesHelper.getLanApiKeyForRequest()}")
                     //  header("Origin", "http://192.168.68.69:1337")
                 }
 
@@ -5752,14 +5777,10 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             if (lanEndpoint.isNullOrBlank()) {
                 throw IllegalStateException("LAN endpoint not configured. Please set it in settings.")
             }
-            val apiKey = sharedPreferencesHelper.getLanApiKey()
-
             try {
                 val response = lanHttpClient.get("$lanEndpoint/v1/models") {
                     timeout { requestTimeoutMillis = 10000 }
-                    if (!apiKey.isNullOrBlank() && apiKey != "any-non-empty-string") {
-                        header("Authorization", "Bearer $apiKey")
-                    }
+                    header("Authorization", "Bearer ${sharedPreferencesHelper.getLanApiKeyForRequest()}")
                 }
                 if (!response.status.isSuccess()) {
                     throw Exception("Server returned ${response.status}: ${response.status.description}")

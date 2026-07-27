@@ -8,6 +8,7 @@ import android.widget.CheckBox
 import android.widget.ListView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
@@ -56,7 +57,7 @@ class ChooserActivity : AppCompatActivity() {
         val titleTextView = TextView(this).apply {
             text = "Choose and Send\nModel: $modelDisplayName"
             textSize = 20f  // Adjust size as needed
-            setTextColor(Color.parseColor("#DADBDF"))
+            setTextColor(ContextCompat.getColor(this@ChooserActivity, R.color.xai_body))
             gravity = Gravity.CENTER  // Center vertically and horizontally
             setPadding(24, 16, 24, 16)  // Add padding for better spacing
         }

@@ -1,0 +1,2 @@
+- Chat DB encrypted at rest (SQLCipher); LAN key/TLS hardening; Grok shell UI polish.
+- Correctness: chat overwrite, cancel, single-flight network; Help/README updated for Grokion.

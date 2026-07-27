@@ -42,30 +42,7 @@ class AdvancedReasoningFragment : Fragment(R.layout.fragment_advanced_reasoning)
             val isEnabled = sharedPreferencesHelper.getAdvancedReasoningEnabled()
             advancedToggle.isChecked = isEnabled
 
-            val thumbTintSelector = ColorStateList(
-                arrayOf(
-                    intArrayOf(android.R.attr.state_checked),
-                    intArrayOf(-android.R.attr.state_checked)
-                ),
-                intArrayOf(
-                    "#000000".toColorInt(),  // Checked state color
-                    "#686868".toColorInt()   // Unchecked state color
-                )
-            )
-            val trackTintSelector = ColorStateList(
-                arrayOf(
-                    intArrayOf(android.R.attr.state_checked),
-                    intArrayOf(-android.R.attr.state_checked)
-                ),
-                intArrayOf(
-                    "#FF7D8187".toColorInt(),  // On state color
-                    "#000000".toColorInt()   // Off state color
-                )
-            )
-            advancedToggle.trackTintList = trackTintSelector
-            advancedToggle.thumbTintList = thumbTintSelector
-            advancedToggle.thumbTintMode = PorterDuff.Mode.SRC_ATOP
-            advancedToggle.trackTintMode = PorterDuff.Mode.SRC_ATOP
+            advancedToggle.applyGrokionSwitchStyle()
             advancedToggle.setOnCheckedChangeListener { _, isChecked ->
                 sharedPreferencesHelper.saveAdvancedReasoningEnabled(isChecked)
                 updateControlsEnabled(isChecked)
@@ -106,32 +83,7 @@ class AdvancedReasoningFragment : Fragment(R.layout.fragment_advanced_reasoning)
             override fun afterTextChanged(s: Editable?) {}
         })
 
-        val thumbTintSelector = ColorStateList(
-            arrayOf(
-                intArrayOf(android.R.attr.state_checked),
-                intArrayOf(-android.R.attr.state_checked)
-            ),
-            intArrayOf(
-                "#000000".toColorInt(),  // Checked state color
-                "#686868".toColorInt()   // Unchecked state color
-            )
-        )
-        val trackTintSelector = ColorStateList(
-            arrayOf(
-                intArrayOf(android.R.attr.state_checked),
-                intArrayOf(-android.R.attr.state_checked)
-            ),
-            intArrayOf(
-                "#FF7D8187".toColorInt(),  // On state color
-                "#000000".toColorInt()   // Off state color
-            )
-        )
-
-// Apply to your MaterialSwitch instance
-        includeSwitch.trackTintList = trackTintSelector
-        includeSwitch.thumbTintList = thumbTintSelector
-        includeSwitch.thumbTintMode = PorterDuff.Mode.SRC_ATOP
-        includeSwitch.trackTintMode = PorterDuff.Mode.SRC_ATOP
+        includeSwitch.applyGrokionSwitchStyle()
 
         val maxTokens = sharedPreferencesHelper.getReasoningMaxTokens()
         effortGroup.isEnabled = maxTokens == null || maxTokens <= 0

@@ -7,10 +7,16 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
+sealed class ChatImportResult {
+    data object Success : ChatImportResult()
+    data class Error(val message: String) : ChatImportResult()
+}
+
 class SavedChatsViewModel(application: Application) : AndroidViewModel(application) {
     companion object {
-        // One Json instance shared by all ViewModel instances
         private val json = Json { prettyPrint = true }
+        private const val MAX_IMPORT_BYTES = 5 * 1024 * 1024
+        private const val MAX_IMPORT_MESSAGES = 5000
     }
     private val repository: ChatRepository
     val allSessions: LiveData<List<ChatSession>>
@@ -43,13 +49,28 @@ class SavedChatsViewModel(application: Application) : AndroidViewModel(applicati
             )
         }
         val backup = ChatBackup(sessions = exportedSessions)
-        // Reuse the singleton Json instance
         return json.encodeToString(backup)
     }
 
-    fun importChatsFromJson(json: String) {
+    fun importChatsFromJson(jsonText: String, onResult: (ChatImportResult) -> Unit) {
         viewModelScope.launch {
-            val backup = Json.decodeFromString<ChatBackup>(json)
+            val result = importChatsFromJsonInternal(jsonText)
+            onResult(result)
+        }
+    }
+
+    private suspend fun importChatsFromJsonInternal(jsonText: String): ChatImportResult {
+        if (jsonText.length > MAX_IMPORT_BYTES) {
+            return ChatImportResult.Error("Import file too large (max 5 MB)")
+        }
+
+        return try {
+            val backup = Json.decodeFromString<ChatBackup>(jsonText)
+            val totalMessages = backup.sessions.sumOf { it.messages.size }
+            if (totalMessages > MAX_IMPORT_MESSAGES) {
+                return ChatImportResult.Error("Too many messages (max 5,000)")
+            }
+
             for (exportedSession in backup.sessions) {
                 val session = ChatSession(
                     title = exportedSession.title,
@@ -57,15 +78,19 @@ class SavedChatsViewModel(application: Application) : AndroidViewModel(applicati
                 )
                 val messages = exportedSession.messages.map { exportedMessage ->
                     ChatMessage(
-                        sessionId = 0, // This will be overridden by the DAO
+                        sessionId = 0,
                         role = exportedMessage.role,
                         content = exportedMessage.content
                     )
                 }
                 repository.insertSessionAndMessages(session, messages)
             }
+            ChatImportResult.Success
+        } catch (e: Exception) {
+            ChatImportResult.Error("Invalid backup format")
         }
     }
+
     suspend fun searchSessions(query: String): List<ChatSession> {
         return repository.searchSessions(query)
     }

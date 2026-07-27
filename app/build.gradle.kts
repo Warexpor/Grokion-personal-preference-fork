@@ -28,8 +28,8 @@ android {
         applicationId = "io.github.warexpor.grokion"
         minSdk = 31
         targetSdk = 36
-        versionCode = 230
-        versionName = "2.1.122-grokion"
+        versionCode = 233
+        versionName = "2.1.125-grokion"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -128,14 +128,14 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.sqlite)
+    implementation(libs.sqlcipher.android) { artifact { type = "aar" } }
     implementation(libs.androidx.core.ktx)
     implementation(libs.openlocationcode)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.oss.licenses.parser)
     implementation(libs.androidx.constraintlayout)
-    implementation(libs.androidx.navigation.fragment.ktx)
-    implementation(libs.androidx.navigation.ui.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

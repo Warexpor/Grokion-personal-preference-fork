@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- xAI design tokens — Light mode (inverted for readability) -->
-    <color name="xai_canvas">#FFF5F5F5</color>
+    <color name="xai_canvas">#FFF8F7F5</color>
     <color name="xai_canvas_soft">#FFEBEBEB</color>
     <color name="xai_canvas_card">#FFFFFFFF</color>
     <color name="xai_canvas_mid">#FFD6D6D6</color>
@@ -12,8 +12,14 @@
     <color name="xai_mute">#FF888888</color>
     <color name="xai_accent_sunset">#FF6A6A6A</color>
     <color name="xai_accent_sunset_soft">#FFCCCCCC</color>
-    <color name="xai_accent_dusk">#FF7C3AED</color>
-    <color name="xai_accent_twilight">#FFC4B5FD</color>
+    <color name="xai_accent_dusk">#FF9A9A9A</color>
+    <color name="xai_accent_twilight">#FFB8B8B8</color>
+    <color name="xai_scrim">#80000000</color>
+    <color name="markwon_code_text">#FF333333</color>
+    <color name="markwon_code_bg">#1A000000</color>
+    <color name="markwon_blockquote">#FF666666</color>
+    <color name="markwon_table_border">#FFE0E0E0</color>
+    <color name="markwon_table_header_bg">#FFEBEBEB</color>
     <color name="xai_accent_breeze">#FFA0C3EC</color>
     <color name="xai_accent_midnight">#FF0D1726</color>
     <color name="xai_border_outline">#33000000</color>

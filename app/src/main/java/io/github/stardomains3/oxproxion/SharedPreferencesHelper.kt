@@ -5,10 +5,12 @@ import android.content.SharedPreferences
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.serialization.json.Json
 import java.security.KeyStore
+import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
@@ -93,7 +95,12 @@ class SharedPreferencesHelper(context: Context) {
         private const val KEY_PRESETS = "user_presets"
         private const val KEY_SELECTED_FONT = "selected_font"
         private const val KEY_BIOMETRIC_ENABLED = "biometric_enabled"
+        private const val KEY_TRUST_SELF_SIGNED_LAN = "trust_self_signed_lan"
+        private const val KEY_ALLOW_DESTRUCTIVE_TOOLS = "allow_destructive_tools"
         private const val KEY_CONVERSATION_MODE_ENABLED = "conversation_mode_enabled"
+        private const val LAN_API_KEY_ALIAS = "lan_api_key"
+        private const val CHAT_DB_PASSPHRASE_ALIAS = "chat_db_passphrase"
+        private const val KEY_LAN_API_KEY_MIGRATED = "lan_api_key_migrated"
         private const val API_KEYS_PREFS_STORE = "ApiKeysPrefsStore"
         private const val MAIN_PREFS = "MainAppPrefs"
         private const val KEY_MODEL_NEW_CHAT = "modelvalenewchat"
@@ -119,6 +126,31 @@ class SharedPreferencesHelper(context: Context) {
 
     init {
         migrateFromGson()
+        migrateLanApiKeyToEncrypted()
+    }
+
+    private fun migrateLanApiKeyToEncrypted() {
+        if (mainPrefs.getBoolean(KEY_LAN_API_KEY_MIGRATED, false)) return
+
+        val plaintext = mainPrefs.getString(LAN_API_KEY, null)
+        if (plaintext.isNullOrBlank() || plaintext == "any-non-empty-string") {
+            // Nothing to migrate — safe to mark done and drop any leftover placeholder.
+            mainPrefs.edit {
+                remove(LAN_API_KEY)
+                putBoolean(KEY_LAN_API_KEY_MIGRATED, true)
+            }
+            return
+        }
+
+        val ok = saveApiKey(LAN_API_KEY_ALIAS, plaintext)
+        if (!ok) {
+            // Keep plaintext and retry on next launch — do not mark migrated.
+            return
+        }
+        mainPrefs.edit {
+            remove(LAN_API_KEY)
+            putBoolean(KEY_LAN_API_KEY_MIGRATED, true)
+        }
     }
 
     private fun migrateFromGson() {
@@ -249,6 +281,12 @@ class SharedPreferencesHelper(context: Context) {
     fun saveBiometricEnabled(enabled: Boolean) = mainPrefs.edit { putBoolean(KEY_BIOMETRIC_ENABLED, enabled) }
     fun getBiometricEnabled(): Boolean = mainPrefs.getBoolean(KEY_BIOMETRIC_ENABLED, false)
 
+    fun getTrustSelfSignedLan(): Boolean = mainPrefs.getBoolean(KEY_TRUST_SELF_SIGNED_LAN, false)
+    fun saveTrustSelfSignedLan(enabled: Boolean) = mainPrefs.edit { putBoolean(KEY_TRUST_SELF_SIGNED_LAN, enabled) }
+
+    fun getAllowDestructiveTools(): Boolean = mainPrefs.getBoolean(KEY_ALLOW_DESTRUCTIVE_TOOLS, false)
+    fun saveAllowDestructiveTools(enabled: Boolean) = mainPrefs.edit { putBoolean(KEY_ALLOW_DESTRUCTIVE_TOOLS, enabled) }
+
     fun getAdvancedReasoningEnabled(): Boolean = mainPrefs.getBoolean("advanced_reasoning_enabled", false)
     fun saveAdvancedReasoningEnabled(enabled: Boolean) = mainPrefs.edit {
         putBoolean(
@@ -334,11 +372,10 @@ class SharedPreferencesHelper(context: Context) {
             try {
                 json.decodeFromString<Set<String>>(jsonStr)
             } catch (e: Exception) {
-                //Log.w("SharedPreferencesHelper", "Failed to parse enabled tools, falling back to all enabled", e)
-                emptySet()  // Safe fallback: enables all tools
+                emptySet()
             }
         } else {
-            emptySet()  // First use: enables all tools
+            emptySet() // First run: no tools enabled until user opts in
         }
     }
     fun hasEnabledToolsStored(): Boolean {
@@ -600,8 +637,8 @@ class SharedPreferencesHelper(context: Context) {
     }
     // --- API Key Management ---
 
-    fun saveApiKey(alias: String, apiKey: String) {
-        try {
+    fun saveApiKey(alias: String, apiKey: String): Boolean {
+        return try {
             val secretKey = getOrCreateSecretKey(alias)
             val cipher = Cipher.getInstance("AES/GCM/NoPadding")
             cipher.init(Cipher.ENCRYPT_MODE, secretKey)
@@ -616,9 +653,32 @@ class SharedPreferencesHelper(context: Context) {
                 putString("${alias}_encrypted", encryptedKeyString)
                 putString("${alias}_iv", ivString)
             }
+
+            val roundTrip = getApiKeyFromPrefs(alias)
+            if (roundTrip != apiKey) {
+                Log.e("API_KEY_STORAGE", "Round-trip verification failed for $alias")
+                return false
+            }
+            true
         } catch (e: Exception) {
-            //  Log.e("API_KEY_STORAGE", "Error encrypting $alias", e)
+            Log.e("API_KEY_STORAGE", "Error encrypting $alias", e)
+            false
         }
+    }
+
+    /** 32-byte SQLCipher passphrase, wrapped by Keystore in ApiKeysPrefsStore. */
+    fun getOrCreateChatDbPassphrase(): ByteArray {
+        val existing = getApiKeyFromPrefs(CHAT_DB_PASSPHRASE_ALIAS)
+        if (existing.isNotBlank()) {
+            return Base64.decode(existing, Base64.NO_WRAP)
+        }
+        val bytes = ByteArray(32)
+        SecureRandom().nextBytes(bytes)
+        val encoded = Base64.encodeToString(bytes, Base64.NO_WRAP)
+        if (!saveApiKey(CHAT_DB_PASSPHRASE_ALIAS, encoded)) {
+            throw IllegalStateException("Failed to persist chat DB passphrase in Keystore")
+        }
+        return bytes
     }
     fun getShowCitations(): Boolean = mainPrefs.getBoolean(KEY_SHOW_CITATIONS, true)  // Default true (show citations)
 
@@ -834,14 +894,27 @@ class SharedPreferencesHelper(context: Context) {
             else putString(KEY_LAN_ENDPOINT, url)
         }
     }
-    fun getLanApiKey(): String {
-        return mainPrefs.getString(LAN_API_KEY, "any-non-empty-string") ?: "any-non-empty-string"
+
+    /** @return false if [apiKey] non-blank but Keystore encrypt failed */
+    fun setLanApiKey(apiKey: String?): Boolean {
+        if (apiKey.isNullOrBlank()) {
+            apiKeysPrefs.edit {
+                remove("${LAN_API_KEY_ALIAS}_encrypted")
+                remove("${LAN_API_KEY_ALIAS}_iv")
+            }
+            return true
+        }
+        return saveApiKey(LAN_API_KEY_ALIAS, apiKey)
     }
 
-    fun setLanApiKey(apiKey: String?) {
-        mainPrefs.edit {
-            putString(LAN_API_KEY, apiKey ?: "any-non-empty-string")  // ALWAYS non-blank
-        }
+    fun getLanApiKey(): String {
+        return getApiKeyFromPrefs(LAN_API_KEY_ALIAS)
+    }
+
+    /** Placeholder used only at request time when no LAN key is configured. */
+    fun getLanApiKeyForRequest(): String {
+        val key = getLanApiKey()
+        return if (key.isBlank()) "any-non-empty-string" else key
     }
     fun getLanEndpoint(): String? {
         // May be null if the user never set a value

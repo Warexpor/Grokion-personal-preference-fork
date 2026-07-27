@@ -7,18 +7,36 @@ data class ToolItem(
     val isEnabled: Boolean // Current state from prefs
 ) {
     companion object {
+        private const val WORKSPACE = "Download/grokion"
+
+        fun isToolEnabled(toolName: String, enabledSet: Set<String>): Boolean {
+            if (toolName in enabledSet) return true
+            return when (toolName) {
+                "list_grokion_files" -> "list_oxproxion_files" in enabledSet
+                "read_grokion_file" -> "read_oxproxion_file" in enabledSet
+                else -> false
+            }
+        }
+
+        fun effectiveEnabledTools(enabledSet: Set<String>): Set<String> {
+            val result = enabledSet.toMutableSet()
+            if ("list_oxproxion_files" in enabledSet) result.add("list_grokion_files")
+            if ("read_oxproxion_file" in enabledSet) result.add("read_grokion_file")
+            return result
+        }
+
         fun getAllToolItems(enabledSet: Set<String>): List<ToolItem> = listOf(
             ToolItem(
                 name = "make_file",
                 displayName = "Create File",
-                description = "Creates and saves a text-based file (TXT/HTML/JSON/Markdown etc.) to the Download/oxproxion folder",
+                description = "Creates and saves a text-based file (TXT/HTML/JSON/Markdown etc.) to the $WORKSPACE folder",
                 isEnabled = "make_file" in enabledSet
             ),
 
             ToolItem(
                 name = "delete_files",
                 displayName = "Delete File(s)",
-                description = "Deletes existing file(s) from the Download/oxproxion workspace.",
+                description = "Deletes existing file(s) from the $WORKSPACE workspace.",
                 isEnabled = "delete_files" in enabledSet
             ),
             ToolItem(
@@ -61,28 +79,28 @@ data class ToolItem(
 
 
             ToolItem(
-                name = "list_oxproxion_files",
-                displayName = "List oxproxion Files",
-                description = "List files and folders in the Download/oxproxion workspace, including subfolders",
-                isEnabled = "list_oxproxion_files" in enabledSet
+                name = "list_grokion_files",
+                displayName = "List Grokion Files",
+                description = "List files and folders in the $WORKSPACE workspace, including subfolders",
+                isEnabled = isToolEnabled("list_grokion_files", enabledSet)
             ),
             ToolItem(
-                name = "read_oxproxion_file",
-                displayName = "Read oxproxion File",
-                description = "Read a text-based file from the Download/oxproxion workspace.",
-                isEnabled = "read_oxproxion_file" in enabledSet
+                name = "read_grokion_file",
+                displayName = "Read Grokion File",
+                description = "Read a text-based file from the $WORKSPACE workspace.",
+                isEnabled = isToolEnabled("read_grokion_file", enabledSet)
             )
             ,
             ToolItem(
                 name = "create_folder",
                 displayName = "Create Folder",
-                description = "Creates a new subfolder in the Download/OpenChat workspace",
+                description = "Creates a new subfolder in the $WORKSPACE workspace",
                 isEnabled = "create_folder" in enabledSet
             ),
             ToolItem(
                 name = "open_file",
                 displayName = "Open File",
-                description = "Opens an existing file from the Download/oxproxion folder using the system's default app. oxproxion has to be in the foreground for this tool to work.",
+                description = "Opens an existing file from the $WORKSPACE folder using the system's default app. Grokion has to be in the foreground for this tool to work.",
                 isEnabled = "open_file" in enabledSet
             ),
             ToolItem(

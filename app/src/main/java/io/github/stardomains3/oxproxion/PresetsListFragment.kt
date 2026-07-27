@@ -120,33 +120,7 @@ class PresetsListFragment : Fragment() {
     private fun setupClearChatSwitch() {
         val switch = view?.findViewById<MaterialSwitch>(R.id.switchClearChat)  // Updated type
         switch?.apply {
-            // Optional: Custom tints if XML doesn't match your theme (uncomment if needed)
-            // thumbTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), android.R.color.white))
-            // trackTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), android.R.color.darker_gray))
-            val thumbTintSelector = ColorStateList(
-                arrayOf(
-                    intArrayOf(android.R.attr.state_checked),
-                    intArrayOf(-android.R.attr.state_checked)
-                ),
-                intArrayOf(
-                    "#000000".toColorInt(),  // Checked state color
-                    "#686868".toColorInt()   // Unchecked state color
-                )
-            )
-            val trackTintSelector = ColorStateList(
-                arrayOf(
-                    intArrayOf(android.R.attr.state_checked),
-                    intArrayOf(-android.R.attr.state_checked)
-                ),
-                intArrayOf(
-                    "#FF7D8187".toColorInt(),  // On state color
-                    "#000000".toColorInt()   // Off state color
-                )
-            )
-            switch.trackTintList = trackTintSelector
-            switch.thumbTintList = thumbTintSelector
-            switch.thumbTintMode = PorterDuff.Mode.SRC_ATOP
-            switch.trackTintMode = PorterDuff.Mode.SRC_ATOP
+            applyGrokionSwitchStyle()
             // Restore state from SharedPreferences
             val sharedPrefs = SharedPreferencesHelper(requireContext())
             isChecked = sharedPrefs.getClearChatDefault2()

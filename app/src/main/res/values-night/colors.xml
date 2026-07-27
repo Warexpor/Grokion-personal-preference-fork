@@ -12,8 +12,14 @@
     <color name="xai_mute">#FF7D8187</color>
     <color name="xai_accent_sunset">#FF7D8187</color>
     <color name="xai_accent_sunset_soft">#FFDADBDF</color>
-    <color name="xai_accent_dusk">#FF7C3AED</color>
-    <color name="xai_accent_twilight">#FFC4B5FD</color>
+    <color name="xai_accent_dusk">#FF7D8187</color>
+    <color name="xai_accent_twilight">#FF9A9EA4</color>
+    <color name="xai_scrim">#80000000</color>
+    <color name="markwon_code_text">#FFCCCCCC</color>
+    <color name="markwon_code_bg">#80000000</color>
+    <color name="markwon_blockquote">#FFAAAAAA</color>
+    <color name="markwon_table_border">#FF555555</color>
+    <color name="markwon_table_header_bg">#FF121314</color>
     <color name="xai_accent_breeze">#FFA0C3EC</color>
     <color name="xai_accent_midnight">#FF0D1726</color>
     <color name="xai_border_outline">#40FFFFFF</color>

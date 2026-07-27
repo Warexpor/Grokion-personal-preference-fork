@@ -39,10 +39,14 @@ class SaveBraveApiDialogFragment : DialogFragment() {
         buttonSave.setOnClickListener {
             val apiKey = editTextApiKey.text.toString().trim()
             if (apiKey.isNotBlank()) {
-                sharedPreferencesHelper.saveApiKey("brave_search_api_key", apiKey)
-                viewModel.refreshApiKey() // Tell the ViewModel to reload the key
-                Toast.makeText(requireContext(), "Brave API Key saved.", Toast.LENGTH_SHORT).show()
-                dismiss()
+                val saved = sharedPreferencesHelper.saveApiKey("brave_search_api_key", apiKey)
+                if (saved) {
+                    viewModel.refreshApiKey()
+                    Toast.makeText(requireContext(), "Brave API Key saved.", Toast.LENGTH_SHORT).show()
+                    dismiss()
+                } else {
+                    Toast.makeText(requireContext(), "Failed to save Brave API key.", Toast.LENGTH_LONG).show()
+                }
             } else {
                 editTextApiKey.error = "API Key cannot be empty"
             }

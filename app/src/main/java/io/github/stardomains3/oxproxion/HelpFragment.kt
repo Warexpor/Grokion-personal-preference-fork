@@ -191,13 +191,13 @@ class HelpFragment : Fragment(R.layout.fragment_help) {
 
 
         val markdownContent = """
-            # oxproxion Help Guide
+            # Grokion Help Guide
             
              **App Version: $versionName**
 
-            Welcome! This guide will help you understand how to use the **oxproxion** app.
+            Welcome! This guide will help you understand how to use the **Grokion** app.
 
-            **oxproxion** is an open-source Android app for chatting with OpenRouter LLMs, supporting both text and image inputs for compatible models. It now also allows chat with Ollama, LM Studio, llama.cpp, MLX LM and Hermes Agent models served on your LAN.
+            **Grokion** is a fork of [oxproxion](https://github.com/stardomains3/oxproxion) — an open-source Android app for chatting with OpenRouter LLMs, supporting both text and image inputs for compatible models. It also allows chat with Ollama, LM Studio, llama.cpp, MLX LM and Hermes Agent models served on your LAN.
 
             ---
 
@@ -212,9 +212,11 @@ class HelpFragment : Fragment(R.layout.fragment_help) {
 
             ## 🔗 Important Links
 
-            *   **GitHub Repo**: <br>[https://github.com/stardomains3/oxproxion](https://github.com/stardomains3/oxproxion)
+            *   **Grokion (this fork)**: <br>[https://github.com/Warexpor/oxproxion](https://github.com/Warexpor/oxproxion)
             <!---->
-            *   **F-Droid App Link**: <br>[oxproxion](https://f-droid.org/en/packages/io.github.stardomains3.oxproxion/)
+            *   **Upstream oxproxion**: <br>[https://github.com/stardomains3/oxproxion](https://github.com/stardomains3/oxproxion)
+            <!---->
+            *   **Upstream F-Droid**: <br>[oxproxion](https://f-droid.org/en/packages/io.github.stardomains3.oxproxion/)
             <!---->
             *   **Support the Dev**(I could use it): <br>[https://www.buymeacoffee.com/oxproxion](https://www.buymeacoffee.com/oxproxion) ☕
             <!---->
@@ -283,7 +285,7 @@ class HelpFragment : Fragment(R.layout.fragment_help) {
             *   **Reasoning Button** {{ic_reasoning}} : Appears only for models that support reasoning. Toggles reasoning on or off. When enabled, the model uses deeper thinking for more thoughtful responses. When disabled, it explicitly instructs the model not to use reasoning. Reasoning traces are not returned in the response. Defaults to medium effort. If you long-press on the button if it is selected, you can enable Advanced Reasoning settings(see below). 
             *   **Web Search Button** {{ic_websearch}} : Enables web search(model gets web search information) for **one response only** (auto-off unless overrided with setting, OpenRouter models only). Long-press to choose engine: [**Default** (native if available, else Exa), **Native only**, **Exa only**].  **Note**: Exa is OpenRouter's search provider. Native is server-side of provider(OpenAI, xAI, Anthropic, etc.) Also available: Parallel and Firecrawl. User chooses context size and max results too. Check OpenRouter/provider's docs for pricing — can be expensive! 
             *   **Stream Button** {{ic_stream}} : Toggles streaming responses on or off.
-            *   **Tools Button**  {{ic_tools}} : **Experimental, use at own risk!**. Many models do not run tools well/correctly. Exit app by swiping upwards if model misuses/repeats etc tools. Toggles tools on/off. Long press to see available tools: There you can toggle which tools you want available to the model. Available tools are: create file, set timer, brave search,  set alarm, add calendar event, list file in folder, open file, delete file(s), get location, find nearby places, read file in folder. Not all models support tool use. It is recommended to have tools on only when wanted as if adds to your input token count. When you first press this button it will ask which folder to use for reading and listing files; It is recommended you select oxproxion folder that is in Download folder as that where create file tool makes sends created files. For now only 9 tool uses can be used sequentially.
+            *   **Tools Button**  {{ic_tools}} : **Experimental, use at own risk!**. Many models do not run tools well/correctly. Exit app by swiping upwards if model misuses/repeats etc tools. Toggles tools on/off. Long press to see available tools: There you can toggle which tools you want available to the model. Available tools are: create file, set timer, brave search,  set alarm, add calendar event, list file in folder, open file, delete file(s), get location, find nearby places, read file in folder. Not all models support tool use. It is recommended to have tools on only when wanted as if adds to your input token count. When you first press this button it will ask which folder to use for reading and listing files; It is recommended you select grokion folder that is in Download folder as that where create file tool makes sends created files. For now only 9 tool uses can be used sequentially.
             *   **Conversation Button** {{ic_convo}} : Toggles "Audio Conversation" mode on or off. When enabled, Speech-to-Text automatically sends recognized prompts to the model, and responses are automatically read aloud via Text-to-Speech.
             *   **Fonts Button** {{ic_fonts}} : Opens the fonts dialog where you can choose one of many different fonts for the main chat screen.
             *   **Font Size Button** {{ic_format}} : Makes visible the font resizing buttons for to change the size of the font in the main chat screen.
@@ -383,7 +385,7 @@ class HelpFragment : Fragment(R.layout.fragment_help) {
              *   Non-streaming only. No tools are available for use.
              *   You can use one of these models as an alternate STT by long-pressing the microphone icon in the chat box. Set your STT model in Settings.
              *   If your have watermark transcription setting on, press and hold the watermark in the main chat screen while you talk. When you lift your finger, your speech is transcribed, copied to the clipboard and entered into the prompt box.
-             *   If you have a transcription model set, make a preset entitled "Transcription"(case insensitive) and have oxproxion set as your system's digital assistant(And do not have a preset entitled "Digital Assistant"), when you call the app using it as the assistant it will act as speech to text transcriber. It will automatically put the transcribed text on your clipboard and quit.
+             *   If you have a transcription model set, make a preset entitled "Transcription"(case insensitive) and have Grokion set as your system's digital assistant(And do not have a preset entitled "Digital Assistant"), when you call the app using it as the assistant it will act as speech to text transcriber. It will automatically put the transcribed text on your clipboard and quit.
             ---
             
             ## Advanced Reasoning Settings
@@ -398,11 +400,11 @@ class HelpFragment : Fragment(R.layout.fragment_help) {
             ## ℹ️ Other Info
 
             *   An internet connection is required.
-            *   If you want the app to work well while backgrounded, turn off battery optimization and allow background data usage in the system's settings for the app; Android Settings->Apps->oxproxion->App battery usage->Allow Background usage->Unrestricted and Android Settings->Apps->oxproxion->Mobile data usage->enable background data
+            *   If you want the app to work well while backgrounded, turn off battery optimization and allow background data usage in the system's settings for the app; Android Settings->Apps->Grokion->App battery usage->Allow Background usage->Unrestricted and Android Settings->Apps->Grokion->Mobile data usage->enable background data
             *   Review OpenRouter's and its model providers' pricing, privacy, and logging policies on their websites.
-            *   oxproxion app does not have trackers, analytics, nor ads.
+            *   Grokion does not have trackers, analytics, nor ads.
             *   This app is intended for use by person 18 and over.
-            *   Chats are stored unencrypted on device only.
+            *   Chat history is stored on device only, encrypted at rest with SQLCipher (passphrase wrapped by Android Keystore). API keys are Keystore-encrypted. Cloud backup excludes prefs and the chat DB.
             *   The app is licensed under the Apache License 2.0.
             *   This app is not affiliated with OpenRouter.ai.
             *   Pasting in to the prompt box strips any unnecessary rich text formatting automatically.
@@ -411,16 +413,18 @@ class HelpFragment : Fragment(R.layout.fragment_help) {
             *   If you want to save your saved chats and/or System Messages, be sure to export them before you uninstall the app, otherwise they will be gone for good.
             *   Imports are programmed to not overwrite: System Messages skip duplicates by title, while Saved Chats add new entries even when titles match, leaving all existing items intact.
             *   This open-source app is provided 'as-is' without any warranty, express or implied. Use at your own discretion.
-            *   OpenRouter allows Presets which allow you to manage your LLM configurations—models, provider routing, and other features. You can use Presets in oxproxion by just manually adding them in your model list. [https://openrouter.ai/docs/features/presets/](https://openrouter.ai/docs/features/presets/)
+            *   OpenRouter allows Presets which allow you to manage your LLM configurations—models, provider routing, and other features. You can use Presets in Grokion by just manually adding them in your model list. [https://openrouter.ai/docs/features/presets/](https://openrouter.ai/docs/features/presets/)
             *   The app is a target for multiple text shares: "Prompt"(set the prompt to the shared text), "System Message Chooser"(set the prompt to the shared text and sets the System Message as chosen in the popup), "Auto Send"(Auto sends the prompt to current model with current settings), and "Presets"(Allows the user to apply a chosen preset and options for the shared text.) You can also press the volume up or down buttons on this screen to stop/send the recording for transcription.
             *   Ollama, LM Studio, llama.cpp, MLX LM, and Hermes Agent endpoint default is plain http, therefore the chat is passed via unencrypted text on your LAN. Unless you have an https endpoint for them.
+            *   For HTTPS LAN servers with a self-signed certificate, enable **Trust self-signed LAN TLS** in Settings (off by default). HTTP LAN URLs are limited to private/loopback/`.local` hosts.
             *   Ollama, LM Studio, llama.cpp, MLX LM, and Hermes Agent function is nascent and might not support all capabilities at this time. Furthermore you must set them to be served properly on your LAN.
             *   Notifications and Connectivity Service: The "Connectivity Service Channel" runs and you can hide that; go into your app settings in the system and go to notifications and you can toggle that notification off. ("Connectivity Service Channel") And the only notifications you will receive(if in the app you have the notification bell active) is if the app is back-grounded and there's either an error or you receive the response from the model. Notifications won't show if app is in the foreground. Notifications are auto-dismissed when returning to the app. Closing the app by swiping it away in Recents will shut down the service properly.
-            *   Notifications Buttons: "Dismiss" closes the notification. "Open" will bring oxproxion to the foreground. "Speak" will speak aloud the last AI response. You stop the audio here too by pressing stop, dismissing, or swiping the notification away. This is separate from the main app's text-to-speak function.
-            *   If you make a preset titled "Digital Assistant"(case-insensitive), and have oxproxion as your system digital assistant in your Android settings(Settings->Apps->Default apps), this preset will be applied for when you use it as the system digital assistant.
+            *   Notifications Buttons: "Dismiss" closes the notification. "Open" will bring Grokion to the foreground. "Speak" will speak aloud the last AI response. You stop the audio here too by pressing stop, dismissing, or swiping the notification away. This is separate from the main app's text-to-speak function.
+            *   If you make a preset titled "Digital Assistant"(case-insensitive), and have Grokion as your system digital assistant in your Android settings(Settings->Apps->Default apps), this preset will be applied for when you use it as the system digital assistant.
             *   **Variable Substitution**: Use `{{oxdate}}` (yyyy-MM-dd), `{{oxtime}}` (HH:mm:ss), `{{oxdatetime}}` (ISO), or `{{oxhdt}}` (human-readable) in prompts/system messages. Auto-replaces with current date/time on send.
-            *   GitHub Changelogs: <br>[https://github.com/stardomains3/oxproxion/releases](https://github.com/stardomains3/oxproxion/releases)
-            *   If tools are not working, you may not have selected the correct folder. The app requires the **Download/oxproxion** folder for tools to work. [Click here to re-select it.](action://reselect-folder)
+            *   Grokion changelogs: <br>[https://github.com/Warexpor/oxproxion/releases](https://github.com/Warexpor/oxproxion/releases) (also see `CHANGELOG.md` in the repo). Upstream oxproxion releases: <br>[https://github.com/stardomains3/oxproxion/releases](https://github.com/stardomains3/oxproxion/releases)
+            *   If tools are not working, you may not have selected the correct folder. The app requires the **Download/grokion** folder for tools to work (legacy **Download/oxproxion** is still readable). [Click here to re-select it.](action://reselect-folder)
+            *   Destructive file tools (delete/move/etc.) stay off unless you enable **Allow destructive file tools** in Settings.
 
             
             ## Hermes Agent Info:
@@ -437,8 +441,8 @@ class HelpFragment : Fragment(R.layout.fragment_help) {
              | `API_SERVER_HOST` | `127.0.0.1` | Bind address (localhost only by default) |
              | `API_SERVER_KEY` | _(none)_ | Bearer token for auth |
              
-             You would need to set API_SERVER_HOST to 0.0.0.0  and set a API_SERVER_KEY to be able to use it with oxproxion on your LAN.
-             Then enter the ip endpoint with port and API_SERVER_KEY you chose for the LAN setting in oxproxion.
+             You would need to set API_SERVER_HOST to 0.0.0.0  and set a API_SERVER_KEY to be able to use it with Grokion on your LAN.
+             Then enter the ip endpoint with port and API_SERVER_KEY you chose for the LAN setting in Grokion.
              The model will populate as "hermes-agent" in the LAN models list. Add it to your list and start chatting with the Hermes Agent on your computer.
              
              Use at own risk. See docs:
@@ -446,15 +450,15 @@ class HelpFragment : Fragment(R.layout.fragment_help) {
              https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/api-server.md
              
              Will not act like Telegram, etc in that it can't message you whenever. It is just for back and forth chat: "List all the files on my MacBook's Desktop", "Check out example.com and tell me what it says" etc.. 
-             Also it doesn't accept image input, nor tools from oxproxion(Hermes Agent uses its own tools on the computer you have it on.)
+             Also it doesn't accept image input, nor tools from Grokion(Hermes Agent uses its own tools on the computer you have it on.)
              
              Check out Hermes Agent docs for all it can do:
              
              https://hermes-agent.nousresearch.com/
             
-            ## What You Can Do With oxproxion
+            ## What You Can Do With Grokion
 
-            oxproxion puts the power of multiple AI models at your fingertips. With custom system messages, you can tailor your experience for virtually any task. Here are some popular use cases:
+            Grokion puts the power of multiple AI models at your fingertips. With custom system messages, you can tailor your experience for virtually any task. Here are some popular use cases:
 
             ### Language Translation
             Seamlessly translate conversations by setting a system message like:  

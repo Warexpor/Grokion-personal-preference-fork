@@ -40,7 +40,17 @@ class SpellCheckActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 1. Setup the "Floating Card" UI
+        if (savedInstanceState != null) {
+            buildUi()
+            return
+        }
+
+        BiometricGateHelper.gateIfNeeded(this) {
+            buildUi()
+        }
+    }
+
+    private fun buildUi() {
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(64, 48, 64, 48)

@@ -7,4 +7,5 @@
     <string name="add_new_system_message">Add new system message</string>
     <string name="grok_empty_prompt">What do you want to know?</string>
     <string name="grok_composer_hint">Ask anything</string>
+    <string name="grok_composer_hint_with_system">(%1$s) Ask anything</string>
 </resources>

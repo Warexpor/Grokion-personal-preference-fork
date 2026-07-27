@@ -4,5 +4,5 @@
     android:shape="rectangle">
     <solid android:color="@color/xai_canvas_soft" />
     <stroke android:width="1dp" android:color="@color/xai_border_outline" />
-    <corners android:radius="28dp" />
+    <corners android:radius="999dp" />
 </shape>

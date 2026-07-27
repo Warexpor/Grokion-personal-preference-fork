@@ -152,31 +152,5 @@ class InferenceParametersFragment : Fragment(R.layout.fragment_inference_paramet
     }
 
     // Copy of your exact switch style helper
-    private fun MaterialSwitch.styleSwitch() {
-        val thumbTintSelector = ColorStateList(
-            arrayOf(
-                intArrayOf(android.R.attr.state_checked),
-                intArrayOf(-android.R.attr.state_checked)
-            ),
-            intArrayOf(
-                "#000000".toColorInt(),  // Checked: Black thumb
-                "#686868".toColorInt()   // Unchecked: Gray thumb
-            )
-        )
-        val trackTintSelector = ColorStateList(
-            arrayOf(
-                intArrayOf(android.R.attr.state_checked),
-                intArrayOf(-android.R.attr.state_checked)
-            ),
-            intArrayOf(
-                "#FF7D8187".toColorInt(),  // Checked: Orange track
-                "#000000".toColorInt()   // Unchecked: Black track
-            )
-        )
-
-        trackTintList = trackTintSelector
-        thumbTintList = thumbTintSelector
-        thumbTintMode = PorterDuff.Mode.SRC_ATOP
-        trackTintMode = PorterDuff.Mode.SRC_ATOP
-    }
+    private fun MaterialSwitch.styleSwitch() = applyGrokionSwitchStyle()
 }

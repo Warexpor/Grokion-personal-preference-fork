@@ -2,7 +2,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
     <!-- xAI: dark-canvas only (no light mode) -->
-    <style name="Theme.Oxproxion" parent="Theme.Material3.Light.NoActionBar">
+    <style name="Theme.Grokion" parent="Theme.Material3.Light.NoActionBar">
         <item name="android:windowBackground">@color/xai_canvas</item>
         <item name="colorSurface">@color/xai_canvas</item>
         <item name="colorOnSurface">@color/xai_body</item>
@@ -25,8 +25,8 @@
         <item name="colorOnPrimaryContainer">@color/xai_ink</item>
         <item name="android:statusBarColor">@color/xai_canvas</item>
         <item name="android:navigationBarColor">@color/xai_canvas</item>
-        <item name="android:windowLightStatusBar">false</item>
-        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
         <item name="materialAlertDialogTheme">@style/CustomMaterialAlertDialogTheme</item>
         <item name="android:fontFamily">sans-serif</item>
         <item name="fontFamily">sans-serif</item>
@@ -122,34 +122,34 @@
         <item name="boxBackgroundColor">@color/xai_canvas_soft</item>
     </style>
 
-    <style name="Font.AlanSansRegular" parent="Theme.Oxproxion"><item name="fontFamily">@font/alansans_regular</item></style>
-    <style name="Font.AlexandriaRegular" parent="Theme.Oxproxion"><item name="fontFamily">@font/alexandria_regular</item></style>
-    <style name="Font.AroneSansRegular" parent="Theme.Oxproxion"><item name="fontFamily">@font/aronesans_regular</item></style>
-    <style name="Font_AtkinsonhyperlegiblemonoRegular" parent="Theme.Oxproxion"><item name="fontFamily">@font/atkinsonhyperlegiblemono_regular</item></style>
-    <style name="Font_AtkinsonhyperlegiblenextRegular" parent="Theme.Oxproxion"><item name="fontFamily">@font/atkinsonhyperlegiblenext_regular</item></style>
-    <style name="Font.FunnelDisplayRegular" parent="Theme.Oxproxion"><item name="fontFamily">@font/funneldisplay_regular</item></style>
-    <style name="Font.GeologicaLight" parent="Theme.Oxproxion"><item name="fontFamily">@font/geologica_light</item></style>
-    <style name="Font.GoogleSansFlexRegular" parent="Theme.Oxproxion"><item name="fontFamily">@font/googlesansflex_regular</item></style>
-    <style name="Font.InstrumentSansRegular" parent="Theme.Oxproxion"><item name="fontFamily">@font/instrumentsans_regular</item></style>
-    <style name="Font.LexendRegular" parent="Theme.Oxproxion"><item name="fontFamily">@font/lexend_regular</item></style>
-    <style name="Font.Merriweather24ptRegular" parent="Theme.Oxproxion"><item name="fontFamily">@font/merriweather_24pt_regular</item></style>
-    <style name="Font.MerriweathersansLight" parent="Theme.Oxproxion"><item name="fontFamily">@font/merriweathersans_light</item></style>
-    <style name="Font.MPlus2Regular" parent="Theme.Oxproxion"><item name="fontFamily">@font/mplus2_regular</item></style>
-    <style name="Font.NokoraRegular" parent="Theme.Oxproxion"><item name="fontFamily">@font/nokora_regular</item></style>
-    <style name="Font.NotoSansRegular" parent="Theme.Oxproxion"><item name="fontFamily">@font/notosans_regular</item></style>
-    <style name="Font.NotoSerifRegular" parent="Theme.Oxproxion"><item name="fontFamily">@font/notoserif_regular</item></style>
-    <style name="Font.OpenSansRegular" parent="Theme.Oxproxion"><item name="fontFamily">@font/opensans_regular</item></style>
-    <style name="Font.OutfitRegular" parent="Theme.Oxproxion"><item name="fontFamily">@font/outfit_regular</item></style>
-    <style name="Font.PoppinsRegular" parent="Theme.Oxproxion"><item name="fontFamily">@font/poppins_regular</item></style>
-    <style name="Font.ReadexProRegular" parent="Theme.Oxproxion"><item name="fontFamily">@font/readexpro_regular</item></style>
-    <style name="Font.RobotoRegular" parent="Theme.Oxproxion"><item name="fontFamily">@font/roboto_regular</item></style>
-    <style name="Font.RobotoSerifRegular" parent="Theme.Oxproxion"><item name="fontFamily">@font/robotoserif_regular</item></style>
-    <style name="Font.SourceSerif4Regular" parent="Theme.Oxproxion"><item name="fontFamily">@font/sourceserif4_regular</item></style>
-    <style name="Font.TasaOrbiterRegular" parent="Theme.Oxproxion"><item name="fontFamily">@font/tasaorbiter_regular</item></style>
-    <style name="Font.UbuntuSansRegular" parent="Theme.Oxproxion"><item name="fontFamily">@font/ubuntusans_regular</item></style>
-    <style name="Font.VendSansRegular" parent="Theme.Oxproxion"><item name="fontFamily">@font/vendsans_regular</item></style>
+    <style name="Font.AlanSansRegular" parent="Theme.Grokion"><item name="fontFamily">@font/alansans_regular</item></style>
+    <style name="Font.AlexandriaRegular" parent="Theme.Grokion"><item name="fontFamily">@font/alexandria_regular</item></style>
+    <style name="Font.AroneSansRegular" parent="Theme.Grokion"><item name="fontFamily">@font/aronesans_regular</item></style>
+    <style name="Font_AtkinsonhyperlegiblemonoRegular" parent="Theme.Grokion"><item name="fontFamily">@font/atkinsonhyperlegiblemono_regular</item></style>
+    <style name="Font_AtkinsonhyperlegiblenextRegular" parent="Theme.Grokion"><item name="fontFamily">@font/atkinsonhyperlegiblenext_regular</item></style>
+    <style name="Font.FunnelDisplayRegular" parent="Theme.Grokion"><item name="fontFamily">@font/funneldisplay_regular</item></style>
+    <style name="Font.GeologicaLight" parent="Theme.Grokion"><item name="fontFamily">@font/geologica_light</item></style>
+    <style name="Font.GoogleSansFlexRegular" parent="Theme.Grokion"><item name="fontFamily">@font/googlesansflex_regular</item></style>
+    <style name="Font.InstrumentSansRegular" parent="Theme.Grokion"><item name="fontFamily">@font/instrumentsans_regular</item></style>
+    <style name="Font.LexendRegular" parent="Theme.Grokion"><item name="fontFamily">@font/lexend_regular</item></style>
+    <style name="Font.Merriweather24ptRegular" parent="Theme.Grokion"><item name="fontFamily">@font/merriweather_24pt_regular</item></style>
+    <style name="Font.MerriweathersansLight" parent="Theme.Grokion"><item name="fontFamily">@font/merriweathersans_light</item></style>
+    <style name="Font.MPlus2Regular" parent="Theme.Grokion"><item name="fontFamily">@font/mplus2_regular</item></style>
+    <style name="Font.NokoraRegular" parent="Theme.Grokion"><item name="fontFamily">@font/nokora_regular</item></style>
+    <style name="Font.NotoSansRegular" parent="Theme.Grokion"><item name="fontFamily">@font/notosans_regular</item></style>
+    <style name="Font.NotoSerifRegular" parent="Theme.Grokion"><item name="fontFamily">@font/notoserif_regular</item></style>
+    <style name="Font.OpenSansRegular" parent="Theme.Grokion"><item name="fontFamily">@font/opensans_regular</item></style>
+    <style name="Font.OutfitRegular" parent="Theme.Grokion"><item name="fontFamily">@font/outfit_regular</item></style>
+    <style name="Font.PoppinsRegular" parent="Theme.Grokion"><item name="fontFamily">@font/poppins_regular</item></style>
+    <style name="Font.ReadexProRegular" parent="Theme.Grokion"><item name="fontFamily">@font/readexpro_regular</item></style>
+    <style name="Font.RobotoRegular" parent="Theme.Grokion"><item name="fontFamily">@font/roboto_regular</item></style>
+    <style name="Font.RobotoSerifRegular" parent="Theme.Grokion"><item name="fontFamily">@font/robotoserif_regular</item></style>
+    <style name="Font.SourceSerif4Regular" parent="Theme.Grokion"><item name="fontFamily">@font/sourceserif4_regular</item></style>
+    <style name="Font.TasaOrbiterRegular" parent="Theme.Grokion"><item name="fontFamily">@font/tasaorbiter_regular</item></style>
+    <style name="Font.UbuntuSansRegular" parent="Theme.Grokion"><item name="fontFamily">@font/ubuntusans_regular</item></style>
+    <style name="Font.VendSansRegular" parent="Theme.Grokion"><item name="fontFamily">@font/vendsans_regular</item></style>
 
-    <style name="Theme.Oxproxion.AIFix" parent="Theme.Oxproxion">
+    <style name="Theme.Grokion.AIFix" parent="Theme.Grokion">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowContentOverlay">@null</item>

@@ -1,5 +1,49 @@
 # Changelog
 
+## 2.1.125-grokion — 2026-07-27
+
+### Security
+- Chat Room DB (`chat_database`) encrypted at rest with SQLCipher; passphrase wrapped
+  via Android Keystore. Existing plaintext DBs migrate once via `sqlcipher_export`.
+
+### Changed
+- Docs/Help/F-Droid metadata aligned with Grokion branding, SQLCipher storage, and
+  LAN TLS / destructive-tools settings.
+
+## 2.1.124-grokion — 2026-07-27
+
+### Fixed
+- Chat overwrite no longer duplicates messages (delete-then-insert per session).
+- Stop/cancel no longer surfaces as an error bubble; single-flight network jobs.
+- Stream auto-scroll locks on drag only; TTS cleaned up in `onDestroyView`.
+- LAN key migration no longer drops plaintext if Keystore encrypt fails; LAN save
+  dialog surfaces encrypt failure.
+- MLX model fetch uses `lanHttpClient` (honors trust-self-signed toggle).
+- HTTP LAN endpoints validated as private/loopback/`.local` (NSC permits cleartext
+  because Android cannot express RFC1918 CIDRs; app-layer blocks public cleartext IPs).
+
+### Security
+- Cleartext allowed for LAN HTTP with host validation; OpenRouter remains HTTPS.
+- LAN self-signed TLS is an opt-in Settings toggle.
+- LAN API key encrypted via Android Keystore; backup excludes prefs + chat DB.
+- Autosend confirmation; biometric gate on share/assist/spell-check when enabled.
+- Tools default off; destructive file tools gated; import size limits; settings-action allowlist.
+
+### Changed
+- Grok shell MVP: single-row Ask-anything composer, sparse top bar, history slide-over,
+  copy icons, scrim dim, warm light canvas + theme-aware Markwon/switches.
+- Extracted `SseJsonReader`, `ChatSessionSaver`, `ToolExecutorPolicy`, `WorkspacePaths`,
+  `LanEndpointValidator`.
+- Dropped unused Navigation Component dependencies.
+
+## 2.1.123-grokion — 2026-07-27
+
+### Changed
+- **Identity rebrand (Phase 3):** user-visible strings, themes (`Theme.Grokion`), HTTP
+  User-Agent / OpenRouter headers, workspace folder (`Download/grokion` with legacy
+  `oxproxion` read fallback), and tool names (`list_grokion_files`, `read_grokion_file`;
+  old names still accepted at runtime).
+
 ## 2.1.122-grokion — 2026-07-18
 
 ### Changed

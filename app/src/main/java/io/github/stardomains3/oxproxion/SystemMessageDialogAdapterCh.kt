@@ -8,7 +8,7 @@ import android.widget.ArrayAdapter
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 
-class SystemMessageAdapterCh(
+class SystemMessageDialogAdapterCh(
     context: Context,
     private val titles: Array<String>,
     private val currentIndex: Int

@@ -3,38 +3,73 @@ package io.github.stardomains3.oxproxion
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class AutosendActivity : AppCompatActivity() {
 
+    private var pendingSharedText: String? = null
+    private var biometricUnlocked = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_autosend)  // Simple black layout (see below)
+        setContentView(R.layout.activity_autosend)
 
-        handleIntent(intent)
+        if (savedInstanceState == null) {
+            BiometricGateHelper.gateIfNeeded(this) {
+                biometricUnlocked = true
+                handleIntent(intent)
+            }
+        } else {
+            biometricUnlocked = true
+        }
     }
 
     private fun handleIntent(intent: Intent?) {
         if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
             val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT)
             if (sharedText != null) {
-                val mainIntent = Intent(this, MainActivity::class.java).apply {
-                    putExtra("autosend", true)  // Flag to trigger autosend
-                    putExtra("shared_text", sharedText)  // The shared text
-                    flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
-                }
-                startActivity(mainIntent)
+                pendingSharedText = sharedText
+                showConfirmationDialog(sharedText)
+                return
             }
         }
-        finish()  // Close this activity immediately after forwarding
+        finish()
+    }
+
+    private fun showConfirmationDialog(sharedText: String) {
+        val preview = sharedText.take(200).let { text ->
+            if (sharedText.length > 200) "$text…" else text
+        }
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Auto Send")
+            .setMessage("Send this text to Grokion now?\n\n$preview")
+            .setPositiveButton("Send") { _, _ -> forwardToMain(sharedText) }
+            .setNegativeButton("Cancel") { _, _ -> finish() }
+            .setOnCancelListener { finish() }
+            .show()
+    }
+
+    private fun forwardToMain(sharedText: String) {
+        val mainIntent = Intent(this, MainActivity::class.java).apply {
+            putExtra("autosend", true)
+            putExtra("shared_text", sharedText)
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        startActivity(mainIntent)
+        finish()
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        handleIntent(intent)
+        if (biometricUnlocked) {
+            handleIntent(intent)
+        }
     }
 
     override fun onPause() {
         super.onPause()
-        finish()  // Ensure it closes quickly
+        if (!isFinishing && pendingSharedText == null) {
+            finish()
+        }
     }
 }

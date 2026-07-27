@@ -28,6 +28,17 @@ import kotlinx.coroutines.delay
 
 class SavedChatsFragment : Fragment() {
 
+    companion object {
+        private const val ARG_EMBEDDED = "embedded"
+
+        fun newEmbedded(): SavedChatsFragment = SavedChatsFragment().apply {
+            arguments = Bundle().apply { putBoolean(ARG_EMBEDDED, true) }
+        }
+    }
+
+    private val isEmbedded: Boolean
+        get() = arguments?.getBoolean(ARG_EMBEDDED) == true
+
     private val viewModel: ChatViewModel by activityViewModels()
     private val savedChatsViewModel: SavedChatsViewModel by viewModels()
     private lateinit var savedChatsAdapter: SavedChatsAdapter
@@ -61,8 +72,14 @@ class SavedChatsFragment : Fragment() {
                             it.bufferedReader().readText()
                         }
                         if (json != null) {
-                            savedChatsViewModel.importChatsFromJson(json)
-                            Toast.makeText(requireContext(), "Chats imported successfully", Toast.LENGTH_SHORT).show()
+                            savedChatsViewModel.importChatsFromJson(json) { result ->
+                                when (result) {
+                                    is ChatImportResult.Success ->
+                                        Toast.makeText(requireContext(), "Chats imported successfully", Toast.LENGTH_SHORT).show()
+                                    is ChatImportResult.Error ->
+                                        Toast.makeText(requireContext(), result.message, Toast.LENGTH_LONG).show()
+                                }
+                            }
                         } else {
                             throw Exception("Failed to read file content.")
                         }
@@ -89,7 +106,11 @@ class SavedChatsFragment : Fragment() {
         val toolbar = view.findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.toolbar)
 
         toolbar.setNavigationOnClickListener {
-            parentFragmentManager.popBackStack()
+            if (isEmbedded) {
+                (parentFragment as? HistoryPanelHost)?.closeHistoryPanel()
+            } else {
+                parentFragmentManager.popBackStack()
+            }
         }
 
         toolbar.setOnMenuItemClickListener { menuItem ->
@@ -143,7 +164,11 @@ class SavedChatsFragment : Fragment() {
         savedChatsAdapter = SavedChatsAdapter(
             onClick = { session ->
                 viewModel.loadChat(session.id)
-                parentFragmentManager.popBackStack()
+                if (isEmbedded) {
+                    (parentFragment as? HistoryPanelHost)?.closeHistoryPanel()
+                } else {
+                    parentFragmentManager.popBackStack()
+                }
             },
             onLongClick = { session, view ->  // ← Now you get the view!
                 showOptionsDialog(session, view)  // ← Pass the view to your dialog

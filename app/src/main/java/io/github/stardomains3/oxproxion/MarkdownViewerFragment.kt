@@ -85,8 +85,9 @@ class MarkdownViewerFragment : Fragment() {
         webView = view.findViewById(R.id.webview_markdown)
         webView?.apply {
             settings.apply {
+                // JS enabled only for the minimal copy-to-clipboard bridge below
                 javaScriptEnabled = true
-                domStorageEnabled = true
+                domStorageEnabled = false
                 loadWithOverviewMode = true
                 useWideViewPort = false
                 setSupportZoom(true)

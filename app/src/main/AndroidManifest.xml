@@ -46,15 +46,17 @@
         android:name="android.hardware.camera"
         android:required="false" />
     <application
+        android:name=".MainApplication"
         android:allowBackup="true"
-        android:usesCleartextTraffic="true"
+        android:usesCleartextTraffic="false"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcherrobot"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcherrobot"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Oxproxion">
+        android:theme="@style/Theme.Grokion">
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -96,7 +98,7 @@
             android:taskAffinity=":assistant_task"
             android:launchMode="singleInstance"
             android:exported="true"
-            android:theme="@style/Theme.Oxproxion">
+            android:theme="@style/Theme.Grokion">
             <intent-filter>
                 <action android:name="android.intent.action.ASSIST" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -110,13 +112,13 @@
             android:launchMode="singleInstance"
             android:windowSoftInputMode="stateAlwaysHidden"
             android:exported="true"
-            android:theme="@style/Theme.Oxproxion.AIFix">
+            android:theme="@style/Theme.Grokion.AIFix">
 
         </activity>
         <activity
             android:name=".SpellCheckActivity"
             android:label="Fix with Grokion"
-            android:theme="@style/Theme.Oxproxion.AIFix"
+            android:theme="@style/Theme.Grokion.AIFix"
             android:exported="true"
             android:excludeFromRecents="true"
             android:noHistory="true"
@@ -137,7 +139,7 @@
             android:launchMode="singleTop"
 
             android:windowSoftInputMode="stateAlwaysHidden"
-            android:theme="@style/Theme.Oxproxion">
+            android:theme="@style/Theme.Grokion">
             <intent-filter android:label="Auto Send">
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -151,7 +153,7 @@
             android:launchMode="singleTop"
 
             android:windowSoftInputMode="stateAlwaysHidden"
-            android:theme="@style/Theme.Oxproxion">
+            android:theme="@style/Theme.Grokion">
             <intent-filter android:label="System Message Chooser">
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -165,7 +167,7 @@
             android:launchMode="singleTop"
 
             android:windowSoftInputMode="stateAlwaysHidden"
-            android:theme="@style/Theme.Oxproxion">
+            android:theme="@style/Theme.Grokion">
             <intent-filter android:label="Presets">
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />

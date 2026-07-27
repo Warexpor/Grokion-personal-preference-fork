@@ -21,3 +21,5 @@
 #-renamesourcefileattribute SourceFile
 -dontwarn okhttp3.internal.Util
 -dontwarn org.commonmark.ext.gfm.strikethrough.Strikethrough
+-keep class net.zetetic.** { *; }
+-keep class net.sqlcipher.** { *; }

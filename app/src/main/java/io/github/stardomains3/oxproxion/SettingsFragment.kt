@@ -57,6 +57,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         val helpButton = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.helpButton)
         val maxTokensButton = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.maxTokensButton)
         val lanButton = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.lanButton)
+        val trustSelfSignedLanSwitch = view.findViewById<MaterialSwitch>(R.id.trustSelfSignedLanSwitch)
+        val allowDestructiveToolsSwitch = view.findViewById<MaterialSwitch>(R.id.allowDestructiveToolsSwitch)
         val openRouterTransformsSwitch = view.findViewById<MaterialSwitch>(R.id.openRouterTransformsSwitch)
         val voiceModelEdit = view.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.voiceInputModelEdit)
         val voiceProviderToggle = view.findViewById<com.google.android.material.button.MaterialButtonToggleGroup>(R.id.voiceInputProviderToggle)
@@ -85,6 +87,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         copyOrOpenSwitch.isChecked = prefs.getUseCopyButton()
         autoDisableWebSearchSwitch.isChecked = prefs.getDisableWebSearchAfterSend()
         openRouterTransformsSwitch.isChecked = prefs.getOpenRouterTransformsEnabled()
+        trustSelfSignedLanSwitch.isChecked = prefs.getTrustSelfSignedLan()
+        allowDestructiveToolsSwitch.isChecked = prefs.getAllowDestructiveTools()
         showCitationsSwitch.isChecked = prefs.getShowCitations()
         voiceModelEdit.setText(prefs.getVoiceInputModel())
         when (prefs.getVoiceInputProvider()) {
@@ -239,6 +243,13 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         lanButton.setOnClickListener {
             SaveLANDialogFragment().show(childFragmentManager, SaveLANDialogFragment.TAG)
         }
+        trustSelfSignedLanSwitch.setOnCheckedChangeListener { _, isChecked ->
+            prefs.saveTrustSelfSignedLan(isChecked)
+            viewModel.refreshLanHttpClient()
+        }
+        allowDestructiveToolsSwitch.setOnCheckedChangeListener { _, isChecked ->
+            prefs.saveAllowDestructiveTools(isChecked)
+        }
         timeoutButton.setOnClickListener {
             TimeoutDialogFragment().show(childFragmentManager, TimeoutDialogFragment.TAG)
         }
@@ -301,6 +312,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             R.id.copyOropenSwitch,
             R.id.autoSaveChatsSwitch,
             R.id.openRouterTransformsSwitch,
+            R.id.trustSelfSignedLanSwitch,
+            R.id.allowDestructiveToolsSwitch,
             R.id.animateBarOnErrorSwitch,
             R.id.watermarkSttSwitch
         ).forEach { id ->
@@ -308,32 +321,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         }
     }
 
-    // 🔥 HELPER: Your exact switch style (call on each)
-    private fun MaterialSwitch.styleSwitch() {
-        val thumbTintSelector = ColorStateList(
-            arrayOf(
-                intArrayOf(android.R.attr.state_checked),
-                intArrayOf(-android.R.attr.state_checked)
-            ),
-            intArrayOf(
-                "#000000".toColorInt(),  // Checked: Black thumb
-                "#686868".toColorInt()   // Unchecked: Gray thumb
-            )
-        )
-        val trackTintSelector = ColorStateList(
-            arrayOf(
-                intArrayOf(android.R.attr.state_checked),
-                intArrayOf(-android.R.attr.state_checked)
-            ),
-            intArrayOf(
-                "#FF7D8187".toColorInt(),  // Checked: Orange track
-                "#000000".toColorInt()   // Unchecked: Black track
-            )
-        )
-
-        trackTintList = trackTintSelector
-        thumbTintList = thumbTintSelector
-        thumbTintMode = PorterDuff.Mode.SRC_ATOP
-        trackTintMode = PorterDuff.Mode.SRC_ATOP
-    }
+    // 🔥 HELPER: Grokion switch style from color resources
+    private fun MaterialSwitch.styleSwitch() = applyGrokionSwitchStyle()
 }

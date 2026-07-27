@@ -2,7 +2,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
     <!-- xAI: same dark-canvas system as day (forced dark) -->
-    <style name="Theme.Oxproxion" parent="Theme.Material3.Dark.NoActionBar">
+    <style name="Theme.Grokion" parent="Theme.Material3.Dark.NoActionBar">
         <item name="android:windowBackground">@color/xai_canvas</item>
         <item name="colorSurface">@color/xai_canvas</item>
         <item name="colorOnSurface">@color/xai_body</item>
@@ -105,7 +105,7 @@
         <item name="android:textColorHint">@color/xai_mute</item>
     </style>
 
-    <style name="Theme.Oxproxion.AIFix" parent="Theme.Oxproxion">
+    <style name="Theme.Grokion.AIFix" parent="Theme.Grokion">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowContentOverlay">@null</item>

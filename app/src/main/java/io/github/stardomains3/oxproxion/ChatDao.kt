@@ -53,10 +53,15 @@ interface ChatDao {
     @Query("DELETE FROM chat_sessions WHERE id = :sessionId")
     suspend fun deleteSession(sessionId: Long)
 
+    @Query("DELETE FROM chat_messages WHERE sessionId = :sessionId")
+    suspend fun deleteMessagesForSession(sessionId: Long)
+
     @Transaction
     suspend fun insertSessionAndMessages(session: ChatSession, messages: List<ChatMessage>) {
         val sessionId = insertSession(session)
-        val messagesWithSessionId = messages.map { it.copy(sessionId = sessionId) }
+        // REPLACE on session alone does not clear child rows — wipe then re-insert.
+        deleteMessagesForSession(sessionId)
+        val messagesWithSessionId = messages.map { it.copy(id = 0, sessionId = sessionId) }
         insertMessages(messagesWithSessionId)
     }
 }

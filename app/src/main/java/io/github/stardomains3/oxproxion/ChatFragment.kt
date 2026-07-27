@@ -102,11 +102,11 @@ import io.noties.markwon.ext.strikethrough.StrikethroughPlugin
 import io.noties.markwon.ext.tables.TablePlugin
 import io.noties.markwon.ext.tables.TableTheme
 import io.noties.markwon.ext.tasklist.TaskListPlugin
-import io.noties.markwon.html.HtmlPlugin
 import io.noties.markwon.image.coil.CoilImagesPlugin
 import io.noties.markwon.linkify.LinkifyPlugin
 import io.noties.markwon.movement.MovementMethodPlugin
 import io.noties.markwon.syntax.Prism4jThemeDarkula
+import io.noties.markwon.syntax.Prism4jThemeDefault
 import io.noties.markwon.syntax.SyntaxHighlightPlugin
 import io.noties.prism4j.Prism4j
 import kotlinx.coroutines.Dispatchers
@@ -131,7 +131,7 @@ import kotlin.text.set
 interface OnKeyboardShortcutListener {
     fun handleKeyDown(keyCode: Int, event: KeyEvent?): Boolean
 }
-class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListener {
+class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListener, HistoryPanelHost {
    // private var isFontUpdate = false
     private var menuClosedByTouch = false
     private lateinit var speechLauncher: ActivityResultLauncher<Intent>
@@ -140,6 +140,8 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
     private var isShare = false
     private lateinit var chatFrameView: FrameLayout
     private var dimOverlay: View? = null
+    private var historyDrawerContainer: FrameLayout? = null
+    private var historyDrawerScrim: View? = null
     private var currentSpeakingPosition = -1
     private lateinit var settingsButton: MaterialButton
     private lateinit var homeButton: MaterialButton
@@ -535,7 +537,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                                             put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
                                             put(MediaStore.MediaColumns.MIME_TYPE, "audio/wav")
                                           //  put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
-                                            put(MediaStore.MediaColumns.RELATIVE_PATH, "${Environment.DIRECTORY_DOWNLOADS}/oxproxion")
+                                            put(MediaStore.MediaColumns.RELATIVE_PATH, WorkspacePaths.mediaStoreRelativePath())
                                             put(MediaStore.MediaColumns.IS_PENDING, 1)
                                         }
 
@@ -602,31 +604,39 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
             }
         }
         val prism4j = Prism4j(ExampleGrammarLocator())
-        val theme = Prism4jThemeDarkula.create()
+        val isNightMode = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
+            android.content.res.Configuration.UI_MODE_NIGHT_YES
+        val theme = if (isNightMode) Prism4jThemeDarkula.create() else Prism4jThemeDefault.create()
         val syntaxHighlightPlugin = SyntaxHighlightPlugin.create(prism4j, theme)
 
-// ✅ CRITICAL: Custom table theme FIRST
+        val tableBorder = ContextCompat.getColor(requireContext(), R.color.markwon_table_border)
+        val tableHeaderBg = ContextCompat.getColor(requireContext(), R.color.markwon_table_header_bg)
         val customTableTheme = TableTheme.buildWithDefaults(requireContext())
-            .tableBorderColor(Color.LTGRAY)
+            .tableBorderColor(tableBorder)
             .tableBorderWidth(2)
-            .tableCellPadding(8)  // Increased for better readability
-            .tableHeaderRowBackgroundColor("#121314".toColorInt())
+            .tableCellPadding(8)
+            .tableHeaderRowBackgroundColor(tableHeaderBg)
             .build()
+
+        val codeTextColor = ContextCompat.getColor(requireContext(), R.color.markwon_code_text)
+        val codeBgColor = ContextCompat.getColor(requireContext(), R.color.markwon_code_bg)
+        val blockQuoteColor = ContextCompat.getColor(requireContext(), R.color.markwon_blockquote)
+        val taskAccent = ContextCompat.getColor(requireContext(), R.color.xai_accent_sunset)
+        val taskBg = ContextCompat.getColor(requireContext(), R.color.xai_canvas_card)
 
         markwon = Markwon.builder(requireContext())
             // ✅ TablePlugin EARLY with custom theme
             .usePlugin(TablePlugin.create(customTableTheme))
 
-            // Core plugins next
-            .usePlugin(HtmlPlugin.create())
+            // Core plugins next (HtmlPlugin omitted — raw HTML in model output is a XSS risk in TextViews)
             .usePlugin(LinkifyPlugin.create(Linkify.WEB_URLS or Linkify.EMAIL_ADDRESSES))
             .usePlugin(StrikethroughPlugin.create())
             .usePlugin(SoftBreakAddsNewLinePlugin.create())
             // ✅ TaskList before syntax/images
             .usePlugin(TaskListPlugin.create(
-                "#007541".toColorInt(),
-                "#007541".toColorInt(),
-                "#F8F8F8".toColorInt()
+                taskAccent,
+                taskAccent,
+                taskBg
             ))
 
             .usePlugin(syntaxHighlightPlugin)
@@ -657,10 +667,10 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
             .usePlugin(object : AbstractMarkwonPlugin() {
                 override fun configureTheme(builder: MarkwonTheme.Builder) {
                     builder
-                        .codeTextColor(Color.LTGRAY)
-                        .codeBackgroundColor(Color.argb(128, 0, 0, 0))
-                        .codeBlockBackgroundColor(Color.argb(128, 0, 0, 0))
-                        .blockQuoteColor(Color.BLACK)
+                        .codeTextColor(codeTextColor)
+                        .codeBackgroundColor(codeBgColor)
+                        .codeBlockBackgroundColor(codeBgColor)
+                        .blockQuoteColor(blockQuoteColor)
                         .isLinkUnderlined(true)
                 }
             })
@@ -724,6 +734,9 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
         }
         rootView.addView(overlayView)
         dimOverlay = view.findViewById<View>(R.id.dimOverlay)
+        historyDrawerContainer = view.findViewById(R.id.historyDrawerContainer)
+        historyDrawerScrim = view.findViewById(R.id.historyDrawerScrim)
+        historyDrawerScrim?.setOnClickListener { closeHistoryPanel() }
         viewModel.activeChatModel.observe(viewLifecycleOwner) { model ->
             if (model != null) {
                 modelNameTextView.text = viewModel.getModelDisplayName(model)
@@ -960,11 +973,13 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
             sendChatButton.isEnabled = true
             val materialButton = sendChatButton
             if (isAwaiting) {
+                sendChatButton.contentDescription = "Stop generation"
                 materialButton.animate().alpha(0f).setDuration(100).withEndAction {
                     materialButton.setIconResource(R.drawable.ic_stop)
                     materialButton.animate().alpha(1f).setDuration(100).start()
                 }.start()
             } else {
+                sendChatButton.contentDescription = "Send message"
                 materialButton.animate().alpha(0f).setDuration(100).withEndAction {
                     materialButton.icon = originalSendIcon
                     materialButton.animate().alpha(1f).setDuration(100).start()
@@ -976,16 +991,25 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                         val originalColor = modelNameTextView.currentTextColor
                         val isError = lastMessage.content
                             .let { it as? JsonPrimitive }?.content?.startsWith("**Error:**") == true
-                        val targetColor = if (isError) "#B84A3A".toColorInt()
-                        else          "#1A1C20".toColorInt()
+                        val targetColor = if (isError) {
+                            ContextCompat.getColor(requireContext(), R.color.xai_error)
+                        } else {
+                            ContextCompat.getColor(requireContext(), R.color.xai_ink)
+                        }
                         modelNameTextView.animateColor(originalColor, targetColor,   1000)
                         modelNameTextView.animateColor(targetColor,   originalColor, 3000)
                         if ( sharedPreferencesHelper.getAnimateBarOnError()) {
                           //  animateBarBackground(topBarLayout, targetColor)
                            // animateBarBackground(chatInputContainer, targetColor)
                             val borderOverlayView = view.findViewById<View>(R.id.borderOverlayView)
+                            val accentColor = ContextCompat.getColor(requireContext(), R.color.xai_accent_sunset)
+                            val errorColor = ContextCompat.getColor(requireContext(), R.color.xai_error)
                             borderOverlayView.animateOutlineFlash(
-                                targetColorStr = if (isError) "#B84A3A" else "#FF7D8187",
+                                targetColorStr = if (isError) {
+                                    String.format("#%06X", 0xFFFFFF and errorColor)
+                                } else {
+                                    String.format("#%06X", 0xFFFFFF and accentColor)
+                                },
                                 glowDuration = 600,
                                 stayDuration = 1600,
                                 fadeDuration = 600,
@@ -1155,9 +1179,8 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
 
                 Snackbar.make(requireView(), message, Snackbar.LENGTH_LONG)
                     .setAction("Open Folder") {
-                        val folderPath = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "oxproxion")
-                        if (!folderPath.exists()) folderPath.mkdirs()
-                        val path = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "oxproxion")
+                        WorkspacePaths.ensureWorkspaceExists()
+                        val path = WorkspacePaths.workspaceDirForRead()
                         val intent = Intent(Intent.ACTION_VIEW)
 
                         // Disable StrictMode check for file:// URI
@@ -1196,7 +1219,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                     // 2. App found: Show Snackbar with Action
                     Snackbar.make(requireView(), message, Snackbar.LENGTH_LONG)
                         .setAction("Open Folder") {
-                            val path = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),"oxproxion")
+                            val path = WorkspacePaths.workspaceDirForRead()
                             //val path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
                             val intent = Intent(Intent.ACTION_VIEW)
                             intent.setPackage(fossifyPackage)
@@ -1383,10 +1406,10 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
         val selectedMessage = sharedPreferencesHelper.getSelectedSystemMessage()
         val isDefault = selectedMessage.isDefault
         val title = selectedMessage.title.trim()
-        if (isDefault) {
-            chatEditText.hint = "Type a message..."
+        chatEditText.hint = if (isDefault) {
+            getString(R.string.grok_composer_hint)
         } else {
-            chatEditText.hint = "($title) Type a message..."
+            getString(R.string.grok_composer_hint_with_system, title)
         }
     }
 
@@ -1417,9 +1440,8 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
         )
 
         // 2. Define the order for COLLAPSED (Top-to-Bottom)
-        val leftCollapsed = listOf(menuButton, speechButton, clearButton, resetChatButton)
-        // Send button is first to make it stay at the top
-        val rightCollapsed = listOf(sendChatButton, utilityButton, systemMessageButton)
+        val leftCollapsed = listOf(menuButton)
+        val rightCollapsed = listOf(speechButton, sendChatButton)
 
         if (expanded) {
             containerParams.height = LinearLayout.LayoutParams.MATCH_PARENT
@@ -1470,9 +1492,8 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
     // Helper to keep the code clean
     private fun applyCollapsedParams(btn: View) {
         val size = (48 * resources.displayMetrics.density).toInt()
-        val margin = (2 * resources.displayMetrics.density).toInt()
         val params = LinearLayout.LayoutParams(size, size)
-        params.setMargins(0, 0, 0, margin)
+        params.setMargins(0, 0, 0, 0)
         btn.layoutParams = params
     }
 
@@ -1661,7 +1682,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
         }
         chatRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                if ((newState == RecyclerView.SCROLL_STATE_DRAGGING&&!hasScrolled) && viewModel.isAwaitingResponse.value == true) {
+                if ((newState == RecyclerView.SCROLL_STATE_DRAGGING && !hasScrolled) && viewModel.isAwaitingResponse.value == true) {
                     hasScrolled = true
                     viewModel.setUserScrolledDuringStream(true)
                 }
@@ -1680,17 +1701,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                     }
             }
         })
-        chatRecyclerView.setOnTouchListener { _, event ->
-            if (viewModel.isAwaitingResponse.value == true &&
-                (event.actionMasked == MotionEvent.ACTION_DOWN&&!hasScrolled)) {  // ACTION_DOWN catches tap/scroll start reliably
-                hasScrolled = true
-                viewModel.setUserScrolledDuringStream(true)
-
-                // If you use this flag locally too!
-            }
-
-            false  // Pass through touch so RecyclerView still works normally
-        }
+        // Stream follow-lock is drag-only (scroll listener above) — do not lock on taps.
 
         // Smooth fade-in for new list items
         (chatRecyclerView.itemAnimator as? androidx.recyclerview.widget.SimpleItemAnimator)?.apply {
@@ -1712,8 +1723,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
             requestFocus()
         }
     }
-    override fun onDestroy() {
-        super.onDestroy()
+    override fun onDestroyView() {
         if (::textToSpeech.isInitialized) {
             textToSpeech.stop()
             textToSpeech.shutdown()
@@ -1721,9 +1731,11 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
         mediaRecorder?.release()
         mediaRecorder = null
         voiceRecordFile?.delete()
-        //if (!isFontUpdate) {  // Only stop the service if not a font update (i.e., actual app closure)
-        //    stopForegroundService()
-      //  }
+        super.onDestroyView()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
         chatAdapter.clearCache()
         val notificationManager = requireContext().getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.cancel(2)
@@ -1757,7 +1769,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
             if (!hasFolderPermission()) {
                 val folderPath = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "oxproxion")
                 if (!folderPath.exists()) folderPath.mkdirs()
-                android.widget.Toast.makeText(requireContext(), "Please select the Download/oxproxion folder first.", android.widget.Toast.LENGTH_LONG).show()
+                android.widget.Toast.makeText(requireContext(), "Please select the Download/grokion folder first.", android.widget.Toast.LENGTH_LONG).show()
                 folderPickerLauncher.launch(null)
             } else {
                 val folderPath = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "oxproxion")
@@ -1784,13 +1796,11 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
 
         toolsButton.setOnClickListener {
             if (!hasFolderPermission()) {
-                val folderPath = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "oxproxion")
-                if (!folderPath.exists()) folderPath.mkdirs()
-                android.widget.Toast.makeText(requireContext(), "Please select the Download/oxproxion folder first.", android.widget.Toast.LENGTH_LONG).show()
+                WorkspacePaths.ensureWorkspaceExists()
+                android.widget.Toast.makeText(requireContext(), "Please select the Download/grokion folder first.", android.widget.Toast.LENGTH_LONG).show()
                 folderPickerLauncher.launch(null)
             } else {
-                val folderPath = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "oxproxion")
-                if (!folderPath.exists()) folderPath.mkdirs()
+                WorkspacePaths.ensureWorkspaceExists()
                 // hideMenu()
                 viewModel.toggleToolsEnabled()
             }
@@ -2015,7 +2025,7 @@ $cleanContent
            /* if (ForegroundService.isRunningForeground && sharedPreferencesHelper.getNotiPreference()) {
                 val apiIdentifier = viewModel.activeChatModel.value ?: "Unknown Model"
                 val displayName = viewModel.getModelDisplayName(apiIdentifier)
-                ForegroundService.updateNotificationStatusSilently(displayName, "oxproxion is Ready.")
+                ForegroundService.updateNotificationStatusSilently(displayName, "Grokion is Ready.")
             }*/
             viewModel.startNewChat()
             currentTempImageFile?.delete()
@@ -2044,7 +2054,7 @@ $cleanContent
                    /* if (ForegroundService.isRunningForeground && sharedPreferencesHelper.getNotiPreference()) {
                         val apiIdentifier = viewModel.activeChatModel.value ?: "Unknown Model"
                         val displayName = viewModel.getModelDisplayName(apiIdentifier)
-                        ForegroundService.updateNotificationStatusSilently(displayName, "oxproxion is Ready.")
+                        ForegroundService.updateNotificationStatusSilently(displayName, "Grokion is Ready.")
                     }*/
                     /*if (ForegroundService.isRunningForeground) {
                         stopForegroundService()
@@ -2140,13 +2150,21 @@ $cleanContent
         btnDoneFont.setOnClickListener {
             fontSizeControlsContainer.visibility = View.GONE
         }
-        saveChatButton.setOnClickListener {
-            if (viewModel.chatMessages.value.isNullOrEmpty()) {
-                return@setOnClickListener
+        saveChatButton.setOnClickListener { anchor ->
+            val popup = android.widget.PopupMenu(requireContext(), anchor)
+            popup.menu.add(0, 1, 0, "Save chat")
+            popup.setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    1 -> {
+                        if (!viewModel.chatMessages.value.isNullOrEmpty()) {
+                            showSaveChatDialogWithResultApi()
+                        }
+                        true
+                    }
+                    else -> false
+                }
             }
-            else {
-                showSaveChatDialogWithResultApi()
-            }
+            popup.show()
         }
         topWebSearchButton.setOnLongClickListener {
             showWebSearchEngineDialog()
@@ -2166,12 +2184,7 @@ $cleanContent
 
         openSavedChatsButton.setOnClickListener {
             hideKeyboard()
-            parentFragmentManager.beginTransaction()
-                .hide(this)
-                .add(R.id.fragment_container, SavedChatsFragment())
-                .addToBackStack(null)
-                .commit()
-
+            openHistoryPanel()
         }
 
         pdfChatButton.setOnClickListener {
@@ -2231,8 +2244,8 @@ $cleanContent
                             e.printStackTrace()
                         }
 
-                        // Define the target folder path (keeping 'oxproxion')
-                        val path = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "oxproxion")
+                        // Grokion workspace folder (read path may fall back to legacy oxproxion)
+                        val path = WorkspacePaths.workspaceDirForRead()
 
                         // Create intent to view the folder
                         val intent = Intent(Intent.ACTION_VIEW)
@@ -2538,7 +2551,7 @@ $cleanContent
 
             // Define font options (display name, font res ID or null for system default, style res ID)
             val fontOptions = listOf(
-                Triple("System Default", null, R.style.Theme_Oxproxion),
+                Triple("System Default", null, R.style.Theme_Grokion),
                 Triple("Alan Sans Regular", R.font.alansans_regular, R.style.Font_AlanSansRegular),
                 Triple("Atkinson Mono", R.font.atkinsonhyperlegiblemono_regular, R.style.Font_AtkinsonhyperlegiblemonoRegular),
                 Triple("Atkinson Next", R.font.atkinsonhyperlegiblenext_regular, R.style.Font_AtkinsonhyperlegiblenextRegular),
@@ -2641,9 +2654,9 @@ $cleanContent
                     val fontName = getFontNameFromRes(fontResId)
                     val isSelected = fontName == currentFont
                     if (isSelected) {
-                        textView.setTextColor("#FF7D8187".toColorInt())  // Grey for readability
+                        textView.setTextColor(ContextCompat.getColor(requireContext(), R.color.xai_mute))
                     } else {
-                        textView.setTextColor(Color.WHITE)  // Default text color
+                        textView.setTextColor(ContextCompat.getColor(requireContext(), R.color.xai_ink))
                     }
 
                     // On tap: Save, apply, dismiss (using helper for fontName)
@@ -3178,7 +3191,7 @@ $cleanContent
         dimOverlay?.apply {
             alpha = 0f
             visibility = View.VISIBLE
-            animate().alpha(1f).setDuration(200).start()
+            animate().alpha(0.65f).setDuration(200).start()
         }
         // Fade empty-state (mark + prompt) while menu is open
         if (emptyStateContainer.isVisible) {
@@ -3464,7 +3477,53 @@ $cleanContent
     }
 
 
+    override fun closeHistoryPanel() {
+        val panel = historyDrawerContainer ?: return
+        val scrim = historyDrawerScrim ?: return
+        if (panel.visibility != View.VISIBLE) return
+        panel.animate()
+            .translationX(-panel.width.toFloat())
+            .setDuration(220)
+            .withEndAction {
+                panel.visibility = View.GONE
+                childFragmentManager.findFragmentById(R.id.historyDrawerContainer)?.let { child ->
+                    childFragmentManager.beginTransaction().remove(child).commitAllowingStateLoss()
+                }
+            }
+            .start()
+        scrim.animate().alpha(0f).setDuration(200).withEndAction {
+            scrim.visibility = View.GONE
+        }.start()
+    }
+
+    private fun openHistoryPanel() {
+        // ponytail: slide-over panel instead of DrawerLayout — lighter than restructuring activity_main
+        val panel = historyDrawerContainer ?: return
+        val scrim = historyDrawerScrim ?: return
+        if (panel.visibility == View.VISIBLE) return
+
+        if (childFragmentManager.findFragmentById(R.id.historyDrawerContainer) == null) {
+            childFragmentManager.beginTransaction()
+                .replace(R.id.historyDrawerContainer, SavedChatsFragment.newEmbedded())
+                .commit()
+        }
+
+        scrim.alpha = 0f
+        scrim.visibility = View.VISIBLE
+        scrim.animate().alpha(0.65f).setDuration(200).start()
+
+        panel.visibility = View.VISIBLE
+        panel.post {
+            panel.translationX = -panel.width.toFloat()
+            panel.animate().translationX(0f).setDuration(250).start()
+        }
+    }
+
     fun onBackPressed(): Boolean {
+        if (historyDrawerContainer?.visibility == View.VISIBLE) {
+            closeHistoryPanel()
+            return true
+        }
         if (viewModel.isExpandableInputEnabled.value == true && chatEditText.hasFocus()) {
             setInputExpandedState(false)
         }
@@ -3480,7 +3539,7 @@ $cleanContent
     }
     private fun launchCamera() {
         val contentValues = ContentValues().apply {
-            put(MediaStore.Images.Media.DISPLAY_NAME, "oxproxion_${System.currentTimeMillis()}.jpg")
+            put(MediaStore.Images.Media.DISPLAY_NAME, "grokion_${System.currentTimeMillis()}.jpg")
             put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
             put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_DCIM + "/Camera")
         }
@@ -3791,7 +3850,7 @@ $cleanContent
 
         // 2️⃣ Compute effective enabled set for display
         val effectiveEnabledSet = if (!hasStoredPrefs) {
-            ToolItem.getAllToolItems(emptySet()).map { it.name }.toSet()
+            emptySet()
         } else {
             enabledTools
         }
@@ -4371,7 +4430,7 @@ $cleanContent
 
         val webView = WebView(requireContext()).apply {
             settings.apply {
-                javaScriptEnabled = true
+                javaScriptEnabled = false
                 loadWithOverviewMode = true
                 useWideViewPort = true
                 defaultTextEncodingName = "utf-8"

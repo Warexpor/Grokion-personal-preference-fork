@@ -1,1 +1,1 @@
-Chat with OpenRouter, Ollama, LM Studio and llama.cpp AI models
+Chat with OpenRouter, Ollama, LM Studio, llama.cpp, MLX LM and Hermes Agent

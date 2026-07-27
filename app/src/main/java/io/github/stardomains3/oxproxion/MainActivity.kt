@@ -12,20 +12,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.biometric.BiometricManager
-import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
-import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
-import java.util.concurrent.Executor
 
 class MainActivity : AppCompatActivity() {
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* no-op */ }
-
-    private lateinit var biometricExecutor: Executor
-    private lateinit var biometricPrompt: BiometricPrompt
-    private lateinit var promptInfo: BiometricPrompt.PromptInfo
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val savedTheme = SharedPreferencesHelper(this).getThemeMode()
@@ -43,65 +35,13 @@ class MainActivity : AppCompatActivity() {
 
 
         if (savedInstanceState == null && SharedPreferencesHelper(this).getBiometricEnabled()) {
-            val bm = BiometricManager.from(this)
-            when (bm.canAuthenticate(BIOMETRIC_STRONG)) {
-                BiometricManager.BIOMETRIC_SUCCESS -> showBiometricGate()
-                else -> {
-                    // Optional: Auto-disable to avoid repeated warnings on future launches
-                    SharedPreferencesHelper(this).saveBiometricEnabled(false)
-
-                    Toast.makeText(
-                        this,
-                        "Biometrics unavailable—proceeding without lock. Enable in Settings > Security for added security.",
-                        Toast.LENGTH_LONG
-                    ).show()
-
-                    // Log for debugging/analytics if needed
-                    //Log.w("MainActivity", "Biometrics skipped: ${bm.canAuthenticate(BIOMETRIC_STRONG)}")
-
-                    continueOnCreate() // Proceed without auth
-                    return
-                }
+            BiometricGateHelper.gateIfNeeded(this) {
+                continueOnCreate()
             }
-            return // Still halt until auth succeeds if available
+            return
         }
 
-        /* ------------------------------------------------------ */
-        /* 2.  Normal onCreate continues only after unlock        */
-        /* ------------------------------------------------------ */
         continueOnCreate()
-    }
-
-    private fun showBiometricGate() {
-        biometricExecutor = ContextCompat.getMainExecutor(this)
-        biometricPrompt = BiometricPrompt(this, biometricExecutor,
-            object : BiometricPrompt.AuthenticationCallback() {
-                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    super.onAuthenticationError(errorCode, errString)
-                    Toast.makeText(this@MainActivity, "Authentication error", Toast.LENGTH_SHORT).show()
-                    finish()
-                }
-
-                override fun onAuthenticationFailed() {
-                    super.onAuthenticationFailed()
-                    Toast.makeText(this@MainActivity, "Authentication failed", Toast.LENGTH_SHORT).show()
-                    finish()
-                }
-
-                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                    super.onAuthenticationSucceeded(result)
-                    continueOnCreate() // unlock OK → proceed
-                }
-            })
-
-        promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle("Unlock oxproxion")
-            .setSubtitle("Use your biometric credential")
-            .setNegativeButtonText("Cancel")
-            .setAllowedAuthenticators(BIOMETRIC_STRONG)
-            .build()
-
-        biometricPrompt.authenticate(promptInfo)
     }
 
     private fun continueOnCreate() {

@@ -1,9 +1,13 @@
 package io.github.stardomains3.oxproxion
 
 import android.content.Context
+import android.util.Log
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import net.zetetic.database.sqlcipher.SQLiteDatabase
+import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
+import java.io.File
 
 @Database(entities = [ChatSession::class, ChatMessage::class], version = 1, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
@@ -11,19 +15,122 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun chatDao(): ChatDao
 
     companion object {
+        const val DB_NAME = "chat_database"
+        private const val TAG = "AppDatabase"
+
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
+        @Volatile
+        private var nativeLoaded = false
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    AppDatabase::class.java,
-                    "chat_database"
-                ).build()
-                INSTANCE = instance
-                instance
+                INSTANCE ?: build(context.applicationContext).also { INSTANCE = it }
             }
+        }
+
+        private fun ensureNativeLoaded() {
+            if (!nativeLoaded) {
+                System.loadLibrary("sqlcipher")
+                nativeLoaded = true
+            }
+        }
+
+        private fun build(context: Context): AppDatabase {
+            ensureNativeLoaded()
+            val passphrase = SharedPreferencesHelper(context).getOrCreateChatDbPassphrase()
+            encryptPlaintextIfNeeded(context, passphrase)
+            val factory = SupportOpenHelperFactory(passphrase.copyOf())
+            return Room.databaseBuilder(context, AppDatabase::class.java, DB_NAME)
+                .openHelperFactory(factory)
+                .build()
+        }
+
+        /**
+         * One-shot: if an unencrypted Room DB already exists, rewrite it via
+         * sqlcipher_export before Room opens with SupportOpenHelperFactory.
+         */
+        private fun encryptPlaintextIfNeeded(context: Context, passphrase: ByteArray) {
+            val dbFile = context.getDatabasePath(DB_NAME)
+            if (!dbFile.exists()) return
+            if (!isPlaintextDatabase(dbFile)) return
+
+            val parent = dbFile.parentFile ?: return
+            val encryptedTemp = File(parent, "$DB_NAME.encrypting")
+            val backup = File(parent, "$DB_NAME.pre_sqlcipher")
+            encryptedTemp.delete()
+            backup.delete()
+
+            val hexKey = passphrase.joinToString("") { b -> "%02x".format(b) }
+            var plaintext: SQLiteDatabase? = null
+            try {
+                plaintext = SQLiteDatabase.openDatabase(
+                    dbFile.absolutePath,
+                    "",
+                    null,
+                    SQLiteDatabase.OPEN_READWRITE,
+                    null,
+                    null
+                )
+                plaintext.rawExecSQL("PRAGMA wal_checkpoint(FULL);")
+                // Raw key form avoids quoting issues with passphrase bytes.
+                plaintext.rawExecSQL(
+                    "ATTACH DATABASE '${encryptedTemp.absolutePath}' AS encrypted KEY \"x'$hexKey'\";"
+                )
+                plaintext.rawExecSQL("SELECT sqlcipher_export('encrypted');")
+                plaintext.rawExecSQL("DETACH DATABASE encrypted;")
+                plaintext.close()
+                plaintext = null
+
+                if (!dbFile.renameTo(backup)) {
+                    encryptedTemp.delete()
+                    throw IllegalStateException("Could not backup plaintext chat DB before encryption")
+                }
+                if (!encryptedTemp.renameTo(dbFile)) {
+                    backup.renameTo(dbFile)
+                    encryptedTemp.delete()
+                    throw IllegalStateException("Could not install encrypted chat DB")
+                }
+                deleteSidecars(backup)
+                backup.delete()
+                deleteSidecars(dbFile)
+                Log.i(TAG, "Migrated plaintext chat_database to SQLCipher")
+            } catch (e: Exception) {
+                try {
+                    plaintext?.close()
+                } catch (_: Exception) {
+                }
+                encryptedTemp.delete()
+                if (backup.exists() && !dbFile.exists()) {
+                    backup.renameTo(dbFile)
+                }
+                Log.e(TAG, "Failed to encrypt existing chat DB", e)
+                throw e
+            }
+        }
+
+        private fun isPlaintextDatabase(dbFile: File): Boolean {
+            return try {
+                val db = SQLiteDatabase.openDatabase(
+                    dbFile.absolutePath,
+                    "",
+                    null,
+                    SQLiteDatabase.OPEN_READONLY,
+                    null,
+                    null
+                )
+                db.close()
+                true
+            } catch (_: Exception) {
+                false
+            }
+        }
+
+        private fun deleteSidecars(dbFile: File) {
+            File(dbFile.path + "-shm").delete()
+            File(dbFile.path + "-wal").delete()
+            File(dbFile.path + "-journal").delete()
         }
     }
 }

@@ -67,32 +67,8 @@ class PresetEditFragment : Fragment() {
         // Setup click listeners
         saveBtn.setOnClickListener { save() }
         cancelBtn.setOnClickListener { parentFragmentManager.popBackStack() }
-        val thumbTintSelector = ColorStateList(
-            arrayOf(
-                intArrayOf(android.R.attr.state_checked),
-                intArrayOf(-android.R.attr.state_checked)
-            ),
-            intArrayOf(
-                "#000000".toColorInt(),  // Checked state color
-                "#686868".toColorInt()   // Unchecked state color
-            )
-        )
-        val trackTintSelector = ColorStateList(
-            arrayOf(
-                intArrayOf(android.R.attr.state_checked),
-                intArrayOf(-android.R.attr.state_checked)
-            ),
-            intArrayOf(
-                "#FF7D8187".toColorInt(),  // On state color
-                "#000000".toColorInt()   // Off state color
-            )
-        )
-
         listOf(streamingSwitch, reasoningSwitch, conversationSwitch, toolsSwitch, webSearchSwitch).forEach { switch ->
-            switch.trackTintList = trackTintSelector
-            switch.thumbTintList = thumbTintSelector
-            switch.thumbTintMode = PorterDuff.Mode.SRC_ATOP
-            switch.trackTintMode = PorterDuff.Mode.SRC_ATOP
+            switch.applyGrokionSwitchStyle()
         }
 
       /*  streamingSwitch.trackTintList = trackTintSelector
