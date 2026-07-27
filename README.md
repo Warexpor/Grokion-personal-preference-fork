@@ -7,7 +7,7 @@ Android LLM chat client. Fork of [oxproxion](https://github.com/stardomains3/oxp
 - **License:** Apache 2.0 (see `LICENSE`)
 - **Upstream credit / support:** [buymeacoffee.com/oxproxion](https://www.buymeacoffee.com/oxproxion)
 
-Not affiliated with OpenRouter.ai or xAI.
+**Unofficial / personal project.** Not affiliated with, endorsed by, or sponsored by xAI, Grok, or OpenRouter.ai. The name and UI resemblance are for personal use only; this is not an official Grok client and must not be treated as one.
 
 ## Backends
 
