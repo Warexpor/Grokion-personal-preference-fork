@@ -1,177 +1,70 @@
 # Grokion
 
-Grokion is a fork of [oxproxion](https://github.com/stardomains3/oxproxion) — a versatile, user-centric Android chat application for interacting with various Large Language Models (LLMs). It provides a seamless interface for managing conversations, customizing bot personas, and saving chat histories.
+Android LLM chat client. Fork of [oxproxion](https://github.com/stardomains3/oxproxion).
 
-## ✨ Features
+- **applicationId:** `io.github.warexpor.grokion`
+- **minSdk / targetSdk:** 31 / 36
+- **License:** Apache 2.0 (see `LICENSE`)
+- **Upstream credit / support:** [buymeacoffee.com/oxproxion](https://www.buymeacoffee.com/oxproxion)
 
-🤖 Multi-Model Support: Switch between different LLM bots and models.
+Not affiliated with OpenRouter.ai or xAI.
 
-🤖 Chat with OpenRouter models or locally served models using Ollama, LM Studio, llama.cpp, MLX LM or Hermes Agent.
+## Backends
 
-💬 Chat Interface: A clean and intuitive interface for conversing with AI models.
+| Backend | Transport | Notes |
+|---------|-----------|--------|
+| [OpenRouter](https://openrouter.ai/) | HTTPS | Requires API key + credits |
+| Ollama, LM Studio, llama.cpp, MLX LM, Hermes Agent | LAN HTTP(S) | User-hosted; app does not provision servers |
 
-💾 Save & Load Chats: Save your text chat sessions and load them later to continue the conversation.
+HTTP LAN endpoints are restricted to private, loopback, link-local, or `.local` hosts. HTTPS may target any host. Self-signed LAN TLS requires **Trust self-signed LAN TLS** in Settings (default off).
 
-📤📥 Import & Export: Easily import and export your chat histories.
+## Capabilities
 
-⚡ Streaming or Non-Streaming Responses: You choose!
+- Streaming and non-streaming chat; vision and image generation where the model supports them
+- System messages, presets (also share targets), reasoning controls, custom fonts
+- Saved sessions with import/export; optional auto-save
+- On-device PDF of a message or full chat (Android PdfDocument)
+- Tool calling (workspace file R/W, calendar, timer/alarm); tools default off; destructive file tools gated in Settings
+- Workspace: `Download/grokion` preferred; legacy `Download/oxproxion` still readable
+- Conversation mode (STT/TTS); share / assistant / spell-check entry points
+- Markwon markdown rendering; OpenRouter credits / model info from the model list UI
 
-🖼️ Chat with Images: With models that support it!
+## Stack
 
-🛠️ Tools:
+| Layer | Choice |
+|-------|--------|
+| Language | Kotlin |
+| UI | Fragments, View Binding, Material 3 |
+| Architecture | MVVM (`ViewModel`, LiveData / StateFlow), Coroutines |
+| Persistence | Room + SQLCipher (`chat_database`); API keys via Android Keystore AES-GCM |
+| Network | Ktor (OkHttp engine); SSE/NDJSON for streams |
+| Markdown | Markwon + Prism4j |
 
-Long-Press the **Tools** button in the options menu to enable/disable specific functionality:
+Cloud backup / device transfer excludes `ApiKeysPrefsStore`, main prefs, and the chat DB sidecars.
 
-*   **Read File**
-*   **Make File**
-*   **List Files in Workspace**
-*   **Make Timer**
-*   **Make Alarm**
-*   **Delete Files**
-*   **Make Calendar Event**
+## Build
 
+```bash
+git clone https://github.com/Warexpor/oxproxion.git Grokion
+cd Grokion
+./gradlew :app:assembleDebug
+```
 
-🎨 Image Generation: With models that support it!
+Open the project in Android Studio (AGP 8.13+, JDK 17) and run the `app` configuration.
 
-✍️ System Message Customization: Create, edit, and manage a library of system messages to guide the AI's behavior and persona.
+Current marketing version: see `versionName` in `app/build.gradle.kts` and `CHANGELOG.md`.
 
-🧠 Reasoning: Choose settings for reasoning models.
+## Configuration
 
-⚙️ Presets: Create, edit, and manage a library of presets to apply a combination of models, system messages, and options with one click. Presets are also exposed as system share targets.
+1. **OpenRouter:** Settings → OpenRouter API Key.
+2. **LAN:** Settings → LAN Settings (base URL + optional API key). Configure the server yourself (bind address, auth, firewall). Hermes Agent needs its API server enabled (`API_SERVER_HOST` reachable from the device, `API_SERVER_KEY` if set).
 
-🔤 Font: Customize the display font for optimal readability in the main chat screen.
+In-app Help covers UI details, presets, and Hermes setup. Upstream release notes: [stardomains3/oxproxion/releases](https://github.com/stardomains3/oxproxion/releases). This fork: [Warexpor/oxproxion/releases](https://github.com/Warexpor/oxproxion/releases).
 
-🎙️ Conversation Mode: Speak to the AI and have responses read out loud automatically.
+## Privacy / security (summary)
 
-🔗 OpenRouter Integration:  
-
-  • Tap icon in model list to open the OpenRouter model's info in your browser.  
-  • Long-press the API key icon to view your remaining OpenRouter credits.  
-
-🔗 Ollama, LM Studio, llama.cpp, MLX LM and Hermes Agent Integration:
-
-  • It now also allows chat with Ollama, LM Studio, llama.cpp, MLX LM or Hermes Agent models served on your LAN.
-
-
-📋 Effortless Copying: Press any avatar to copy the corresponding response to the clipboard. Long-press the response avatar to copy in Markdown.
-
-📄 On-Device PDF Export: Make a PDF of the whole chat with the PDF button in the options area. Or press the PDF icon/button on the response to generate a PDF of that specific response; All created locally using Android's native tools. 
-
-**🛠️ Built with Modern Tech**: 100 % Kotlin, leveraging Jetpack libraries, Coroutines for asynchronous tasks, and Ktor for networking.
-
-## Screenshots
-
-Here are some screenshots of the app in action:
-
-### Main Screen
-![Main App Screen](screenshots/1.png)
-
-*A view of the app's primary interface.*
-
-### Image Generation
-![Image Generation Screen](screenshots/4.png)
-
-*Image Generation*
-
-### System Messages
-![System Messages Screen](screenshots/3.png)
-
-*Custom System Messages*
-
-### SOTA Models Galore! 
-![OpenRouter Models Screen](screenshots/5.png)
-
-*Add Models to your delight!*
-
-### Markdown 
-![Markdown Screen](screenshots/7.png)
-
-*Markdown delight!*
-
-### Options with Extended Dock on and Reasoning on
-![Options Screen](screenshots/8.png)
-
-*Customize your experience in the options menu.*
-
-### Your List
-![Models Screen](screenshots/2.png)
-
-*Your Model List*
-
-### Vision Model
-![Vision Model Screen](screenshots/6.png)
-
-*Vision Model*
-
-### Advanced Reasoning Settings
-![Vision Model Screen](screenshots/9.png)
-
-*Advanced Reasoning Settings*
-
-### Presets
-![Presest Screen](screenshots/10.png)
-
-*Presets Screen*
-
-### Ollama, LM studio and llama.cpp Models
-![LAN Screen](screenshots/11.png)
-
-*LAN Screen*
-
-## ️ Technologies Used
-
-- **UI**: Android Jetpack, Material Components, View Binding
-- **Architecture**: MVVM (ViewModel, LiveData/StateFlow)
-- **Asynchronicity**: Kotlin Coroutines
-- **Database**: Jetpack Room + SQLCipher (chat DB encrypted at rest)
-- **Networking**: Ktor HTTP Client
-- **Markdown Rendering**: Markwon
-
-## Getting Started
-
-To build and run the project, follow these steps:
-
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/Warexpor/oxproxion.git Grokion
-    cd Grokion
-    ```
-2.  **Open in Android Studio:**
-    Open the project in the latest version of Android Studio.
-3.  **Build the project:**
-    Android Studio should automatically sync the Gradle project. Click the "Run" button to build and install the app on an emulator or a physical device.
-
-## ⚙️ Configuration
-
-To use with OpenRouter models, this application requires an API key from [OpenRouter.ai](https://openrouter.ai/) to function. You will need to create an account, add credits, and obtain your API key.
-
-Once you have your key, you can add it to the app's settings by pressing the "OpenRouter API Key" button.
-
-Alternatively, you can run this locally with Ollama, LM Studio, llama.cpp, MLX LM or Hermes Agent.
-
-To use these, you must host the model servers on your own LAN. Note: This application does not provide setup guidance for local infrastructure. You will need to configure the following yourself:
-
-Server Setup: Read the official documentation for your chosen server to configure it correctly.
-
-💡 Tip: Don't know where to start? Ask an AI to generate the specific configuration steps for your OS and hardware.
-
-Network Configuration: Adjust your network environment, including firewall rules, router settings, and port forwarding.
-
-Connection: Ensure your LAN allows traffic between the app and the model server.
-
-Once you have your properly configured LAN endpoint for the server enter it at Settings → "LAN Settings".
-
-For HTTPS LAN servers with a self-signed certificate, enable **Trust self-signed LAN TLS** in Settings (off by default). HTTP endpoints are limited to private/loopback/`.local` hosts.
-
-**Disclaimer:** This project is not affiliated with, endorsed by, or sponsored by OpenRouter.ai in any way.
-*   This open-source app is provided 'as-is' without any warranty, express or implied. Use at your own discretion.
-*   Review OpenRouter's and its model providers' pricing, privacy, and logging policies on their websites.
-*   Grokion does not have trackers, analytics, nor ads.
-*   This app is intended for use by persons 18 and over.
-*   Chat history is stored on device only, encrypted at rest with SQLCipher (passphrase wrapped by Android Keystore). API keys are Keystore-encrypted. Cloud backup excludes prefs and the chat DB.
-
-If you find this app useful, please consider supporting its developer: [Buy Me a Coffee](https://www.buymeacoffee.com/oxproxion) ☕
-
-##  License
-
-This project is licensed under the Apache License 2.0. See the LICENSE file for details.
+- No trackers, analytics, or ads in this app
+- Chat history stays on device; encrypted at rest (SQLCipher, Keystore-wrapped passphrase)
+- OpenRouter and model-provider privacy/pricing policies apply to cloud traffic; LAN HTTP is cleartext on the local network unless you use HTTPS
+- Intended for users 18+
+- Provided as-is, without warranty
