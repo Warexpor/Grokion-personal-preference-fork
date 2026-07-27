@@ -58,7 +58,7 @@ class AdvancedReasoningFragment : Fragment(R.layout.fragment_advanced_reasoning)
                     intArrayOf(-android.R.attr.state_checked)
                 ),
                 intArrayOf(
-                    "#a0610a".toColorInt(),  // On state color
+                    "#FF7D8187".toColorInt(),  // On state color
                     "#000000".toColorInt()   // Off state color
                 )
             )
@@ -122,7 +122,7 @@ class AdvancedReasoningFragment : Fragment(R.layout.fragment_advanced_reasoning)
                 intArrayOf(-android.R.attr.state_checked)
             ),
             intArrayOf(
-                "#a0610a".toColorInt(),  // On state color
+                "#FF7D8187".toColorInt(),  // On state color
                 "#000000".toColorInt()   // Off state color
             )
         )

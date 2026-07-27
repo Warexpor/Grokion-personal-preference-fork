@@ -39,7 +39,7 @@
                 android:text="LAN Settings"
                 app:icon="@drawable/ic_lan"
                 app:iconSize="28dp"
-                app:iconTint="#A8A8A8"
+                app:iconTint="@color/xai_icon"
                 app:iconTintMode="src_in"
                 app:iconGravity="start"
                 app:iconPadding="12dp"
@@ -56,7 +56,7 @@
                 android:text="Manage AI Tools"
                 app:icon="@drawable/ic_tools"
                 app:iconSize="28dp"
-                app:iconTint="#A8A8A8"
+                app:iconTint="@color/xai_icon"
                 app:iconTintMode="src_in"
                 app:iconGravity="start"
                 app:iconPadding="12dp"
@@ -73,7 +73,7 @@
                 android:text="Prompt Library"
                 app:icon="@drawable/ic_prompts"
                 app:iconSize="28dp"
-                app:iconTint="#A8A8A8"
+                app:iconTint="@color/xai_icon"
                 app:iconTintMode="src_in"
                 app:iconGravity="start"
                 app:iconPadding="12dp"
@@ -90,7 +90,7 @@
                 android:text="Request Timeout"
                 app:icon="@drawable/ic_timeout"
                 app:iconSize="28dp"
-                app:iconTint="#A8A8A8"
+                app:iconTint="@color/xai_icon"
                 app:iconTintMode="src_in"
                 app:iconGravity="start"
                 app:iconPadding="12dp"
@@ -107,7 +107,7 @@
                 android:text="Max Tokens"
                 app:icon="@drawable/ic_ruler"
                 app:iconSize="28dp"
-                app:iconTint="#A8A8A8"
+                app:iconTint="@color/xai_icon"
                 app:iconTintMode="src_in"
                 app:iconGravity="start"
                 app:iconPadding="12dp"
@@ -123,7 +123,7 @@
                 android:text="Inference Parameters"
                 app:icon="@drawable/ic_param"
                 app:iconSize="28dp"
-                app:iconTint="#A8A8A8"
+                app:iconTint="@color/xai_icon"
                 app:iconTintMode="src_in"
                 app:iconGravity="start"
                 app:iconPadding="12dp"
@@ -140,7 +140,7 @@
                 android:text="OpenRouter API Key"
                 app:icon="@drawable/ic_key"
                 app:iconSize="28dp"
-                app:iconTint="#A8A8A8"
+                app:iconTint="@color/xai_icon"
                 app:iconTintMode="src_in"
                 app:iconGravity="start"
                 app:iconPadding="12dp"
@@ -157,7 +157,7 @@
                 android:text="Brave Search API Key"
                 app:icon="@drawable/ic_key"
                 app:iconSize="28dp"
-                app:iconTint="#A8A8A8"
+                app:iconTint="@color/xai_icon"
                 app:iconTintMode="src_in"
                 app:iconGravity="start"
                 app:iconPadding="12dp"
@@ -174,7 +174,7 @@
                 android:text="Check Remaining Credits"
                 app:icon="@drawable/ic_credits"
                 app:iconSize="28dp"
-                app:iconTint="#A8A8A8"
+                app:iconTint="@color/xai_icon"
                 app:iconTintMode="src_in"
                 app:iconGravity="start"
                 app:iconPadding="12dp"
@@ -191,7 +191,7 @@
                 android:text="Help Screen"
                 app:icon="@drawable/ic_help"
                 app:iconSize="28dp"
-                app:iconTint="#A8A8A8"
+                app:iconTint="@color/xai_icon"
                 app:iconTintMode="src_in"
                 app:iconGravity="start"
                 app:iconPadding="12dp"
@@ -226,8 +226,7 @@
                     app:strokeWidth="1dp"
                     app:backgroundTint="?attr/colorSurface" />
             </LinearLayout>
-            <!-- Replace the old lightThemeSwitch LinearLayout with this -->
-            <!-- Replace the old lightThemeSwitch LinearLayout with this -->
+            <!-- Theme Mode: System / Light / Dark -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -298,8 +297,7 @@
                     android:id="@+id/extendedDockSwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:checked="false"
-                    app:useMaterialThemeColors="true" />
+                    android:checked="false" />
             </LinearLayout>
 
 
@@ -322,8 +320,7 @@
                     android:id="@+id/expandableInputSwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:checked="false"
-                    app:useMaterialThemeColors="true" />
+                    android:checked="false" />
             </LinearLayout>
 
             <LinearLayout
@@ -366,8 +363,7 @@
                     android:id="@+id/scrollButtonsSwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:checked="false"
-                    app:useMaterialThemeColors="true" />
+                    android:checked="false" />
             </LinearLayout>
 
             <LinearLayout
@@ -388,8 +384,7 @@
                     android:id="@+id/volumeScrollSwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:checked="false"
-                    app:useMaterialThemeColors="true" />
+                    android:checked="false" />
             </LinearLayout>
 
             <LinearLayout
@@ -410,8 +405,7 @@
                     android:id="@+id/presetsExtendedSwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:checked="false"
-                    app:useMaterialThemeColors="true" />
+                    android:checked="false" />
             </LinearLayout>
 
             <LinearLayout
@@ -432,8 +426,7 @@
                     android:id="@+id/keepScreenOnSwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:checked="false"
-                    app:useMaterialThemeColors="true" />
+                    android:checked="false" />
             </LinearLayout>
 
             <LinearLayout
@@ -454,8 +447,7 @@
                     android:id="@+id/biometricsSwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:checked="false"
-                    app:useMaterialThemeColors="true" />
+                    android:checked="false" />
             </LinearLayout>
 
             <LinearLayout
@@ -520,8 +512,7 @@
                     android:id="@+id/extendedTopBarSwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:checked="false"
-                    app:useMaterialThemeColors="true" />
+                    android:checked="false" />
             </LinearLayout>
 
             <LinearLayout
@@ -542,8 +533,7 @@
                     android:id="@+id/showCitationsSwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:checked="false"
-                    app:useMaterialThemeColors="true" />
+                    android:checked="false" />
             </LinearLayout>
 
             <LinearLayout
@@ -564,8 +554,7 @@
                     android:id="@+id/copyOrdismissSwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:checked="false"
-                    app:useMaterialThemeColors="true" />
+                    android:checked="false" />
             </LinearLayout>
 
             <LinearLayout
@@ -586,8 +575,7 @@
                     android:id="@+id/copyOropenSwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:checked="false"
-                    app:useMaterialThemeColors="true" />
+                    android:checked="false" />
             </LinearLayout>
 
             <LinearLayout
@@ -600,16 +588,15 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Auto Back after receiving a Share:"
+                    android:text="Auto Save Chats:"
                     android:textColor="?android:attr/textColorPrimary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
                 <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/autoBackSwitch"
+                    android:id="@+id/autoSaveChatsSwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:checked="false"
-                    app:useMaterialThemeColors="true" />
+                    android:checked="false" />
             </LinearLayout>
 
             <LinearLayout
@@ -630,8 +617,7 @@
                     android:id="@+id/openRouterTransformsSwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:checked="false"
-                    app:useMaterialThemeColors="true" />
+                    android:checked="false" />
             </LinearLayout>
 
             <LinearLayout
@@ -737,8 +723,7 @@
                     android:id="@+id/watermarkSttSwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:checked="false"
-                    app:useMaterialThemeColors="true" />
+                    android:checked="false" />
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

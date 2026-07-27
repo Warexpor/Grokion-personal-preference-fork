@@ -43,7 +43,6 @@ import android.text.method.LinkMovementMethod
 import android.text.style.BackgroundColorSpan
 import android.text.util.Linkify
 import android.util.Base64
-import android.util.Log
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.KeyEvent
@@ -221,6 +220,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
     private lateinit var attachmentPreviewContainer: View
     private lateinit var previewImageView: ImageView
     private lateinit var centerWatermarkIcon: ImageView
+    private lateinit var emptyStateContainer: FrameLayout
     private lateinit var removeAttachmentButton: ImageButton
     private lateinit var headerContainer: LinearLayout
     private var overlayView: View? = null
@@ -351,7 +351,6 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                     // Notify for gallery refresh
                     requireContext().contentResolver.notifyChange(imageUri, null)
                 } catch (e: Exception) {
-                 //   Log.e("ChatFragment", "Error processing photo: ${e.message}", e)
                     Toast.makeText(requireContext(), "Failed to process photo", Toast.LENGTH_SHORT).show()
                     requireContext().contentResolver.delete(imageUri, null, null)
                 }
@@ -415,9 +414,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                             // Set pending as string for FlexibleMessage
                             viewModel.setPendingUserImageUri(u.toString())
 
-                          //  Log.d("ChatFragment", "Persistent URI granted for gallery: $u")
                         } catch (e: SecurityException) {
-                         //   Log.e("ChatFragment", "Persistent permission failed: ${e.message}", e)
                             Toast.makeText(requireContext(), "Image access limited; tap won't open full file", Toast.LENGTH_SHORT).show()
                             // Fallback: No Uri set, use base64 display only
                         }
@@ -500,6 +497,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
         attachmentPreviewContainer = view.findViewById(R.id.attachmentPreviewContainer)
         previewImageView = view.findViewById(R.id.previewImageView)
         centerWatermarkIcon = view.findViewById(R.id.centerWatermarkIcon)
+        emptyStateContainer = view.findViewById(R.id.emptyStateContainer)
         removeAttachmentButton = view.findViewById(R.id.removeAttachmentButton)
         headerContainer = view.findViewById(R.id.headerContainer)
         settingsButton = view.findViewById(R.id.settingsButton)
@@ -557,10 +555,8 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                                         resolver.update(uri, contentValues, null, null)
 
                                         success = true
-                                        //   Log.d("TTS", "✅ Coroutines MediaStore save: $fileName (${tempFile.length()} bytes)")
 
                                     } catch (e: Exception) {
-                                        //    Log.e("TTS", "Coroutines save failed", e)
                                     } finally {
                                         // 🧹 Cleanup
                                         tempFile.delete()
@@ -586,7 +582,6 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                     override fun onError(utteranceId: String?) {
                         if (utteranceId?.startsWith("TTS_SAVE_") == true) {
                             Toast.makeText(requireContext(), "❌ TTS synthesis error", Toast.LENGTH_SHORT).show()
-                            //Log.e("TTS", "TTS error for: $utteranceId")
                         }
                         else {
                             requireActivity().runOnUiThread {
@@ -831,11 +826,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
             if(hasMessages){
                 resetChatButton.icon.alpha = 255
                 saveChatButton.icon.alpha = 255
-                centerWatermarkIcon.animate()
-                    .alpha(0f)
-                    .setDuration(800)
-                    .withEndAction { centerWatermarkIcon.visibility = View.GONE }
-                    .start()
+                emptyStateContainer.visibility = View.GONE
                 resetChatButton.isVisible = true
                 val lastMessage = messages.last()
                 if (lastMessage.role == "assistant" && lastMessage.content is JsonPrimitive) {
@@ -915,11 +906,9 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
             {
                 resetChatButton.icon.alpha = 102
                 saveChatButton.icon.alpha = 102
+                emptyStateContainer.visibility = View.VISIBLE
                 centerWatermarkIcon.visibility = View.VISIBLE
-                centerWatermarkIcon.animate()
-                    .alpha(0.50f)
-                    .setDuration(800)
-                    .start()
+                emptyStateContainer.alpha = 1f
             }
             if(sharedPreferencesHelper.getScrollersPreference()){
                 chatRecyclerView.post {
@@ -963,13 +952,23 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
             }
             if (!isAwaiting) {// && sharedPreferencesHelper.getStreamingPreference()) {
                 chatAdapter.finalizeStreaming()
+                // Auto-save: save chat with LLM-generated title when streaming completes
+                if (sharedPreferencesHelper.getAutoSaveChats()) {
+                    viewModel.autoSaveChat()
+                }
             }
             sendChatButton.isEnabled = true
             val materialButton = sendChatButton
             if (isAwaiting) {
-                materialButton.setIconResource(R.drawable.ic_stop)
+                materialButton.animate().alpha(0f).setDuration(100).withEndAction {
+                    materialButton.setIconResource(R.drawable.ic_stop)
+                    materialButton.animate().alpha(1f).setDuration(100).start()
+                }.start()
             } else {
-                materialButton.icon = originalSendIcon
+                materialButton.animate().alpha(0f).setDuration(100).withEndAction {
+                    materialButton.icon = originalSendIcon
+                    materialButton.animate().alpha(1f).setDuration(100).start()
+                }.start()
                 val messages = viewModel.chatMessages.value
                 if (messages?.isNotEmpty() == true) {
                     val lastMessage = messages.last()
@@ -977,8 +976,8 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                         val originalColor = modelNameTextView.currentTextColor
                         val isError = lastMessage.content
                             .let { it as? JsonPrimitive }?.content?.startsWith("**Error:**") == true
-                        val targetColor = if (isError) "#8c1911".toColorInt()
-                        else          "#222f3d".toColorInt()
+                        val targetColor = if (isError) "#B84A3A".toColorInt()
+                        else          "#1A1C20".toColorInt()
                         modelNameTextView.animateColor(originalColor, targetColor,   1000)
                         modelNameTextView.animateColor(targetColor,   originalColor, 3000)
                         if ( sharedPreferencesHelper.getAnimateBarOnError()) {
@@ -986,7 +985,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                            // animateBarBackground(chatInputContainer, targetColor)
                             val borderOverlayView = view.findViewById<View>(R.id.borderOverlayView)
                             borderOverlayView.animateOutlineFlash(
-                                targetColorStr = if (isError) "#8c1911" else "#6D2E0F",
+                                targetColorStr = if (isError) "#B84A3A" else "#FF7D8187",
                                 glowDuration = 600,
                                 stayDuration = 1600,
                                 fadeDuration = 600,
@@ -1692,6 +1691,11 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
 
             false  // Pass through touch so RecyclerView still works normally
         }
+
+        // Smooth fade-in for new list items
+        (chatRecyclerView.itemAnimator as? androidx.recyclerview.widget.SimpleItemAnimator)?.apply {
+            supportsChangeAnimations = false
+        }
     }
 
     fun View.showKeyboard() {
@@ -2048,7 +2052,7 @@ $cleanContent
                     else{
                         ChatServiceGate.shouldRunService = false
                     }*/
-                    viewModel.startNewChat()
+            viewModel.startNewChat()
                     currentTempImageFile?.delete()
                     currentTempImageFile = null
                     selectedAudioBytes = null
@@ -2637,7 +2641,7 @@ $cleanContent
                     val fontName = getFontNameFromRes(fontResId)
                     val isSelected = fontName == currentFont
                     if (isSelected) {
-                        textView.setTextColor("#a0610a".toColorInt())  // High contrast for readability
+                        textView.setTextColor("#FF7D8187".toColorInt())  // Grey for readability
                     } else {
                         textView.setTextColor(Color.WHITE)  // Default text color
                     }
@@ -2858,13 +2862,8 @@ $cleanContent
         utilityButton.visibility = if (isExtended) View.VISIBLE else View.GONE
 
         if (isExtended) {
-            if (hasText) {
-                clearButton.visibility = View.VISIBLE
-                speechButton.visibility = View.GONE
-            } else {
-                clearButton.visibility = View.GONE
-                speechButton.visibility = View.VISIBLE
-            }
+            clearButton.visibility = if (hasText) View.VISIBLE else View.GONE
+            speechButton.visibility = if (hasText) View.GONE else View.VISIBLE
         } else {
             clearButton.visibility = View.GONE
             speechButton.visibility = View.GONE
@@ -2948,16 +2947,13 @@ $cleanContent
             when (result) {
                 TextToSpeech.SUCCESS -> {
                     Toast.makeText(context, "Audio generating...", Toast.LENGTH_SHORT).show()
-                    //  Log.d("TTS", "✅ Queued TTS: $utteranceId → ${tempFile.absolutePath}")
                 }
                 else -> {
                     Toast.makeText(context, "❌ TTS wav failed (code: $result)", Toast.LENGTH_SHORT).show()
-                    //   Log.e("TTS", "synthesizeToFile failed: $result")
                 }
             }
 
         } catch (e: Exception) {
-            //  Log.e("TTS", "Queue error", e)
             Toast.makeText(context, "Error queuing TTS: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
@@ -3104,16 +3100,15 @@ $cleanContent
         }
     }
     private fun updateButtonVisibility() {
-        // If both buttons are already gone (extended OFF), do nothing
-        if (clearButton.isGone && speechButton.isGone) return
-
+        val isExtended = sharedPreferencesHelper.getExtPreference()
         val hasText = !chatEditText.text.isNullOrEmpty()
-        if (hasText) {
-            clearButton.visibility = View.VISIBLE
-            speechButton.visibility = View.GONE
+        // Match the same logic as isExtendedDockEnabled observer
+        if (isExtended) {
+            clearButton.visibility = if (hasText) View.VISIBLE else View.GONE
+            speechButton.visibility = if (hasText) View.GONE else View.VISIBLE
         } else {
             clearButton.visibility = View.GONE
-            speechButton.visibility = View.VISIBLE
+            speechButton.visibility = View.GONE
         }
     }
     override fun handleKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
@@ -3174,28 +3169,36 @@ $cleanContent
     }
     private fun showMenu() {
         overlayView?.visibility = View.VISIBLE
-        headerContainer.visibility = View.VISIBLE
+        headerContainer.apply {
+            alpha = 0f
+            visibility = View.VISIBLE
+            animate().alpha(1f).setDuration(200).setInterpolator(android.view.animation.AccelerateDecelerateInterpolator()).start()
+        }
         (chatFrameView as ViewGroup).bringChildToFront(headerContainer)
-        dimOverlay?.visibility = View.VISIBLE
-        centerWatermarkIcon.animate()
-            .alpha(0f)
-            .setDuration(300)
-            .start()
-
+        dimOverlay?.apply {
+            alpha = 0f
+            visibility = View.VISIBLE
+            animate().alpha(1f).setDuration(200).start()
+        }
+        // Fade empty-state (mark + prompt) while menu is open
+        if (emptyStateContainer.isVisible) {
+            emptyStateContainer.visibility = View.GONE
+        }
     }
     private fun hideMenu() {
-        dimOverlay?.visibility = View.GONE
-        headerContainer.visibility = View.GONE
-        overlayView?.visibility = View.GONE
+        dimOverlay?.animate()?.alpha(0f)?.setDuration(150)?.withEndAction {
+            dimOverlay?.visibility = View.GONE
+        }?.start()
+        headerContainer.animate().alpha(0f).setDuration(150).withEndAction {
+            headerContainer.visibility = View.GONE
+            overlayView?.visibility = View.GONE
+        }.start()
 
-        // Only restore watermark if the chat is empty
+        // Only restore empty state if the chat is empty
         val hasMessages = !(viewModel.chatMessages.value.isNullOrEmpty())
         if (!hasMessages) {
+            emptyStateContainer.visibility = View.VISIBLE
             centerWatermarkIcon.visibility = View.VISIBLE
-            centerWatermarkIcon.animate()
-                .alpha(0.50f)
-                .setDuration(300)
-                .start()
         }
     }
 
@@ -3356,23 +3359,14 @@ $cleanContent
             Toast.makeText(requireContext(), "Speech recognition not supported", Toast.LENGTH_SHORT).show()
         }
     }
-    /*private fun startForegroundService() {
-        try {
-            val serviceIntent = Intent(requireContext(), ForegroundService::class.java)
-            requireContext().startService(serviceIntent)
-        } catch (e: Exception) {
-            //  Log.e("ChatFragment", "Failed to start foreground service", e)
-        }
-    }*/
     private fun startForegroundService() {
         try {
             val serviceIntent = Intent(requireContext(), ForegroundService::class.java)
-            // Add the display name extra if needed (from previous response)
             val displayName = viewModel.getModelDisplayName(viewModel.activeChatModel.value ?: "Unknown Model")
             serviceIntent.putExtra("initial_title", displayName)
             requireContext().startService(serviceIntent)
         } catch (e: Exception) {
-          //  Log.e("ChatFragment", "Failed to start foreground service", e)
+            // silently ignore — foreground service start is best-effort
         }
     }
 
@@ -3380,7 +3374,6 @@ $cleanContent
         try {
             ForegroundService.stopService()
         } catch (e: Exception) {
-            // Log.e("ChatFragment", "Failed to stop foreground service", e)
         }
     }
     private fun updateModelSourceIndicator() {
@@ -3528,7 +3521,7 @@ $cleanContent
                     requireContext().contentResolver.openFileDescriptor(pdfUri, "r")
                 } ?: run {
                     // Fallback copy (rare now)
-                   // Log.d("ChatFragment", "Direct access failed; copying PDF to cache...")
+                    // Direct access fallback (rare)
                     val inputStream = requireContext().contentResolver.openInputStream(pdfUri)
                         ?: run {
                             Toast.makeText(requireContext(), "No read access to PDF.", Toast.LENGTH_SHORT).show()
@@ -3576,16 +3569,13 @@ $cleanContent
                     }
                 }
             } catch (e: Exception) {
-              //  Log.e("ChatFragment", "PDF processing error", e)
                 val errorMsg = "Failed to process PDF: ${e.message}"
                 Toast.makeText(requireContext(), errorMsg, Toast.LENGTH_SHORT).show()
             } finally {
-                // Only close parcelFd and temp file (renderer closed in branches)
                 try {
                     parcelFd?.close()
                     tempPdfFile?.delete()
                 } catch (e: Exception) {
-                 //   Log.e("ChatFragment", "Error closing PDF resources", e)
                 }
             }
         }
@@ -3700,9 +3690,6 @@ $cleanContent
                 // Get MIME type and extension for validation (before reading content)
                 val mimeType = requireContext().contentResolver.getType(uri)
                 val extension = fileName.substringAfterLast('.', "").lowercase()
-
-                // TEMP DEBUG LOG: Remove after testing
-                // android.util.Log.d("ProcessTextFile", "File: $fileName, MIME: '$mimeType', Extension: '$extension'")
 
                 // Allowed MIME types (your list from earlier)
                 val allowedTypes = setOf(
@@ -4046,6 +4033,9 @@ $cleanContent
     }
     private fun updateExtendedTopBarVisibility(extendedEnabled: Boolean) {
         extendedTopBarContainer.visibility = if (extendedEnabled) View.VISIBLE else View.GONE
+        // Parent scroll must track the same flag or the row stays gone forever
+        view?.findViewById<View>(R.id.extendedTopBarScroll)?.visibility =
+            if (extendedEnabled) View.VISIBLE else View.GONE
 
         val model = viewModel.activeChatModel.value // Get current model (may be null on startup)
         val isLan = viewModel.activeModelIsLan()
@@ -4264,7 +4254,6 @@ $cleanContent
             speechButton.isSelected = true
             Toast.makeText(requireContext(), "Recording...", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
-            //Log.e("ChatFragment", "Failed to start recording", e)
             Toast.makeText(requireContext(), "Recording failed: ${e.message}", Toast.LENGTH_SHORT).show()
             voiceRecordFile?.delete()
             voiceRecordFile = null
@@ -4291,7 +4280,6 @@ $cleanContent
                 }
             }
         } catch (e: Exception) {
-           // Log.e("ChatFragment", "Failed to stop recording", e)
             isRecording = false
             speechButton.setIconResource(R.drawable.ic_mic)
             speechButton.isSelected = false
@@ -4326,7 +4314,6 @@ $cleanContent
                     Toast.makeText(requireContext(), "Transcription failed", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-              //  Log.e("ChatFragment", "Voice processing error", e)
                 Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
             } finally {
                 file.delete()

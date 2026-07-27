@@ -556,6 +556,16 @@ class ChatAdapter(
                 text
             }
             messageTextView.text = displayText
+
+            // Subtle streaming indicator: pulse the container softly while tokens arrive
+            if (pulseAnimator == null || !pulseAnimator!!.isRunning) {
+                pulseAnimator = ObjectAnimator.ofFloat(messageContainer, "alpha", 0.85f, 1f).apply {
+                    duration = 600
+                    repeatCount = ObjectAnimator.INFINITE
+                    repeatMode = ObjectAnimator.REVERSE
+                }
+                pulseAnimator?.start()
+            }
         }
 
         fun bind(message: FlexibleMessage, position: Int, isSpeaking: Boolean, currentPosition: Int) {
@@ -628,37 +638,15 @@ class ChatAdapter(
             bgColorAnimator = null
 
             if (isThinking) {
-                val originalDrawable = ContextCompat.getDrawable(itemView.context, R.drawable.bg_ai_message) as GradientDrawable
-                val animatedDrawable = GradientDrawable().apply {
-                    shape = GradientDrawable.RECTANGLE
-                    setColor(0xFF2C2C2C.toInt())
-                    cornerRadius = 16f * itemView.resources.displayMetrics.density
-                }
-
-                messageContainer.background = animatedDrawable
-
-                val alphaAnimator = ObjectAnimator.ofFloat(messageContainer, "alpha", 0.2f, 1f).apply {
-                    duration = 4000
+                // Grok-like: soft alpha pulse on flat text, no heavy bubble flash
+                val alphaAnimator = ObjectAnimator.ofFloat(messageContainer, "alpha", 0.35f, 1f).apply {
+                    duration = 1200
                     repeatCount = ObjectAnimator.INFINITE
                     repeatMode = ObjectAnimator.REVERSE
                 }
-
-                val colorAnimator = ObjectAnimator.ofArgb(
-                    animatedDrawable,
-                    "color",
-                    0xFF222f3d.toInt(),
-                    0xFF2C2C2C.toInt()
-                ).apply {
-                    duration = 2000
-                    repeatCount = ObjectAnimator.INFINITE
-                    repeatMode = ObjectAnimator.REVERSE
-                }
-
                 alphaAnimator.start()
-                colorAnimator.start()
-
                 pulseAnimator = alphaAnimator
-                bgColorAnimator = colorAnimator
+                bgColorAnimator = null
             } else {
                 messageContainer.alpha = 1f
             }

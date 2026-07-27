@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#000000"
+    android:background="@color/xai_canvas"
     android:fitsSystemWindows="true"
     tools:context="io.github.stardomains3.oxproxion.LicenseListFragment">
 
@@ -15,7 +15,7 @@
         android:layout_height="?attr/actionBarSize"
         app:title="Third-Party Licenses"
         app:titleTextColor="@android:color/white"
-        android:background="#1C1C1E"
+        android:background="@color/xai_canvas_card"
         app:navigationIcon="@drawable/is_backarrow" />
 
     <androidx.recyclerview.widget.RecyclerView
@@ -25,7 +25,7 @@
         android:padding="16dp"
         android:clipToPadding="false"
         android:scrollbars="vertical"
-        android:background="#000000"
+        android:background="@color/xai_canvas"
         tools:listitem="@android:layout/simple_list_item_1" />
 
 </LinearLayout>

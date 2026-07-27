@@ -35,7 +35,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         val toolsButton = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.toolsButton)
         val animateBarOnErrorSwitch = view.findViewById<MaterialSwitch>(R.id.animateBarOnErrorSwitch)
         val showCitationsSwitch = view.findViewById<MaterialSwitch>(R.id.showCitationsSwitch)
-        val autoBackSwitch = view.findViewById<MaterialSwitch>(R.id.autoBackSwitch)
+        val autoSaveChatsSwitch = view.findViewById<MaterialSwitch>(R.id.autoSaveChatsSwitch)
         val extendedTopBarSwitch = view.findViewById<MaterialSwitch>(R.id.extendedTopBarSwitch)
         val copyOrDismissSwitch = view.findViewById<MaterialSwitch>(R.id.copyOrdismissSwitch)
         val expandableInputSwitch = view.findViewById<MaterialSwitch>(R.id.expandableInputSwitch)
@@ -62,7 +62,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         val voiceProviderToggle = view.findViewById<com.google.android.material.button.MaterialButtonToggleGroup>(R.id.voiceInputProviderToggle)
         biometricsSwitch.isChecked = prefs.getBiometricEnabled()
         notificationsSwitch.isChecked = prefs.getNotiPreference()
-        autoBackSwitch.isChecked = prefs.getAutoBack()
+        autoSaveChatsSwitch.isChecked = prefs.getAutoSaveChats()
         val memoryCount = prefs.getChatMemoryCount()
         chatMemoryButton.text = if (memoryCount == Int.MAX_VALUE) "All messages" else "$memoryCount messages"
         val savedMode = prefs.getThemeMode()
@@ -112,8 +112,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             dialog.show(childFragmentManager, "ChatMemoryDialogFragment")
         }
 
-        autoBackSwitch.setOnCheckedChangeListener { _, isChecked ->
-            prefs.saveAutoBack(isChecked)
+        autoSaveChatsSwitch.setOnCheckedChangeListener { _, isChecked ->
+            prefs.saveAutoSaveChats(isChecked)
         }
         extendedDockSwitch.setOnCheckedChangeListener { _, isChecked ->
             viewModel.toggleExtendedDock()  // VM saves + notifies Chat
@@ -285,15 +285,24 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             R.id.biometricsSwitch,
             R.id.copyOropenSwitch,
             R.id.extendedDockSwitch,
-            R.id.notificationsSwitch,
+            R.id.extendedDockSwitch,
+            R.id.expandableInputSwitch,
+            R.id.scrollProgressSwitch,
+            R.id.scrollButtonsSwitch,
+            R.id.volumeScrollSwitch,
             R.id.presetsExtendedSwitch,
-            R.id.copyOrdismissSwitch,
+            R.id.keepScreenOnSwitch,
+            R.id.biometricsSwitch,
+            R.id.notificationsSwitch,
             R.id.autoDisableWebSearchSwitch,
             R.id.extendedTopBarSwitch,
-            R.id.autoBackSwitch,
-            R.id.openRouterTransformsSwitch,
             R.id.showCitationsSwitch,
-            R.id.animateBarOnErrorSwitch
+            R.id.copyOrdismissSwitch,
+            R.id.copyOropenSwitch,
+            R.id.autoSaveChatsSwitch,
+            R.id.openRouterTransformsSwitch,
+            R.id.animateBarOnErrorSwitch,
+            R.id.watermarkSttSwitch
         ).forEach { id ->
             view.findViewById<MaterialSwitch>(id)?.styleSwitch()
         }
@@ -317,7 +326,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
                 intArrayOf(-android.R.attr.state_checked)
             ),
             intArrayOf(
-                "#a0610a".toColorInt(),  // Checked: Orange track
+                "#FF7D8187".toColorInt(),  // Checked: Orange track
                 "#000000".toColorInt()   // Unchecked: Black track
             )
         )

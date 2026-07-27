@@ -1,27 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- xAI: dark-canvas only (no light mode) -->
     <style name="Theme.Oxproxion" parent="Theme.Material3.Light.NoActionBar">
-        <item name="android:windowBackground">@android:color/white</item>
-        <item name="colorSurface">@android:color/white</item>
-        <item name="colorOnSurface">#121212</item>
-        <item name="colorPrimary">#222f3d</item>
-        <item name="colorOnPrimary">@android:color/white</item>
-        <item name="android:textColorHighlight">#007541</item>
-        <item name="colorControlActivated">@color/your_orange_color</item>
-        <item name="colorControlNormal">#686868</item>
-        <item name="android:colorControlNormal">#686868</item>
-        <item name="colorOutline">#888888</item>
-        <item name="colorSurfaceVariant">#F5F5F5</item>
-
-
-
-        <item name="android:statusBarColor">@android:color/white</item>
-        <item name="android:navigationBarColor">@android:color/white</item>
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowLightNavigationBar">true</item>
-
+        <item name="android:windowBackground">@color/xai_canvas</item>
+        <item name="colorSurface">@color/xai_canvas</item>
+        <item name="colorOnSurface">@color/xai_body</item>
+        <item name="colorPrimary">@color/xai_ink</item>
+        <item name="colorOnPrimary">@color/xai_canvas</item>
+        <item name="colorSecondary">@color/xai_accent_sunset</item>
+        <item name="colorOnSecondary">@color/xai_canvas</item>
+        <item name="android:textColorPrimary">@color/xai_ink</item>
+        <item name="android:textColorSecondary">@color/xai_mute</item>
+        <item name="android:textColorHighlight">@color/xai_accent_sunset_soft</item>
+        <item name="colorControlActivated">@color/xai_accent_sunset</item>
+        <item name="colorControlNormal">@color/xai_mute</item>
+        <item name="android:colorControlNormal">@color/xai_mute</item>
+        <item name="colorOutline">@color/xai_hairline</item>
+        <item name="colorSurfaceVariant">@color/xai_canvas_soft</item>
+        <item name="colorOnSurfaceVariant">@color/xai_mute</item>
+        <item name="colorError">@color/xai_error</item>
+        <item name="android:colorBackground">@color/xai_canvas</item>
+        <item name="colorPrimaryContainer">@color/xai_canvas_card</item>
+        <item name="colorOnPrimaryContainer">@color/xai_ink</item>
+        <item name="android:statusBarColor">@color/xai_canvas</item>
+        <item name="android:navigationBarColor">@color/xai_canvas</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
         <item name="materialAlertDialogTheme">@style/CustomMaterialAlertDialogTheme</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="fontFamily">sans-serif</item>
     </style>
 
     <style name="Widget.App.CheckBox" parent="Widget.Material3.CompoundButton.CheckBox">
@@ -30,54 +38,90 @@
     </style>
 
     <style name="CustomMaterialAlertDialogTheme" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
-        <item name="android:backgroundDimAmount">0.6</item>
-        <item name="shapeAppearanceMediumComponent">@style/ff</item>
-        <item name="android:textColorPrimary">#121212</item>
-        <item name="colorPrimary">#222f3d</item>
+        <item name="android:backgroundDimAmount">0.75</item>
+        <item name="shapeAppearanceMediumComponent">@style/XaiShapeCard</item>
+        <item name="android:textColorPrimary">@color/xai_body</item>
+        <item name="colorPrimary">@color/xai_ink</item>
+        <item name="colorSurface">@color/xai_canvas_card</item>
+        <item name="android:background">@color/xai_canvas_card</item>
         <item name="materialAlertDialogTitleTextStyle">@style/CustomDialogTitleText</item>
         <item name="materialAlertDialogBodyTextStyle">@style/CustomDialogBodyText</item>
-        <item name="android:colorAccent">@color/your_orange_color</item>
+        <item name="android:colorAccent">@color/xai_accent_sunset</item>
+        <item name="buttonBarPositiveButtonStyle">@style/XaiDialogButton</item>
+        <item name="buttonBarNegativeButtonStyle">@style/XaiDialogButton</item>
+        <item name="buttonBarNeutralButtonStyle">@style/XaiDialogButton</item>
     </style>
 
-    <style name="ff" parent="ShapeAppearance.MaterialComponents.MediumComponent">
+    <style name="XaiShapeCard" parent="ShapeAppearance.MaterialComponents.MediumComponent">
         <item name="cornerFamily">rounded</item>
-        <item name="cornerSize">16dp</item>
+        <item name="cornerSize">8dp</item>
+    </style>
+
+    <style name="XaiShapePill" parent="ShapeAppearance.MaterialComponents.SmallComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">999dp</item>
+    </style>
+
+    <style name="ff" parent="XaiShapeCard" />
+
+    <style name="XaiDialogButton" parent="Widget.Material3.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/xai_ink</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0</item>
     </style>
 
     <style name="CustomDialogTheme" parent="ThemeOverlay.Material3.Dialog.Alert">
-        <item name="colorSurface">#F5F5F5</item> <item name="android:background">#F5F5F5</item>
-        <item name="android:backgroundDimAmount">0.6</item>
-        <item name="android:textColorPrimary">#121212</item>
-        <item name="colorPrimary">#222f3d</item>
+        <item name="colorSurface">@color/xai_canvas_card</item>
+        <item name="android:background">@color/xai_canvas_card</item>
+        <item name="android:backgroundDimAmount">0.75</item>
+        <item name="android:textColorPrimary">@color/xai_body</item>
+        <item name="colorPrimary">@color/xai_ink</item>
         <item name="materialAlertDialogTitleTextStyle">@style/CustomDialogTitleText</item>
         <item name="materialAlertDialogBodyTextStyle">@style/CustomDialogBodyText</item>
     </style>
 
     <style name="CustomDialogBodyText" parent="TextAppearance.Material3.BodyMedium">
         <item name="android:textSize">16sp</item>
-        <item name="android:textColor">#333333</item> </style>
+        <item name="android:textColor">@color/xai_body</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
 
     <style name="CustomDialogTitleText" parent="MaterialAlertDialog.Material3.Title.Text">
-        <item name="android:textSize">24sp</item>
-        <item name="android:textColor">#121212</item>
-        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:textColor">@color/xai_ink</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:letterSpacing">-0.02</item>
     </style>
 
     <style name="RoundedCornersDialog" parent="Theme.MaterialComponents.DayNight.Dialog">
-        <item name="android:backgroundDimAmount">0.6</item>
+        <item name="android:backgroundDimAmount">0.75</item>
         <item name="android:windowBackground">@drawable/rounded_dialog_background</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowIsFloating">true</item>
         <item name="android:windowIsTranslucent">false</item>
         <item name="android:windowContentOverlay">@null</item>
-        <item name="colorAccent">@color/your_orange_color</item>
-        <item name="colorPrimary">#222f3d</item>
+        <item name="colorAccent">@color/xai_accent_sunset</item>
+        <item name="colorPrimary">@color/xai_ink</item>
+        <item name="colorSurface">@color/xai_canvas_card</item>
     </style>
 
-    <style name="MyEditTextTheme" parent="ThemeOverlay.AppCompat.Light">
-        <item name="colorControlActivated">#FF9800</item>
-        <item name="colorControlNormal">#79480a</item>
+    <style name="MyEditTextTheme" parent="ThemeOverlay.AppCompat.Dark">
+        <item name="colorControlActivated">@color/xai_accent_sunset</item>
+        <item name="colorControlNormal">@color/xai_hairline</item>
+        <item name="android:textColorHint">@color/xai_mute</item>
     </style>
+
+    <style name="Xai.TextInputLayout" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/text_input_box_stroke_selector</item>
+        <item name="hintTextColor">@color/xai_mute</item>
+        <item name="boxCornerRadiusTopStart">8dp</item>
+        <item name="boxCornerRadiusTopEnd">8dp</item>
+        <item name="boxCornerRadiusBottomStart">8dp</item>
+        <item name="boxCornerRadiusBottomEnd">8dp</item>
+        <item name="boxBackgroundColor">@color/xai_canvas_soft</item>
+    </style>
+
     <style name="Font.AlanSansRegular" parent="Theme.Oxproxion"><item name="fontFamily">@font/alansans_regular</item></style>
     <style name="Font.AlexandriaRegular" parent="Theme.Oxproxion"><item name="fontFamily">@font/alexandria_regular</item></style>
     <style name="Font.AroneSansRegular" parent="Theme.Oxproxion"><item name="fontFamily">@font/aronesans_regular</item></style>
@@ -105,8 +149,6 @@
     <style name="Font.UbuntuSansRegular" parent="Theme.Oxproxion"><item name="fontFamily">@font/ubuntusans_regular</item></style>
     <style name="Font.VendSansRegular" parent="Theme.Oxproxion"><item name="fontFamily">@font/vendsans_regular</item></style>
 
-
-
     <style name="Theme.Oxproxion.AIFix" parent="Theme.Oxproxion">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
@@ -114,7 +156,7 @@
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowIsFloating">true</item>
         <item name="android:backgroundDimEnabled">true</item>
-        <item name="android:backgroundDimAmount">0.4</item>
+        <item name="android:backgroundDimAmount">0.6</item>
         <item name="android:windowAnimationStyle">@android:style/Animation.Dialog</item>
     </style>
 </resources>

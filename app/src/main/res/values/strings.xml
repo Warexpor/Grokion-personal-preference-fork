@@ -1,8 +1,10 @@
 <resources>
-    <string name="app_name">oxproxion</string>
+    <string name="app_name">Grokion</string>
     <string name="action_settings">Settings</string>
     <!-- Strings used for fragments for navigation -->
     <string name="next">Next</string>
     <string name="previous">Previous</string>
     <string name="add_new_system_message">Add new system message</string>
+    <string name="grok_empty_prompt">What do you want to know?</string>
+    <string name="grok_composer_hint">Ask anything</string>
 </resources>

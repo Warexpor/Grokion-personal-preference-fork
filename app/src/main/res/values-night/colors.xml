@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- xAI design tokens — Dark mode (Grok's native palette) -->
+    <color name="xai_canvas">#FF0A0A0A</color>
+    <color name="xai_canvas_soft">#FF1A1C20</color>
+    <color name="xai_canvas_card">#FF191919</color>
+    <color name="xai_canvas_mid">#FF363A3F</color>
+    <color name="xai_hairline">#FF212327</color>
+    <color name="xai_ink">#FFFFFFFF</color>
+    <color name="xai_ink_hover">#FFFAFAF7</color>
+    <color name="xai_body">#FFDADBDF</color>
+    <color name="xai_mute">#FF7D8187</color>
+    <color name="xai_accent_sunset">#FF7D8187</color>
+    <color name="xai_accent_sunset_soft">#FFDADBDF</color>
+    <color name="xai_accent_dusk">#FF7C3AED</color>
+    <color name="xai_accent_twilight">#FFC4B5FD</color>
+    <color name="xai_accent_breeze">#FFA0C3EC</color>
+    <color name="xai_accent_midnight">#FF0D1726</color>
+    <color name="xai_border_outline">#40FFFFFF</color>
+    <color name="xai_icon">#FF7D8187</color>
+    <color name="xai_icon_active">#FFFFFFFF</color>
+    <color name="xai_selected">#FF2A2A2A</color>
+    <color name="xai_error">#FFB84A3A</color>
+    <color name="xai_progress">#FF7D8187</color>
+    <color name="xai_link">#FFA0C3EC</color>
+
+    <!-- Legacy aliases (dark) -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="ora">@color/xai_accent_sunset</color>
+    <color name="default_color">@color/xai_canvas</color>
+    <color name="focused_color">@color/xai_canvas_mid</color>
+    <color name="pressed_color">@color/xai_canvas_mid</color>
+    <color name="spinner_item_color">@color/xai_canvas_mid</color>
+    <color name="back">@color/xai_canvas</color>
+    <color name="trackColorChecked">@color/xai_canvas_mid</color>
+    <color name="trackColorUnchecked">@color/xai_mute</color>
+    <color name="thumbColorChecked">@color/xai_accent_sunset</color>
+    <color name="thumbColorUnchecked">@color/xai_body</color>
+    <color name="ff">@color/xai_canvas</color>
+    <color name="your_orange_color">@color/xai_accent_sunset</color>
+    <color name="your_default_text_color">@color/xai_ink</color>
+    <color name="fab_bg_60">#331A1C20</color>
+    <color name="chestnut">@color/xai_selected</color>
+    <color name="ch">@color/xai_canvas_card</color>
+    <color name="tx">@color/xai_body</color>
+    <color name="threetwo">@color/xai_canvas_mid</color>
+    <color name="ic_launcherrobot_background">@color/xai_canvas</color>
+    <color name="advanced_reasoning_color">@color/xai_accent_sunset</color>
+    <color name="gray">@color/xai_mute</color>
+</resources>

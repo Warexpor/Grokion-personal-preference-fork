@@ -743,7 +743,7 @@ class PdfGenerator(private val context: Context) {
 
     private fun drawBubble(canvas: Canvas, text: String, image: Bitmap?, isUser: Boolean, startY: Float) {
         val bubblePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = if (isUser) "#36454F".toColorInt() else "#2C2C2C".toColorInt()
+            color = if (isUser) "#1A1C20".toColorInt() else "#191919".toColorInt()
         }
         val textPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.WHITE

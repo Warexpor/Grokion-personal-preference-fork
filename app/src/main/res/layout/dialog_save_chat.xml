@@ -11,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Save Chat"
-        android:textColor="#C2C2C2"
+        android:textColor="@color/xai_body"
         android:textAppearance="?attr/textAppearanceHeadline6"
         android:layout_marginBottom="16dp" />
 
@@ -19,8 +19,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Enter chat title"
-        app:boxStrokeColor="#C2C2C2"
-        app:hintTextColor="#C2C2C2"
+        app:boxStrokeColor="@color/xai_hairline"
+        app:hintTextColor="@color/xai_mute"
         android:id="@+id/edit_text_lay"
         app:boxBackgroundMode="outline">
 
@@ -30,7 +30,7 @@
             android:layout_height="wrap_content"
             android:textSize="20sp"
             android:inputType="textCapSentences"
-            android:textColor="#ffffff"
+            android:textColor="@color/xai_ink"
             android:singleLine="true" />
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -49,7 +49,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Save as new chat (don't overwrite existing)"
-        android:textColor="#C2C2C2"
+        android:textColor="@color/xai_body"
         android:textSize="16sp"
         android:layout_marginTop="8dp"
         android:checked="false"
@@ -61,7 +61,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Notice: If images are in the chat, they are not saved."
-        android:textColor="#C2C2C2"
+        android:textColor="@color/xai_body"
         android:textSize="15sp"
         android:layout_marginTop="16dp"
         android:layout_marginBottom="8dp"
@@ -79,7 +79,7 @@
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#C2C2C2"
+            android:textColor="@color/xai_body"
             android:text="Cancel" />
 
         <com.google.android.material.button.MaterialButton
@@ -87,7 +87,7 @@
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#C2C2C2"
+            android:textColor="@color/xai_body"
             android:layout_marginStart="8dp"
             android:text="Save" />
     </LinearLayout>

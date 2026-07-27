@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:fitsSystemWindows="true"
-    android:background="#000000">
+    android:background="@color/xai_canvas">
 
     <!-- Toolbar -->
     <com.google.android.material.appbar.MaterialToolbar
@@ -13,7 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         app:titleTextColor="@android:color/white"
-        android:background="#1C1C1E"
+        android:background="@color/xai_canvas_card"
         app:navigationIcon="@drawable/is_backarrow"
         app:menu="@menu/menu_edit_message" />
 
@@ -38,8 +38,8 @@
                 android:layout_height="match_parent"
                 android:gravity="top"
                 android:inputType="textMultiLine"
-                android:textColor="#C2C2C2"
-                android:textColorHint="#888888"
+                android:textColor="@color/xai_body"
+                android:textColorHint="@color/xai_mute"
                 android:scrollbars="vertical"
                 android:fadeScrollbars="false"
                 android:theme="@style/MyEditTextTheme"/>

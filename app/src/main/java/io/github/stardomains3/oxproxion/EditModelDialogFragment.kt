@@ -41,7 +41,7 @@ class EditModelDialogFragment : DialogFragment() {
         val trackTint = ColorStateList(
             arrayOf(intArrayOf(android.R.attr.state_checked),
                 intArrayOf(-android.R.attr.state_checked)),
-            intArrayOf("#a0610a".toColorInt(), "#000000".toColorInt()))
+            intArrayOf("#FF7D8187".toColorInt(), "#000000".toColorInt()))
 
         // Added switchTranscription and switchIsFree to the styling list
         listOf(switchVision, switchReason, switchLan, switchImage, switchTranscription, switchIsFree).forEach {

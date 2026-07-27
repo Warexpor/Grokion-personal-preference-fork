@@ -56,7 +56,7 @@ class ChooserActivity : AppCompatActivity() {
         val titleTextView = TextView(this).apply {
             text = "Choose and Send\nModel: $modelDisplayName"
             textSize = 20f  // Adjust size as needed
-            setTextColor(Color.parseColor("#C2C2C2"))
+            setTextColor(Color.parseColor("#DADBDF"))
             gravity = Gravity.CENTER  // Center vertically and horizontally
             setPadding(24, 16, 24, 16)  // Add padding for better spacing
         }

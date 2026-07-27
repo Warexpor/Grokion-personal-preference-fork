@@ -46,11 +46,11 @@ class SpellCheckActivity : AppCompatActivity() {
             setPadding(64, 48, 64, 48)
             gravity = Gravity.CENTER_HORIZONTAL
 
-            // Background: Rounded corners + Dark Brown (#471d0d) from your theme
+            // Background: Rounded corners + Dark Brown (#191919) from your theme
             background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
                 cornerRadius = 48f
-                setColor("#471d0d".toColorInt())
+                setColor("#191919".toColorInt())
             }
         }
 
@@ -58,7 +58,7 @@ class SpellCheckActivity : AppCompatActivity() {
         val titleView = TextView(this).apply {
             text = "AI Grammar Fix"
             textSize = 18f
-            setTextColor("#C2C2C2".toColorInt())
+            setTextColor("#DADBDF".toColorInt())
             setPadding(0, 0, 0, 24)
             typeface = android.graphics.Typeface.DEFAULT_BOLD
         }
@@ -75,7 +75,7 @@ class SpellCheckActivity : AppCompatActivity() {
         // Progress Bar (Material Style)
         progressBar = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
             isIndeterminate = true
-            indeterminateTintList = android.content.res.ColorStateList.valueOf("#C2C2C2".toColorInt())
+            indeterminateTintList = android.content.res.ColorStateList.valueOf("#DADBDF".toColorInt())
             layoutParams = FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT
@@ -104,7 +104,7 @@ class SpellCheckActivity : AppCompatActivity() {
         statusText = TextView(this).apply {
             text = "Consulting AI..."
             textSize = 14f
-            setTextColor("#C2C2C2".toColorInt())
+            setTextColor("#DADBDF".toColorInt())
             setPadding(0, 16, 0, 0)
             gravity = Gravity.CENTER_HORIZONTAL
         }
@@ -136,7 +136,7 @@ class SpellCheckActivity : AppCompatActivity() {
         cancelButton = AppCompatButton(this).apply {
             text = "Cancel"
             textSize = 14f
-            setTextColor("#C2C2C2".toColorInt())
+            setTextColor("#DADBDF".toColorInt())
             background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
                 cornerRadius = 24f
@@ -156,11 +156,11 @@ class SpellCheckActivity : AppCompatActivity() {
         acceptButton = AppCompatButton(this).apply {
             text = "Accept"
             textSize = 14f
-            setTextColor("#471d0d".toColorInt())
+            setTextColor("#191919".toColorInt())
             background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
                 cornerRadius = 24f
-                setColor("#C2C2C2".toColorInt())
+                setColor("#DADBDF".toColorInt())
             }
             setPadding(48, 24, 48, 24)
             setOnClickListener { onAccept() }

@@ -13,7 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Set Request Timeout"
-        android:textColor="#C2C2C2"
+        android:textColor="@color/xai_body"
         android:textAppearance="?attr/textAppearanceHeadline6"
         android:layout_marginBottom="16dp" />
 
@@ -23,8 +23,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Minutes (1‑45)"
-        app:boxStrokeColor="#C2C2C2"
-        app:hintTextColor="#C2C2C2"
+        app:boxStrokeColor="@color/xai_hairline"
+        app:hintTextColor="@color/xai_mute"
         app:boxBackgroundMode="outline">
 
         <com.google.android.material.textfield.TextInputEditText
@@ -34,7 +34,7 @@
             android:textSize="20sp"
             android:inputType="number"
             android:digits="0123456789"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/xai_ink"
             android:singleLine="true" />
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -43,7 +43,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="The timeout defines how long the app will wait for the AI response before terminating the request. Longer values allow the model more time to generate answers. Default is 5 minutes."
-        android:textColor="#C2C2C2"
+        android:textColor="@color/xai_body"
         android:textSize="14sp"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="16dp" />
@@ -61,7 +61,7 @@
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#C2C2C2"
+            android:textColor="@color/xai_body"
             android:text="Cancel" />
 
         <com.google.android.material.button.MaterialButton
@@ -70,7 +70,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:textColor="#C2C2C2"
+            android:textColor="@color/xai_body"
             android:text="Save" />
     </LinearLayout>
 </LinearLayout>

@@ -57,7 +57,7 @@
         android:theme="@style/Theme.Oxproxion">
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="io.github.stardomains3.oxproxion.fileprovider"
+            android:authorities="${applicationId}.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
@@ -115,7 +115,7 @@
         </activity>
         <activity
             android:name=".SpellCheckActivity"
-            android:label="Fix with oxproxion"
+            android:label="Fix with Grokion"
             android:theme="@style/Theme.Oxproxion.AIFix"
             android:exported="true"
             android:excludeFromRecents="true"

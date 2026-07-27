@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Grok-like chat shell: sparse top bar, quiet canvas, bottom pill composer.
+     All original view IDs preserved for ChatFragment compatibility. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -11,390 +13,309 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:background="?attr/colorSurface"
+        android:background="@color/xai_canvas"
         android:fitsSystemWindows="true"
         tools:context=".ChatFragment">
 
+        <!-- ── Top bar: history | model chip | save ── -->
         <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/topBarLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="2dp"
-            android:id="@+id/topBarLayout"
-            android:background="@drawable/bg_rounded_lin">
+            android:minHeight="56dp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:background="@drawable/bg_top_bar_grok">
 
-            <!-- Left Column -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/openSavedChatsButton"
-                style="@style/Widget.Material3.Button.IconButton.Filled"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:contentDescription="History"
                 app:icon="@drawable/ic_schats"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                app:iconGravity="textStart"
-                app:iconSize="28dp"
-                app:cornerRadius="24dp"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                android:insetLeft="1dp"
-                android:insetRight="1dp"
-                app:iconTint="#A8A8A8"
-                app:backgroundTint="@color/button_background_col"
+                app:iconSize="22dp"
+                app:iconTint="@color/xai_ink"
+                app:backgroundTint="@android:color/transparent"
+                app:rippleColor="@color/xai_canvas_mid"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/backcopyButton"
-                style="@style/Widget.Material3.Button.IconButton.Filled"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginTop="2dp"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
                 android:visibility="gone"
-                app:backgroundTint="@color/button_background_col"
-                app:cornerRadius="24dp"
+                app:backgroundTint="@android:color/transparent"
                 app:icon="@drawable/backcopy"
-                app:iconGravity="textStart"
-                app:iconPadding="0dp"
-                app:iconSize="24dp"
-                app:iconTint="#A8A8A8"
-                android:insetLeft="0dp"
-                android:insetTop="0dp"
-                android:insetRight="0dp"
-                android:insetBottom="0dp"
-                android:padding="0dp"
+                app:iconSize="22dp"
+                app:iconTint="@color/xai_ink"
                 app:layout_constraintStart_toStartOf="@id/openSavedChatsButton"
                 app:layout_constraintTop_toBottomOf="@id/openSavedChatsButton" />
 
-            <!-- attachmentButton -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/attachmentButton"
-                style="@style/Widget.Material3.Button.IconButton.Filled"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="0dp"
-                android:layout_marginEnd="2dp"
-                app:backgroundTint="@color/button_background_col"
-                app:cornerRadius="24dp"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:contentDescription="Attach file"
+                app:backgroundTint="@android:color/transparent"
                 app:icon="@drawable/ic_attachdoc"
-                app:iconGravity="textStart"
-                app:iconPadding="0dp"
-                app:iconSize="24dp"
-                app:iconTint="#A8A8A8"
-                android:insetLeft="0dp"
-                android:insetTop="0dp"
-                android:insetRight="0dp"
-                android:insetBottom="0dp"
-                android:padding="0dp"
-                android:layout_gravity="top"
+                app:iconSize="20dp"
+                app:iconTint="@color/xai_mute"
                 app:layout_constraintStart_toEndOf="@id/openSavedChatsButton"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
 
-            <!-- genButton -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/genButton"
-                style="@style/Widget.Material3.Button.IconButton.Filled"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginEnd="2dp"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:visibility="gone"
-                app:backgroundTint="@color/button_background_col"
-                app:cornerRadius="24dp"
+                android:contentDescription="Image generation"
+                app:backgroundTint="@android:color/transparent"
                 app:icon="@drawable/ic_palette"
-                app:iconGravity="textStart"
-                app:iconPadding="0dp"
-                app:iconSize="24dp"
-                app:iconTint="#A8A8A8"
-                android:insetLeft="0dp"
-                android:insetTop="0dp"
-                android:insetRight="0dp"
-                android:insetBottom="0dp"
-                android:padding="0dp"
-                android:layout_gravity="top"
+                app:iconSize="20dp"
+                app:iconTint="@color/xai_mute"
                 app:layout_constraintStart_toEndOf="@id/attachmentButton"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
 
-            <!-- Model Name -->
             <TextView
                 android:id="@+id/modelNameTextView"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:layout_gravity="center"
-                android:gravity="center"
-                android:textColor="#A8A8A8"
-                android:padding="2dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxWidth="180dp"
+                android:background="@drawable/bg_model_chip"
                 android:clickable="true"
-                android:background="@drawable/background_selector"
-                android:textSize="15sp"
+                android:focusable="true"
                 android:ellipsize="end"
                 android:singleLine="true"
-                android:visibility="visible"
-                android:drawablePadding="3dp"
-                android:paddingEnd="4dp"
+                android:gravity="center"
+                android:textColor="@color/xai_body"
+                android:textSize="13sp"
+                android:letterSpacing="0.01"
+                android:drawablePadding="6dp"
                 app:drawableEndCompat="@drawable/ic_lan2"
-                tools:text="model-8ai-mini-maximum-length-model-name"
-                app:layout_constraintStart_toEndOf="@id/genButton"
-                app:layout_constraintEnd_toStartOf="@id/plusButton"
+                tools:text="Grok"
+                app:layout_constraintStart_toEndOf="@id/openSavedChatsButton"
+                app:layout_constraintEnd_toStartOf="@id/saveChatButton"
                 app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="@id/openSavedChatsButton" />
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintHorizontal_bias="0.5" />
 
-            <!-- plusButton -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/plusButton"
-                style="@style/Widget.Material3.Button.IconButton.Filled"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="2dp"
-                app:backgroundTint="@color/button_background_col"
-                app:cornerRadius="24dp"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:contentDescription="Attach image or audio"
+                app:backgroundTint="@android:color/transparent"
                 app:icon="@drawable/ic_imgup"
-                app:iconGravity="textStart"
-                app:iconPadding="0dp"
-                app:iconSize="24dp"
-                app:iconTint="#A8A8A8"
-                android:insetLeft="0dp"
-                android:insetTop="0dp"
-                android:insetRight="0dp"
-                android:insetBottom="0dp"
-                android:padding="0dp"
-                android:layout_gravity="top"
+                app:iconSize="20dp"
+                app:iconTint="@color/xai_mute"
                 app:layout_constraintEnd_toStartOf="@id/saveChatButton"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
 
-            <!-- Right Column -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/saveChatButton"
-                style="@style/Widget.Material3.Button.IconButton.Filled"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:contentDescription="Save chat"
                 app:icon="@drawable/ic_savechat"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="2dp"
-                app:iconGravity="textStart"
-                app:iconSize="28dp"
-                app:cornerRadius="24dp"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                android:insetLeft="0dp"
-                android:insetRight="0dp"
-                app:iconTint="#A8A8A8"
-                app:backgroundTint="@color/button_background_col"
+                app:iconSize="22dp"
+                app:iconTint="@color/xai_ink"
+                app:backgroundTint="@android:color/transparent"
+                app:rippleColor="@color/xai_canvas_mid"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/backButton"
-                style="@style/Widget.Material3.Button.IconButton.Filled"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginTop="2dp"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
                 android:visibility="gone"
-                app:backgroundTint="@color/button_background_col"
-                app:cornerRadius="24dp"
+                app:backgroundTint="@android:color/transparent"
                 app:icon="@drawable/backtoapp"
-                app:iconGravity="textStart"
-                app:iconPadding="0dp"
-                app:iconSize="24dp"
-                app:iconTint="#A8A8A8"
-                android:layout_marginBottom="2dp"
-                android:insetLeft="0dp"
-                android:insetTop="0dp"
-                android:insetRight="0dp"
-                android:insetBottom="0dp"
-                android:padding="0dp"
+                app:iconSize="22dp"
+                app:iconTint="@color/xai_ink"
                 app:layout_constraintEnd_toEndOf="@id/saveChatButton"
-                app:layout_constraintTop_toBottomOf="@id/saveChatButton" /><com.google.android.material.button.MaterialButton
-            android:id="@+id/homeButton"
-            style="@style/Widget.Material3.Button.IconButton.Filled"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_marginTop="2dp"
-            android:visibility="gone"
-            app:backgroundTint="@color/button_background_col"
-            app:cornerRadius="24dp"
-            app:icon="@drawable/ic_home"
-            app:iconGravity="textStart"
-            app:iconPadding="0dp"
-            app:iconSize="24dp"
-            app:iconTint="#A8A8A8"
-            android:insetLeft="0dp"
-            android:insetTop="0dp"
-            android:insetRight="0dp"
-            android:insetBottom="0dp"
-            android:padding="0dp"
-            app:layout_constraintStart_toStartOf="@id/saveChatButton"
-            app:layout_constraintTop_toBottomOf="@id/saveChatButton" />
-            <!-- Extended Top Bar Container -->
-            <LinearLayout
-                android:id="@+id/extendedTopBarContainer"
+                app:layout_constraintTop_toBottomOf="@id/saveChatButton" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/homeButton"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:visibility="gone"
+                app:backgroundTint="@android:color/transparent"
+                app:icon="@drawable/ic_home"
+                app:iconSize="22dp"
+                app:iconTint="@color/xai_ink"
+                app:layout_constraintEnd_toEndOf="@id/saveChatButton"
+                app:layout_constraintTop_toBottomOf="@id/saveChatButton" />
+
+            <!-- Extended tools row (preference-driven; visibility owned by container) -->
+            <HorizontalScrollView
+                android:id="@+id/extendedTopBarScroll"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center"
+                android:scrollbars="none"
                 android:visibility="gone"
-                android:layout_marginTop="2dp"
-                app:layout_constraintStart_toEndOf="@id/openSavedChatsButton"
-                app:layout_constraintEnd_toStartOf="@id/saveChatButton"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/openSavedChatsButton">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/topReasoningButton"
-                    style="@style/Widget.Material3.Button.IconButton.Filled"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginEnd="2dp"
-                    app:icon="@drawable/ic_reasoning"
-                    app:iconGravity="textStart"
-                    app:iconSize="28dp"
-                    app:cornerRadius="24dp"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-                    android:insetLeft="0dp"
-                    android:insetRight="0dp"
-                    app:iconTint="#A8A8A8"
-                    app:backgroundTint="@color/button_background_col"/>
+                <LinearLayout
+                    android:id="@+id/extendedTopBarContainer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/topWebSearchButton"
-                    style="@style/Widget.Material3.Button.IconButton.Filled"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginEnd="2dp"
-                    app:icon="@drawable/ic_websearch"
-                    app:iconGravity="textStart"
-                    app:iconSize="28dp"
-                    app:cornerRadius="24dp"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-                    android:insetLeft="0dp"
-                    android:insetRight="0dp"
-                    app:iconTint="#A8A8A8"
-                    app:backgroundTint="@color/button_background_col"/>
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/topReasoningButton"
+                        style="@style/Widget.Material3.Button.IconButton"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        app:icon="@drawable/ic_reasoning"
+                        app:iconSize="20dp"
+                        app:iconTint="@color/xai_mute"
+                        app:backgroundTint="@android:color/transparent" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/topStreamButton"
-                    style="@style/Widget.Material3.Button.IconButton.Filled"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginEnd="2dp"
-                    app:icon="@drawable/ic_stream"
-                    app:iconGravity="textStart"
-                    app:iconSize="28dp"
-                    app:cornerRadius="24dp"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-                    android:insetLeft="0dp"
-                    android:insetRight="0dp"
-                    app:iconTint="#A8A8A8"
-                    app:backgroundTint="@color/button_background_col"/>
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/topWebSearchButton"
+                        style="@style/Widget.Material3.Button.IconButton"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        app:icon="@drawable/ic_websearch"
+                        app:iconSize="20dp"
+                        app:iconTint="@color/xai_mute"
+                        app:backgroundTint="@android:color/transparent" />
 
-                <!-- <com.google.android.material.button.MaterialButton
-                    android:id="@+id/topConvoButton"
-                    style="@style/Widget.Material3.Button.IconButton.Filled"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginEnd="2dp"
-                    app:icon="@drawable/ic_convo"
-                    app:iconGravity="textStart"
-                    app:iconSize="28dp"
-                    app:cornerRadius="24dp"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-                    android:insetLeft="0dp"
-                    android:insetRight="0dp"
-                    app:iconTint="#A8A8A8"
-                    app:backgroundTint="@color/button_background_col"/> -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/topToolsButton"
-                    style="@style/Widget.Material3.Button.IconButton.Filled"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginEnd="2dp"
-                    app:icon="@drawable/ic_tools"
-                    app:iconGravity="textStart"
-                    app:iconSize="28dp"
-                    app:cornerRadius="24dp"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-                    android:insetLeft="0dp"
-                    android:insetRight="0dp"
-                    app:iconTint="#A8A8A8"
-                    app:backgroundTint="@color/button_background_col"/>
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/topStreamButton"
+                        style="@style/Widget.Material3.Button.IconButton"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        app:icon="@drawable/ic_stream"
+                        app:iconSize="20dp"
+                        app:iconTint="@color/xai_mute"
+                        app:backgroundTint="@android:color/transparent" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/topPresetsButton"
-                    style="@style/Widget.Material3.Button.IconButton.Filled"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginEnd="2dp"
-                    app:icon="@drawable/ic_presets"
-                    app:iconGravity="textStart"
-                    app:iconSize="28dp"
-                    app:cornerRadius="24dp"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-                    android:insetLeft="0dp"
-                    android:insetRight="0dp"
-                    app:iconTint="#A8A8A8"
-                    app:backgroundTint="@color/button_background_col"/>
+                    <!-- kept for id stability; commented in original as topConvo -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/topConvoButton"
+                        style="@style/Widget.Material3.Button.IconButton"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:visibility="gone"
+                        app:icon="@drawable/ic_convo"
+                        app:iconSize="20dp"
+                        app:iconTint="@color/xai_mute"
+                        app:backgroundTint="@android:color/transparent" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/topSettingsButton"
-                    style="@style/Widget.Material3.Button.IconButton.Filled"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    app:icon="@drawable/ic_settings"
-                    app:iconGravity="textStart"
-                    app:iconSize="28dp"
-                    app:cornerRadius="24dp"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-                    android:insetLeft="0dp"
-                    android:insetRight="0dp"
-                    app:iconTint="#A8A8A8"
-                    app:backgroundTint="@color/button_background_col"/>
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/topToolsButton"
+                        style="@style/Widget.Material3.Button.IconButton"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        app:icon="@drawable/ic_tools"
+                        app:iconSize="20dp"
+                        app:iconTint="@color/xai_mute"
+                        app:backgroundTint="@android:color/transparent" />
 
-            </LinearLayout>
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/topPresetsButton"
+                        style="@style/Widget.Material3.Button.IconButton"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        app:icon="@drawable/ic_presets"
+                        app:iconSize="20dp"
+                        app:iconTint="@color/xai_mute"
+                        app:backgroundTint="@android:color/transparent" />
 
-
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/topSettingsButton"
+                        style="@style/Widget.Material3.Button.IconButton"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        app:icon="@drawable/ic_settings"
+                        app:iconSize="20dp"
+                        app:iconTint="@color/xai_mute"
+                        app:backgroundTint="@android:color/transparent" />
+                </LinearLayout>
+            </HorizontalScrollView>
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-
+        <!-- ── Chat canvas ── -->
         <FrameLayout
             android:id="@+id/chatFrameView"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:background="?attr/colorSurface"
-            android:layout_weight="1">
+            android:layout_weight="1"
+            android:animateLayoutChanges="true"
+            android:background="@color/xai_canvas">
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/chatRecyclerView"
-                android:background="?attr/colorSurface"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:background="@color/xai_canvas"
                 android:clipToPadding="false"
-                android:paddingTop="8dp"
-                android:paddingStart="0dp"
-                android:paddingEnd="0dp"
-                android:paddingBottom="8dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="16dp"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
-            <ImageView
-                android:id="@+id/centerWatermarkIcon"
-                android:layout_width="160dp"
-                android:layout_height="160dp"
+
+            <!-- Empty state: small Grok mark, no text (Grok-style quiet canvas) -->
+            <FrameLayout
+                android:id="@+id/emptyStateContainer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:layout_gravity="center"
-                android:src="@drawable/ic_iconpage"
-                android:alpha="0.50"
-                android:contentDescription="Watermark"
                 android:clickable="false"
-                android:visibility="visible"
-                android:focusable="false" />
+                android:focusable="false">
+
+                <ImageView
+                    android:id="@+id/centerWatermarkIcon"
+                    android:layout_width="260dp"
+                    android:layout_height="260dp"
+                    android:layout_gravity="center"
+                    android:layout_marginBottom="80dp"
+                    android:src="@drawable/ic_grok_mark_mono"
+                    android:alpha="0.15"
+                    android:contentDescription="@string/app_name"
+                    android:clickable="false"
+                    android:focusable="false"
+                    android:scaleType="fitCenter" />
+            </FrameLayout>
+
             <View
                 android:id="@+id/dimOverlay"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:visibility="gone"
-                android:background="#000000"
+                android:background="@color/xai_canvas"
                 android:clickable="true"
                 android:focusable="true"
-                android:alpha="0.8" />
+                android:alpha="0.72" />
+
+            <!-- Overflow tools panel (menu) — premium Grok-style spacing -->
             <LinearLayout
                 android:id="@+id/headerContainer"
                 android:layout_width="wrap_content"
@@ -402,12 +323,12 @@
                 android:layout_gravity="center"
                 android:clickable="true"
                 android:focusable="true"
-                android:background="@drawable/bg_rounded_frame"
+                android:background="@drawable/bg_menu_panel"
                 android:visibility="gone"
-                android:layout_marginTop="2dp"
                 android:orientation="vertical"
-                android:padding="8dp">
-
+                android:animateLayoutChanges="true"
+                android:padding="20dp"
+                android:elevation="8dp">
 
                 <LinearLayout
                     android:id="@+id/buttonsContainer"
@@ -423,42 +344,29 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
+                        android:gravity="center"
                         android:layout_gravity="center_horizontal">
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/reasoningButton"
-                            style="@style/Widget.Material3.Button.IconButton.Filled"
-                            app:icon="@drawable/ic_reasoning"
+                            style="@style/Widget.Material3.Button.IconButton"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
-                            app:iconGravity="textStart"
-                            app:iconSize="28dp"
-                            app:cornerRadius="24dp"
-                            android:layout_marginEnd="14dp"
-                            android:insetTop="0dp"
-                            android:insetBottom="0dp"
-                            android:insetLeft="0dp"
-                            android:insetRight="0dp"
-                            app:iconTint="#A8A8A8"
-                            app:backgroundTint="@color/button_background_col"/>
+                            android:layout_marginEnd="12dp"
+                            app:icon="@drawable/ic_reasoning"
+                            app:iconSize="24dp"
+                            app:iconTint="@color/xai_body"
+                            app:backgroundTint="@color/xai_canvas_soft" />
+
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/webSearchButton"
-                            style="@style/Widget.Material3.Button.IconButton.Filled"
-                            app:icon="@drawable/ic_websearch"
+                            style="@style/Widget.Material3.Button.IconButton"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
-                            app:iconGravity="textStart"
-                            app:iconSize="28dp"
-                            app:cornerRadius="24dp"
-                            android:insetTop="0dp"
-                            android:insetBottom="0dp"
-                            android:insetLeft="0dp"
-                            android:insetRight="0dp"
-                            app:iconTint="#A8A8A8"
-                            app:backgroundTint="@color/button_background_col"/>
-
-
-
+                            app:icon="@drawable/ic_websearch"
+                            app:iconSize="24dp"
+                            app:iconTint="@color/xai_body"
+                            app:backgroundTint="@color/xai_canvas_soft" />
                     </LinearLayout>
 
                     <LinearLayout
@@ -466,238 +374,171 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="14dp"
+                        android:gravity="center"
                         android:layout_gravity="center_horizontal">
+
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/toolsButton"
-                            style="@style/Widget.Material3.Button.IconButton.Filled"
-                            app:icon="@drawable/ic_tools"
+                            style="@style/Widget.Material3.Button.IconButton"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
-                            app:iconGravity="textStart"
-                            app:iconSize="28dp"
-                            app:cornerRadius="24dp"
-                            android:layout_marginEnd="14dp"
-                            android:insetTop="0dp"
-                            android:insetBottom="0dp"
-                            android:insetLeft="0dp"
-                            android:insetRight="0dp"
-                            app:iconTint="#A8A8A8"
-                            app:backgroundTint="@color/button_background_col"/>
+                            android:layout_marginEnd="12dp"
+                            app:icon="@drawable/ic_tools"
+                            app:iconSize="24dp"
+                            app:iconTint="@color/xai_body"
+                            app:backgroundTint="@color/xai_canvas_soft" />
+
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/streamButton"
-                            style="@style/Widget.Material3.Button.IconButton.Filled"
-                            app:icon="@drawable/ic_stream"
+                            style="@style/Widget.Material3.Button.IconButton"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
-                            app:iconGravity="textStart"
-                            app:iconSize="28dp"
-                            app:cornerRadius="24dp"
-                            android:layout_marginEnd="14dp"
-                            android:insetTop="0dp"
-                            android:insetBottom="0dp"
-                            android:insetLeft="0dp"
-                            android:insetRight="0dp"
-                            app:iconTint="#A8A8A8"
-                            app:backgroundTint="@color/button_background_col"/>
+                            android:layout_marginEnd="12dp"
+                            app:icon="@drawable/ic_stream"
+                            app:iconSize="24dp"
+                            app:iconTint="@color/xai_body"
+                            app:backgroundTint="@color/xai_canvas_soft" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/presetsButton"
-                            style="@style/Widget.Material3.Button.IconButton.Filled"
-                            app:icon="@drawable/ic_presets"
+                            style="@style/Widget.Material3.Button.IconButton"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
-                            app:iconGravity="textStart"
-                            app:iconSize="28dp"
-                            app:cornerRadius="24dp"
-                            android:insetTop="0dp"
-                            android:insetBottom="0dp"
-                            android:layout_marginEnd="14dp"
-                            android:insetLeft="0dp"
-                            android:insetRight="0dp"
-                            app:iconTint="#A8A8A8"
-                            app:backgroundTint="@color/button_background_col"/>
+                            android:layout_marginEnd="12dp"
+                            app:icon="@drawable/ic_presets"
+                            app:iconSize="24dp"
+                            app:iconTint="@color/xai_body"
+                            app:backgroundTint="@color/xai_canvas_soft" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/settingsButton"
-                            style="@style/Widget.Material3.Button.IconButton.Filled"
+                            style="@style/Widget.Material3.Button.IconButton"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
                             app:icon="@drawable/ic_settings"
-                            app:iconSize="28dp"
-                            app:iconGravity="textStart"
-                            app:cornerRadius="24dp"
-                            app:iconTint="#A8A8A8"
-                            app:backgroundTint="@color/button_background_col"
-                            android:insetTop="0dp"
-                            android:insetBottom="0dp"
-                            android:insetLeft="0dp"
-                            android:insetRight="0dp"/>
-
+                            app:iconSize="24dp"
+                            app:iconTint="@color/xai_body"
+                            app:backgroundTint="@color/xai_canvas_soft" />
                     </LinearLayout>
+
                     <LinearLayout
                         android:id="@+id/buttonsRowAux"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:layout_marginTop="12dp"
-                        android:visibility="visible"
+                        android:layout_marginTop="14dp"
+                        android:gravity="center"
                         android:layout_gravity="center_horizontal">
+
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/convoButton"
-                            style="@style/Widget.Material3.Button.IconButton.Filled"
-                            app:icon="@drawable/ic_convo"
+                            style="@style/Widget.Material3.Button.IconButton"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
-                            app:iconGravity="textStart"
-                            app:iconSize="28dp"
-                            app:cornerRadius="24dp"
-                            android:layout_marginEnd="14dp"
-                            android:insetTop="0dp"
-                            android:insetBottom="0dp"
-                            android:insetLeft="0dp"
-                            android:insetRight="0dp"
-                            app:iconTint="#A8A8A8"
-                            app:backgroundTint="@color/button_background_col"/>
+                            android:layout_marginEnd="12dp"
+                            app:icon="@drawable/ic_convo"
+                            app:iconSize="24dp"
+                            app:iconTint="@color/xai_body"
+                            app:backgroundTint="@color/xai_canvas_soft" />
+
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/fontsButton"
-                            style="@style/Widget.Material3.Button.IconButton.Filled"
-                            app:icon="@drawable/ic_fonts"
+                            style="@style/Widget.Material3.Button.IconButton"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
-                            app:iconGravity="textStart"
-                            app:iconSize="28dp"
-                            app:cornerRadius="24dp"
-                            android:insetTop="0dp"
-                            android:layout_marginEnd="14dp"
-                            android:insetBottom="0dp"
-                            android:insetLeft="0dp"
-                            android:insetRight="0dp"
-                            app:iconTint="#A8A8A8"
-                            app:backgroundTint="@color/button_background_col"/>
+                            android:layout_marginEnd="12dp"
+                            app:icon="@drawable/ic_fonts"
+                            app:iconSize="24dp"
+                            app:iconTint="@color/xai_body"
+                            app:backgroundTint="@color/xai_canvas_soft" />
+
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/fontSizeButton"
-                            style="@style/Widget.Material3.Button.IconButton.Filled"
-                            app:icon="@drawable/ic_format"
+                            style="@style/Widget.Material3.Button.IconButton"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
-                            app:iconGravity="textStart"
-                            app:iconSize="28dp"
-                            app:cornerRadius="24dp"
-                            android:insetTop="0dp"
-                            android:insetBottom="0dp"
-                            android:insetLeft="0dp"
-                            android:insetRight="0dp"
-                            app:iconTint="#A8A8A8"
-                            app:backgroundTint="@color/button_background_col"/>
-
+                            app:icon="@drawable/ic_format"
+                            app:iconSize="24dp"
+                            app:iconTint="@color/xai_body"
+                            app:backgroundTint="@color/xai_canvas_soft" />
                     </LinearLayout>
 
                     <LinearLayout
                         android:id="@+id/buttonsRow2"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="16dp"
                         android:orientation="horizontal"
                         android:padding="8dp"
                         android:background="@drawable/bg_charcoal_rounded"
+                        android:gravity="center"
                         android:layout_gravity="center_horizontal">
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/copyChatButton"
-                            style="@style/Widget.Material3.Button.IconButton.Filled"
+                            style="@style/Widget.Material3.Button.IconButton"
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:layout_marginEnd="6dp"
                             app:icon="@drawable/ic_copi"
-                            android:layout_width="48dp"
-                            android:layout_height="48dp"
-                            app:iconGravity="textStart"
-                            app:iconSize="28dp"
-                            app:cornerRadius="24dp"
-                            android:layout_marginEnd="14dp"
-                            android:insetTop="0dp"
-                            android:insetBottom="0dp"
-                            android:insetLeft="0dp"
-                            android:insetRight="0dp"
-                            app:iconTint="#A8A8A8"
-                            app:backgroundTint="@color/button_background_col" />
+                            app:iconSize="22dp"
+                            app:iconTint="@color/xai_body"
+                            app:backgroundTint="@android:color/transparent" />
+
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/saveMarkdownFileButton"
-                            style="@style/Widget.Material3.Button.IconButton.Filled"
+                            style="@style/Widget.Material3.Button.IconButton"
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:layout_marginEnd="6dp"
                             app:icon="@drawable/ic_markdown"
-                            android:layout_width="48dp"
-                            android:layout_marginEnd="14dp"
-                            android:layout_height="48dp"
-                            app:iconGravity="textStart"
-                            app:iconSize="28dp"
-                            app:cornerRadius="24dp"
-                            android:insetTop="0dp"
-                            android:insetBottom="0dp"
-                            android:insetLeft="0dp"
-                            android:insetRight="0dp"
-                            app:iconTint="#A8A8A8"
-                            app:backgroundTint="@color/button_background_col"/>
+                            app:iconSize="22dp"
+                            app:iconTint="@color/xai_body"
+                            app:backgroundTint="@android:color/transparent" />
+
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/saveHtmlButton"
-                            style="@style/Widget.Material3.Button.IconButton.Filled"
+                            style="@style/Widget.Material3.Button.IconButton"
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:layout_marginEnd="6dp"
                             app:icon="@drawable/ic_html"
-                            android:layout_width="48dp"
-                            android:layout_marginEnd="14dp"
-                            android:layout_height="48dp"
-                            app:iconGravity="textStart"
-                            app:iconSize="28dp"
-                            app:cornerRadius="24dp"
-                            android:insetTop="0dp"
-                            android:insetBottom="0dp"
-                            android:insetLeft="0dp"
-                            android:insetRight="0dp"
-                            app:iconTint="#A8A8A8"
-                            app:backgroundTint="@color/button_background_col"/>
+                            app:iconSize="22dp"
+                            app:iconTint="@color/xai_body"
+                            app:backgroundTint="@android:color/transparent" />
+
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/saveEpubButton"
-                            style="@style/Widget.Material3.Button.IconButton.Filled"
+                            style="@style/Widget.Material3.Button.IconButton"
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:layout_marginEnd="6dp"
                             app:icon="@drawable/ic_epub"
-                            android:layout_width="48dp"
-                            android:layout_marginEnd="14dp"
-                            android:layout_height="48dp"
-                            app:iconGravity="textStart"
-                            app:iconSize="28dp"
-                            app:cornerRadius="24dp"
-                            android:insetTop="0dp"
-                            android:insetBottom="0dp"
-                            android:insetLeft="0dp"
-                            android:insetRight="0dp"
-                            app:iconTint="#A8A8A8"
-                            app:backgroundTint="@color/button_background_col"/>
+                            app:iconSize="22dp"
+                            app:iconTint="@color/xai_body"
+                            app:backgroundTint="@android:color/transparent" />
+
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/printButton"
-                            style="@style/Widget.Material3.Button.IconButton.Filled"
+                            style="@style/Widget.Material3.Button.IconButton"
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:layout_marginEnd="6dp"
                             app:icon="@drawable/ic_print"
-                            android:layout_width="48dp"
-                            android:layout_marginEnd="14dp"
-                            android:layout_height="48dp"
-                            app:iconGravity="textStart"
-                            app:iconSize="28dp"
-                            app:cornerRadius="24dp"
-                            android:insetTop="0dp"
-                            android:insetBottom="0dp"
-                            android:insetLeft="0dp"
-                            android:insetRight="0dp"
-                            app:iconTint="#A8A8A8"
-                            app:backgroundTint="@color/button_background_col"/>
+                            app:iconSize="22dp"
+                            app:iconTint="@color/xai_body"
+                            app:backgroundTint="@android:color/transparent" />
+
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/pdfChatButton"
-                            style="@style/Widget.Material3.Button.IconButton.Filled"
+                            style="@style/Widget.Material3.Button.IconButton"
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
                             app:icon="@drawable/ic_pdfnew"
-                            android:layout_width="48dp"
-                            android:layout_height="48dp"
-                            app:iconGravity="textStart"
-                            app:iconSize="28dp"
-                            app:cornerRadius="24dp"
-                            android:insetTop="0dp"
-                            android:insetBottom="0dp"
-                            android:insetLeft="0dp"
-                            android:insetRight="0dp"
-                            app:iconTint="#A8A8A8"
-                            app:backgroundTint="@color/button_background_col"/>
+                            app:iconSize="22dp"
+                            app:iconTint="@color/xai_body"
+                            app:backgroundTint="@android:color/transparent" />
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
@@ -707,179 +548,147 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom|center_horizontal"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="12dp"
                 app:cardCornerRadius="12dp"
-                app:cardBackgroundColor="#333333"
+                app:cardBackgroundColor="@color/xai_canvas_card"
+                app:cardElevation="0dp"
                 android:visibility="gone"
-                tools:visibility="visible">
+                tools:visibility="gone">
 
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:background="#1f1f1f"
+                    android:background="@color/xai_canvas_soft"
                     android:padding="8dp">
 
                     <ImageView
                         android:id="@+id/previewImageView"
-                        android:layout_width="260dp"
-                        android:layout_height="200dp"
+                        android:layout_width="220dp"
+                        android:layout_height="160dp"
                         android:scaleType="fitCenter"
-                        android:background="#1f1f1f"
+                        android:background="@color/xai_canvas_soft"
                         tools:src="@tools:sample/avatars" />
 
                     <ImageButton
                         android:id="@+id/removeAttachmentButton"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
                         android:layout_marginStart="8dp"
                         android:src="@android:drawable/ic_menu_close_clear_cancel"
-                        android:background="#1f1f1f"
-                        app:tint="#A8A8A8" />
+                        android:background="@android:color/transparent"
+                        app:tint="@color/xai_icon" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
+
             <LinearLayout
                 android:id="@+id/extBG"
-                android:elevation="2dp"
-                android:layout_width="48dp"
+                android:layout_width="44dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom|end"
-                android:layout_marginEnd="2dp"
-                android:visibility="visible"
+                android:layout_marginEnd="6dp"
+                android:layout_marginBottom="4dp"
                 android:orientation="vertical"
                 android:padding="2dp">
+
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/scrollToTopButton"
-                    style="@style/Widget.Material3.Button.IconButton.Filled"
-                    app:icon="@drawable/ic_top"
+                    style="@style/Widget.Material3.Button.IconButton"
                     android:layout_width="36dp"
                     android:layout_height="36dp"
-                    android:elevation="2dp"
-                    app:iconGravity="textStart"
-                    app:iconSize="28dp"
-                    app:cornerRadius="18dp"
-                    android:layout_marginBottom="16dp"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-                    android:insetLeft="0dp"
+                    android:layout_marginBottom="8dp"
                     android:layout_gravity="center_horizontal"
-                    android:insetRight="0dp"
-                    app:iconTint="#A8A8A8"
-                    android:alpha="0.5"
-                    app:backgroundTint="@color/button_background_col"
-                    android:visibility="gone" />
+                    android:alpha="0.55"
+                    android:visibility="gone"
+                    app:icon="@drawable/ic_top"
+                    app:iconSize="20dp"
+                    app:iconTint="@color/xai_mute"
+                    app:backgroundTint="@color/xai_canvas_card" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/scrollToBottomButton"
-                    style="@style/Widget.Material3.Button.IconButton.Filled"
-                    app:icon="@drawable/ic_bottom"
-                    android:alpha="0.5"
+                    style="@style/Widget.Material3.Button.IconButton"
                     android:layout_width="36dp"
                     android:layout_height="36dp"
+                    android:layout_marginBottom="8dp"
                     android:layout_gravity="center_horizontal"
-                    android:elevation="2dp"
-                    app:iconGravity="textStart"
-                    app:iconSize="28dp"
-                    app:cornerRadius="18dp"
-                    android:layout_marginBottom="16dp"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-                    android:insetLeft="0dp"
-                    android:insetRight="0dp"
-                    app:iconTint="#A8A8A8"
-                    app:backgroundTint="@color/button_background_col"
-                    android:visibility="gone" />
+                    android:alpha="0.55"
+                    android:visibility="gone"
+                    app:icon="@drawable/ic_bottom"
+                    app:iconSize="20dp"
+                    app:iconTint="@color/xai_mute"
+                    app:backgroundTint="@color/xai_canvas_card" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/presetsButton2"
-                    style="@style/Widget.Material3.Button.IconButton.Filled"
-                    app:icon="@drawable/ic_presets"
+                    style="@style/Widget.Material3.Button.IconButton"
                     android:layout_width="36dp"
-                    android:alpha="0.5"
                     android:layout_height="36dp"
-                    app:iconGravity="textStart"
                     android:layout_gravity="center_horizontal"
-                    app:iconSize="28dp"
-                    app:cornerRadius="18dp"
-                    android:insetTop="0dp"
-                    android:layout_marginBottom="12dp"
-                    android:insetBottom="0dp"
-                    android:insetLeft="0dp"
-                    android:insetRight="0dp"
+                    android:alpha="0.55"
                     android:visibility="gone"
-                    app:iconTint="#A8A8A8"
-                    app:backgroundTint="@color/button_background_col" />
-
+                    app:icon="@drawable/ic_presets"
+                    app:iconSize="20dp"
+                    app:iconTint="@color/xai_mute"
+                    app:backgroundTint="@color/xai_canvas_card" />
             </LinearLayout>
+
             <LinearLayout
                 android:id="@+id/fontSizeControlsContainer"
                 android:layout_width="48dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom|start"
-                android:layout_marginStart="2dp"
+                android:layout_marginStart="6dp"
                 android:layout_marginBottom="8dp"
                 android:orientation="vertical"
                 android:visibility="gone"
                 android:padding="2dp">
+
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnIncreaseFont"
-                    style="@style/Widget.Material3.Button.IconButton.Filled"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginTop="4dp"
+                    style="@style/Widget.Material3.Button.IconButton"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
                     app:icon="@drawable/ic_plus"
-                    app:iconSize="24dp"
-                    app:cornerRadius="24dp"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-                    android:insetLeft="0dp"
-                    android:insetRight="0dp"
-                    app:iconTint="#A8A8A8"
-                    app:backgroundTint="@color/button_background_col"
+                    app:iconSize="20dp"
+                    app:iconTint="@color/xai_body"
+                    app:backgroundTint="@color/xai_canvas_card"
                     android:contentDescription="Increase font" />
+
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnDecreaseFont"
-                    style="@style/Widget.Material3.Button.IconButton.Filled"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
+                    style="@style/Widget.Material3.Button.IconButton"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
                     app:icon="@drawable/ic_minus"
-                    app:iconSize="24dp"
-                    app:cornerRadius="24dp"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-                    android:insetLeft="0dp"
-                    android:insetRight="0dp"
-                    app:iconTint="#A8A8A8"
-                    app:backgroundTint="@color/button_background_col"
+                    app:iconSize="20dp"
+                    app:iconTint="@color/xai_body"
+                    app:backgroundTint="@color/xai_canvas_card"
                     android:contentDescription="Decrease font" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnDoneFont"
-                    style="@style/Widget.Material3.Button.IconButton.Filled"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginTop="4dp"
+                    style="@style/Widget.Material3.Button.IconButton"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
                     app:icon="@drawable/ic_check"
-                    app:iconSize="24dp"
-                    app:cornerRadius="24dp"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-                    android:insetLeft="0dp"
-                    android:insetRight="0dp"
-                    app:iconTint="#A8A8A8"
-                    app:backgroundTint="@color/button_background_col"
+                    app:iconSize="20dp"
+                    app:iconTint="@color/xai_body"
+                    app:backgroundTint="@color/xai_canvas_card"
                     android:contentDescription="Done" />
             </LinearLayout>
+
             <View
                 android:id="@+id/progressBar"
                 android:layout_width="match_parent"
-                android:layout_height="4dp"
+                android:layout_height="2dp"
                 android:layout_gravity="top"
-                android:background="#6D2E0F"
+                android:background="@color/xai_progress"
                 android:scaleX="0"
                 android:visibility="visible"
                 android:elevation="4dp" />
+
             <View
                 android:id="@+id/borderOverlayView"
                 android:layout_width="match_parent"
@@ -889,40 +698,43 @@
                 android:focusableInTouchMode="false" />
         </FrameLayout>
 
+        <!-- ── Bottom composer: Grok-clean pill, transparent icons, filled send ── -->
         <LinearLayout
             android:id="@+id/chatInputContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="2dp"
-            android:background="@drawable/bg_rounded_lin"
-            android:gravity="bottom">
+            android:padding="4dp"
+            android:background="@drawable/bg_composer_pill_tall"
+            android:gravity="top">
 
             <LinearLayout
                 android:id="@+id/leftButtonContainer"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:gravity="bottom">
-
+                android:gravity="top">
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/menuButton"
                     style="@style/Widget.Material3.Button.IconButton.Filled"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
-                    app:backgroundTint="@color/button_background_col"
+                    app:backgroundTint="@android:color/transparent"
+                    app:rippleColor="@color/xai_canvas_mid"
                     app:cornerRadius="24dp"
-                    app:icon="@drawable/ic_menudot"
+                    app:icon="@drawable/ic_grok_menu"
                     app:iconGravity="textStart"
                     app:iconPadding="0dp"
                     app:iconSize="24dp"
-                    app:iconTint="#A8A8A8"
+                    app:iconTint="@color/xai_body"
                     android:layout_marginBottom="2dp"
                     android:insetLeft="0dp"
                     android:insetTop="0dp"
                     android:insetRight="0dp"
                     android:insetBottom="0dp"
                     android:padding="0dp" />
+
+                <!-- Mic — transparent, visible by default -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/speechButton"
                     style="@style/Widget.Material3.Button.IconButton.Filled"
@@ -938,8 +750,11 @@
                     android:insetLeft="0dp"
                     android:insetRight="0dp"
                     android:visibility="visible"
-                    app:iconTint="#A8A8A8"
-                    app:backgroundTint="@color/button_background_col" />
+                    app:iconTint="@color/xai_body"
+                    app:backgroundTint="@android:color/transparent"
+                    app:rippleColor="@color/xai_canvas_mid" />
+
+                <!-- Clear — transparent, hidden by default -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/clearButton"
                     style="@style/Widget.Material3.Button.IconButton.Filled"
@@ -954,10 +769,12 @@
                     android:insetBottom="0dp"
                     android:insetLeft="0dp"
                     android:insetRight="0dp"
-                    android:visibility="visible"
-                    app:iconTint="#A8A8A8"
-                    app:backgroundTint="@color/button_background_col" />
+                    android:visibility="gone"
+                    app:iconTint="@color/xai_body"
+                    app:backgroundTint="@android:color/transparent"
+                    app:rippleColor="@color/xai_canvas_mid" />
 
+                <!-- Reset — transparent, visible by default (new chat) -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/resetChatButton"
                     style="@style/Widget.Material3.Button.IconButton.Filled"
@@ -967,20 +784,15 @@
                     app:iconGravity="textStart"
                     app:iconSize="28dp"
                     app:cornerRadius="24dp"
-
                     android:insetTop="0dp"
                     android:insetBottom="0dp"
                     android:insetLeft="0dp"
                     android:insetRight="0dp"
-                    app:iconTint="#A8A8A8"
-                    app:backgroundTint="@color/button_background_col" />
-
+                    android:visibility="visible"
+                    app:iconTint="@color/xai_body"
+                    app:backgroundTint="@android:color/transparent"
+                    app:rippleColor="@color/xai_canvas_mid" />
             </LinearLayout>
-            <!--  <LinearLayout
-                  android:layout_width="wrap_content"
-                  android:layout_height="match_parent"
-                  android:orientation="vertical"
-                  android:gravity="bottom">-->
 
             <LinearLayout
                 android:id="@+id/centerInputWrapper"
@@ -988,6 +800,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:orientation="vertical">
+
                 <EditText
                     android:id="@+id/chatEditText"
                     android:layout_width="match_parent"
@@ -995,7 +808,7 @@
                     android:layout_marginStart="4dp"
                     android:layout_marginEnd="4dp"
                     android:background="@drawable/bg_rounded"
-                    android:hint="Type a message..."
+                    android:hint="@string/grok_composer_hint"
                     android:inputType="textMultiLine|textCapSentences"
                     android:maxLines="5"
                     android:minHeight="48dp"
@@ -1004,14 +817,14 @@
                     android:paddingTop="4dp"
                     android:paddingBottom="4dp"
                     android:textSize="16sp"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textColorHint="?android:attr/textColorSecondary"
+                    android:textColor="@color/xai_ink"
+                    android:textColorHint="@color/xai_body"
                     android:importantForAutofill="no"
                     android:textCursorDrawable="@drawable/cursor_c"
-                    android:textColorHighlight="@color/spinner_item_color"
+                    android:textColorHighlight="@color/xai_accent_sunset_soft"
                     android:gravity="top"
                     android:scrollbars="vertical"
-                    android:fadeScrollbars="false"
+                    android:fadeScrollbars="true"
                     tools:ignore="VisualLintTextFieldSize" />
 
                 <LinearLayout
@@ -1022,37 +835,36 @@
                     android:gravity="center_vertical"
                     android:visibility="gone"
                     android:paddingTop="8dp" />
-
             </LinearLayout>
-
-
-
 
             <LinearLayout
                 android:id="@+id/rightButtonContainer"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:gravity="bottom">
+                android:gravity="top">
 
+                <!-- Send — filled grey circle, white arrow (Grok primary CTA) -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/sendChatButton"
                     style="@style/Widget.Material3.Button.IconButton.Filled"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
-                    app:backgroundTint="@color/bgreen"
+                    app:backgroundTint="@color/xai_canvas_mid"
                     app:cornerRadius="24dp"
                     app:icon="@drawable/ic_send"
                     app:iconGravity="textStart"
                     app:iconPadding="0dp"
                     app:iconSize="24dp"
                     android:layout_marginBottom="2dp"
-                    app:iconTint="#A8A8A8"
+                    app:iconTint="@color/xai_ink"
                     android:insetLeft="0dp"
                     android:insetTop="0dp"
                     android:insetRight="0dp"
                     android:insetBottom="0dp"
                     android:padding="0dp" />
+
+                <!-- Utility — transparent, hidden by default -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/utilityButton"
                     style="@style/Widget.Material3.Button.IconButton.Filled"
@@ -1061,16 +873,18 @@
                     android:layout_height="48dp"
                     app:iconGravity="textStart"
                     app:iconSize="28dp"
-                    android:visibility="visible"
+                    android:visibility="gone"
                     app:cornerRadius="24dp"
                     android:layout_marginBottom="2dp"
                     android:insetTop="0dp"
                     android:insetBottom="0dp"
                     android:insetLeft="0dp"
                     android:insetRight="0dp"
-                    app:iconTint="#A8A8A8"
-                    app:backgroundTint="@color/button_background_col" />
+                    app:iconTint="@color/xai_body"
+                    app:backgroundTint="@android:color/transparent"
+                    app:rippleColor="@color/xai_canvas_mid" />
 
+                <!-- System msg — transparent, always visible (oxproxion feature) -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/systemMessageButton"
                     style="@style/Widget.Material3.Button.IconButton.Filled"
@@ -1080,13 +894,13 @@
                     app:iconGravity="textStart"
                     app:iconSize="28dp"
                     app:cornerRadius="24dp"
-
                     android:insetTop="0dp"
                     android:insetBottom="0dp"
                     android:insetLeft="0dp"
                     android:insetRight="0dp"
-                    app:iconTint="#A8A8A8"
-                    app:backgroundTint="@color/sysbutton_background_col" />
+                    app:iconTint="@color/xai_body"
+                    app:backgroundTint="@android:color/transparent"
+                    app:rippleColor="@color/xai_canvas_mid" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

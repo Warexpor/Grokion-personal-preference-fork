@@ -593,6 +593,47 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun autoSaveChat() {
+        viewModelScope.launch {
+            val messages = _chatMessages.value ?: return@launch
+            if (messages.isEmpty() || messages.none { it.role == "assistant" }) return@launch
+
+            // Already saved — reuse existing title, don't regenerate on every message
+            if (currentSessionId != null) {
+                val existing = repository.getSessionById(currentSessionId!!)
+                val reusedTitle = existing?.title
+                if (!reusedTitle.isNullOrBlank()) {
+                    saveCurrentChat(reusedTitle)
+                    return@launch
+                }
+            }
+
+            // First save — generate title via AI, fallback to first user message
+            val title = try {
+                var suggested = getSuggestedChatTitle()
+                if (suggested != null && suggested.startsWith("Error:")) suggested = null
+                suggested
+            } catch (_: Exception) {
+                null
+            }
+            val finalTitle = if (title.isNullOrBlank()) {
+                val firstUserMsg = messages.firstOrNull { it.role == "user" }
+                if (firstUserMsg != null) {
+                    val raw = getMessageText(firstUserMsg.content).trim()
+                    if (raw.length > 60) raw.take(57) + "..." else raw
+                } else {
+                    java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.US)
+                        .format(java.util.Date())
+                }
+            } else {
+                title
+            }
+            if (finalTitle.isNotBlank()) {
+                saveCurrentChat(finalTitle)
+            }
+        }
+    }
+
     fun loadChat(sessionId: Long) {
       //  generatedImages.clear()
         _isChatLoading.value = true
@@ -3095,6 +3136,63 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
+    /**
+     * Consume OpenAI-compatible SSE (and NDJSON fallback) from a chat stream.
+     * Invokes [onPayload] for each JSON event body. Skips comments/heartbeats.
+     * Does not stop early on [DONE] (some providers send trailing chunks after it).
+     */
+    private suspend fun forEachSseJsonPayload(
+        channel: ByteReadChannel,
+        onPayload: suspend (String) -> Unit
+    ) {
+        val dataLines = mutableListOf<String>()
+        suspend fun flushData() {
+            if (dataLines.isEmpty()) return
+            val payload = dataLines.joinToString("\n").trim()
+            dataLines.clear()
+            if (payload.isNotEmpty() &&
+                payload != "[DONE]" &&
+                !payload.equals("DONE", ignoreCase = true)
+            ) {
+                onPayload(payload)
+            }
+        }
+        try {
+            while (!channel.isClosedForRead) {
+                val line = channel.readLine() ?: break
+                when {
+                    line.isEmpty() -> flushData()
+                    line.startsWith(":") -> Unit // comment / keepalive
+                    line.startsWith("data:") -> {
+                        val value = when {
+                            line.startsWith("data: ") -> line.substring(6)
+                            line.startsWith("data:\t") -> line.substring(6)
+                            else -> line.substring(5).trimStart()
+                        }
+                        dataLines.add(value)
+                    }
+                    line.startsWith("event:") || line.startsWith("id:") || line.startsWith("retry:") -> Unit
+                    line.trimStart().startsWith("{") -> {
+                        flushData()
+                        onPayload(line.trim())
+                    }
+                    dataLines.isNotEmpty() -> dataLines.add(line)
+                }
+            }
+            flushData()
+        } catch (_: Exception) {
+            flushData()
+        }
+    }
+
+    private fun parseStreamChunk(jsonString: String): StreamedChatResponse? {
+        return try {
+            json.decodeFromString<StreamedChatResponse>(jsonString)
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     private suspend fun handleStreamedResponseLAN(
         modelForRequest: String,
         messagesForApiRequest: List<FlexibleMessage>,
@@ -3148,6 +3246,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 lanHttpClient.preparePost(activeChatUrl) {
                     header("Authorization", "Bearer $activeChatApiKey")
+                    header(HttpHeaders.Accept, "text/event-stream")
                     contentType(ContentType.Application.Json)
                     setBody(chatRequest)
                 }.execute { httpResponse ->
@@ -3171,123 +3270,116 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     val toolCallBuffer = mutableListOf<ToolCall>()
                     val accumulatedAnnotations = mutableListOf<Annotation>()
                     val accumulatedImages = mutableListOf<String>()
+                    var streamAborted = false
 
-                    while (!channel.isClosedForRead) {
-                        val line = channel.readLine() ?: continue
-                        if (line.startsWith("data:")) {
-                            val jsonString = line.substring(5).trim()
+                    forEachSseJsonPayload(channel) { jsonString ->
+                        if (streamAborted) return@forEachSseJsonPayload
+                        val chunk = parseStreamChunk(jsonString) ?: return@forEachSseJsonPayload
 
-                            if (jsonString == "[DONE]") continue
+                        chunk.error?.let { apiError ->
+                            val rawDetails = "Code: ${apiError.code ?: "unknown"} - ${apiError.message ?: "Mid-stream error"}"
+                            withContext(Dispatchers.Main) {
+                                handleError(Exception(rawDetails), thinkingMessage)
+                            }
+                            streamAborted = true
+                            return@forEachSseJsonPayload
+                        }
 
-                            try {
-                                val chunk = json.decodeFromString<StreamedChatResponse>(jsonString)
+                        val choice = chunk.choices.firstOrNull()
+                        finish_reason = choice?.finish_reason ?: finish_reason
+                        lastChoice = choice
+                        val delta = choice?.delta ?: return@forEachSseJsonPayload
+                        delta.annotations?.forEach { accumulatedAnnotations.add(it) }
 
-                                chunk.error?.let { apiError ->
-                                    val rawDetails = "Code: ${apiError.code ?: "unknown"} - ${apiError.message ?: "Mid-stream error"}"
-                                    withContext(Dispatchers.Main) {
-                                        handleError(Exception(rawDetails), thinkingMessage)
-                                    }
-                                    return@execute
-                                }
+                        var contentChanged = false
+                        var reasoningChanged = false
 
-                                val choice = chunk.choices.firstOrNull()
-                                finish_reason = choice?.finish_reason ?: finish_reason
-                                lastChoice = choice
-                                val delta = choice?.delta
-                                delta?.annotations?.forEach { accumulatedAnnotations.add(it) }
+                        if (!delta.content.isNullOrEmpty()) {
+                            val isFirstContentChunk = accumulatedResponse.isEmpty()
+                            accumulatedResponse += delta.content
+                            contentChanged = true
 
-                                var contentChanged = false
-                                var reasoningChanged = false
-
-                                if (!delta?.content.isNullOrEmpty()) {
-                                    val isFirstContentChunk = accumulatedResponse.isEmpty()
-                                    accumulatedResponse += delta.content
-                                    contentChanged = true
-
-                                    if (isFirstContentChunk) {
-                                        withContext(Dispatchers.Main) {
-                                            updateMessages { list ->
-                                                val index = list.indexOf(thinkingMessage)
-                                                if (index != -1) {
-                                                    list[index] = FlexibleMessage(
-                                                        role = "assistant",
-                                                        content = JsonPrimitive(accumulatedResponse),
-                                                        reasoning = accumulatedReasoning
-                                                    )
-                                                }
-                                            }
-                                        }
-                                        continue
-                                    }
-                                }
-
-                                if (delta?.reasoning_details?.isNotEmpty() == true) {
-                                    hasUsedReasoningDetails = true
-                                    delta.reasoning_details.forEach { detail ->
-                                        if (detail.type == "reasoning.text" && detail.text != null) {
-                                            if (!reasoningStarted) {
-                                                accumulatedReasoning = "```\n"
-                                                reasoningStarted = true
-                                            }
-                                            accumulatedReasoning += detail.text
-                                            reasoningChanged = true
+                            if (isFirstContentChunk) {
+                                withContext(Dispatchers.Main) {
+                                    updateMessages { list ->
+                                        val index = list.indexOf(thinkingMessage)
+                                        if (index != -1) {
+                                            list[index] = FlexibleMessage(
+                                                role = "assistant",
+                                                content = JsonPrimitive(accumulatedResponse),
+                                                reasoning = accumulatedReasoning
+                                            )
                                         }
                                     }
-                                } else if (!hasUsedReasoningDetails && !delta?.reasoning.isNullOrEmpty()) {
+                                }
+                                return@forEachSseJsonPayload
+                            }
+                        }
+
+                        if (delta.reasoning_details?.isNotEmpty() == true) {
+                            hasUsedReasoningDetails = true
+                            delta.reasoning_details.forEach { detail ->
+                                if (detail.type == "reasoning.text" && detail.text != null) {
                                     if (!reasoningStarted) {
                                         accumulatedReasoning = "```\n"
                                         reasoningStarted = true
                                     }
-                                    accumulatedReasoning += delta.reasoning
+                                    accumulatedReasoning += detail.text
                                     reasoningChanged = true
                                 }
+                            }
+                        } else if (!hasUsedReasoningDetails && !delta.reasoning.isNullOrEmpty()) {
+                            if (!reasoningStarted) {
+                                accumulatedReasoning = "```\n"
+                                reasoningStarted = true
+                            }
+                            accumulatedReasoning += delta.reasoning
+                            reasoningChanged = true
+                        }
 
-                                if (contentChanged || reasoningChanged) {
-                                    withContext(Dispatchers.Main) {
-                                        updateMessages { list ->
-                                            if (list.isNotEmpty()) {
-                                                val last = list.last()
-                                                list[list.size - 1] = last.copy(
-                                                    content = JsonPrimitive(accumulatedResponse),
-                                                    reasoning = accumulatedReasoning
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-
-                                delta?.toolCalls?.forEach { deltaTc ->
-                                    val index = deltaTc.index
-                                    if (index >= toolCallBuffer.size) {
-                                        toolCallBuffer.add(
-                                            ToolCall(
-                                                id = deltaTc.id ?: "",
-                                                type = deltaTc.type ?: "function",
-                                                function = FunctionCall(
-                                                    name = deltaTc.function?.name ?: "",
-                                                    arguments = deltaTc.function?.arguments ?: ""
-                                                )
-                                            )
-                                        )
-                                    } else {
-                                        val existing = toolCallBuffer[index]
-                                        toolCallBuffer[index] = existing.copy(
-                                            function = existing.function.copy(
-                                                name = existing.function.name + (deltaTc.function?.name ?: ""),
-                                                arguments = existing.function.arguments + (deltaTc.function?.arguments ?: "")
-                                            )
+                        if (contentChanged || reasoningChanged) {
+                            withContext(Dispatchers.Main) {
+                                updateMessages { list ->
+                                    if (list.isNotEmpty()) {
+                                        val last = list.last()
+                                        list[list.size - 1] = last.copy(
+                                            content = JsonPrimitive(accumulatedResponse),
+                                            reasoning = accumulatedReasoning
                                         )
                                     }
                                 }
-
-                                accumulatedAnnotations.addAll(delta?.annotations ?: emptyList())
-                                delta?.images?.forEach { accumulatedImages.add(it.image_url.url) }
-
-                            } catch (e: Exception) {
-
                             }
                         }
+
+                        delta.toolCalls?.forEach { deltaTc ->
+                            val index = deltaTc.index
+                            if (index >= toolCallBuffer.size) {
+                                toolCallBuffer.add(
+                                    ToolCall(
+                                        id = deltaTc.id ?: "",
+                                        type = deltaTc.type ?: "function",
+                                        function = FunctionCall(
+                                            name = deltaTc.function?.name ?: "",
+                                            arguments = deltaTc.function?.arguments ?: ""
+                                        )
+                                    )
+                                )
+                            } else {
+                                val existing = toolCallBuffer[index]
+                                toolCallBuffer[index] = existing.copy(
+                                    function = existing.function.copy(
+                                        name = existing.function.name + (deltaTc.function?.name ?: ""),
+                                        arguments = existing.function.arguments + (deltaTc.function?.arguments ?: "")
+                                    )
+                                )
+                            }
+                        }
+
+                        accumulatedAnnotations.addAll(delta.annotations ?: emptyList())
+                        delta.images?.forEach { accumulatedImages.add(it.image_url.url) }
                     }
+
+                    if (streamAborted) return@execute
 
                     val downloadedUris = if (accumulatedImages.isNotEmpty()) {
                         downloadImages(accumulatedImages)
@@ -3482,6 +3574,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     header("Authorization", "Bearer $activeChatApiKey")
                     header("HTTP-Referer", "https://github.com/stardomains3/oxproxion/")
                     header("X-Title", "oxproxion")
+                    header(HttpHeaders.Accept, "text/event-stream")
                     contentType(ContentType.Application.Json)
                     setBody(chatRequest)
                 }.execute { httpResponse ->
@@ -3506,132 +3599,122 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
                     // --- AUDIO variables ---
                     val audioBuffer = StringBuilder()
+                    var streamAborted = false
 
-                    while (!channel.isClosedForRead) {
-                        val line = channel.readLine() ?: continue
-                        if (line.startsWith("data:")) {
-                            val jsonString = line.substring(5).trim()
-                            if (jsonString == "[DONE]") {
-                                continue  // Keep reading — OpenRouter can send data after [DONE]
+                    forEachSseJsonPayload(channel) { jsonString ->
+                        if (streamAborted) return@forEachSseJsonPayload
+                        val chunk = parseStreamChunk(jsonString) ?: return@forEachSseJsonPayload
+
+                        // Handle mid-stream error
+                        chunk.error?.let { apiError ->
+                            val rawDetails =
+                                "Code: ${apiError.code ?: "unknown"} - ${apiError.message ?: "Mid-stream error"}"
+                            withContext(Dispatchers.Main) {
+                                handleError(Exception(rawDetails), thinkingMessage)
                             }
+                            streamAborted = true
+                            return@forEachSseJsonPayload
+                        }
 
-                            try {
-                                val chunk = json.decodeFromString<StreamedChatResponse>(jsonString)
+                        val choice = chunk.choices.firstOrNull()
+                        finish_reason = choice?.finish_reason ?: finish_reason
+                        val delta = choice?.delta ?: return@forEachSseJsonPayload
 
-                                // Handle mid-stream error
-                                chunk.error?.let { apiError ->
-                                    val rawDetails =
-                                        "Code: ${apiError.code ?: "unknown"} - ${apiError.message ?: "Mid-stream error"}"
-                                    withContext(Dispatchers.Main) {
-                                        handleError(Exception(rawDetails), thinkingMessage)
-                                    }
-                                    return@execute
-                                }
+                        // === AUDIO ACCUMULATION ===
+                        delta.audio?.let { audioDelta ->
+                            audioDelta.data?.let { audioBuffer.append(it) }
+                        }
 
-                                val choice = chunk.choices.firstOrNull()
-                                finish_reason = choice?.finish_reason ?: finish_reason
-                                val delta = choice?.delta
+                        // === TEXT ACCUMULATION ===
+                        var contentChanged = false
+                        if (!delta.content.isNullOrEmpty()) {
+                            val isFirstContentChunk = accumulatedResponse.isEmpty()
+                            accumulatedResponse += delta.content
+                            contentChanged = true
 
-                                // === AUDIO ACCUMULATION ===
-                                delta?.audio?.let { audioDelta ->
-                                    audioDelta.data?.let { audioBuffer.append(it) }
-                                }
-
-                                // === TEXT ACCUMULATION ===
-                                var contentChanged = false
-                                if (!delta?.content.isNullOrEmpty()) {
-                                    val isFirstContentChunk = accumulatedResponse.isEmpty()
-                                    accumulatedResponse += delta.content
-                                    contentChanged = true
-
-                                    if (isFirstContentChunk) {
-                                        withContext(Dispatchers.Main) {
-                                            updateMessages { list ->
-                                                val index = list.indexOf(thinkingMessage)
-                                                if (index != -1) {
-                                                    list[index] = FlexibleMessage(
-                                                        role = "assistant",
-                                                        content = JsonPrimitive(accumulatedResponse),
-                                                        reasoning = accumulatedReasoning
-                                                    )
-                                                }
-                                            }
-                                        }
-                                        continue
-                                    }
-                                }
-
-                                // === REASONING ACCUMULATION ===
-                                var reasoningChanged = false
-                                if (delta?.reasoning_details?.isNotEmpty() == true) {
-                                    hasUsedReasoningDetails = true
-                                    delta.reasoning_details.forEach { detail ->
-                                        if (detail.type == "reasoning.text" && detail.text != null) {
-                                            if (!reasoningStarted) {
-                                                accumulatedReasoning = "```\n"
-                                                reasoningStarted = true
-                                            }
-                                            accumulatedReasoning += detail.text
-                                            reasoningChanged = true
+                            if (isFirstContentChunk) {
+                                withContext(Dispatchers.Main) {
+                                    updateMessages { list ->
+                                        val index = list.indexOf(thinkingMessage)
+                                        if (index != -1) {
+                                            list[index] = FlexibleMessage(
+                                                role = "assistant",
+                                                content = JsonPrimitive(accumulatedResponse),
+                                                reasoning = accumulatedReasoning
+                                            )
                                         }
                                     }
-                                } else if (!hasUsedReasoningDetails && !delta?.reasoning.isNullOrEmpty()) {
+                                }
+                                return@forEachSseJsonPayload
+                            }
+                        }
+
+                        // === REASONING ACCUMULATION ===
+                        var reasoningChanged = false
+                        if (delta.reasoning_details?.isNotEmpty() == true) {
+                            hasUsedReasoningDetails = true
+                            delta.reasoning_details.forEach { detail ->
+                                if (detail.type == "reasoning.text" && detail.text != null) {
                                     if (!reasoningStarted) {
                                         accumulatedReasoning = "```\n"
                                         reasoningStarted = true
                                     }
-                                    accumulatedReasoning += delta.reasoning
+                                    accumulatedReasoning += detail.text
                                     reasoningChanged = true
                                 }
+                            }
+                        } else if (!hasUsedReasoningDetails && !delta.reasoning.isNullOrEmpty()) {
+                            if (!reasoningStarted) {
+                                accumulatedReasoning = "```\n"
+                                reasoningStarted = true
+                            }
+                            accumulatedReasoning += delta.reasoning
+                            reasoningChanged = true
+                        }
 
-                                // === REAL-TIME UI UPDATE ===
-                                if (contentChanged || reasoningChanged) {
-                                    withContext(Dispatchers.Main) {
-                                        updateMessages { list ->
-                                            if (list.isNotEmpty()) {
-                                                val last = list.last()
-                                                list[list.size - 1] = last.copy(
-                                                    content = JsonPrimitive(accumulatedResponse),
-                                                    reasoning = accumulatedReasoning
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-
-                                // === TOOL CALLS BUFFERING ===
-                                delta?.toolCalls?.forEach { deltaTc ->
-                                    val index = deltaTc.index
-                                    if (index >= toolCallBuffer.size) {
-                                        toolCallBuffer.add(
-                                            ToolCall(
-                                                id = deltaTc.id ?: "",
-                                                type = deltaTc.type ?: "function",
-                                                function = FunctionCall(
-                                                    name = deltaTc.function?.name ?: "",
-                                                    arguments = deltaTc.function?.arguments ?: ""
-                                                )
-                                            )
-                                        )
-                                    } else {
-                                        val existing = toolCallBuffer[index]
-                                        toolCallBuffer[index] = existing.copy(
-                                            function = existing.function.copy(
-                                                name = existing.function.name + (deltaTc.function?.name ?: ""),
-                                                arguments = existing.function.arguments + (deltaTc.function?.arguments ?: "")
-                                            )
+                        // === REAL-TIME UI UPDATE ===
+                        if (contentChanged || reasoningChanged) {
+                            withContext(Dispatchers.Main) {
+                                updateMessages { list ->
+                                    if (list.isNotEmpty()) {
+                                        val last = list.last()
+                                        list[list.size - 1] = last.copy(
+                                            content = JsonPrimitive(accumulatedResponse),
+                                            reasoning = accumulatedReasoning
                                         )
                                     }
                                 }
-
-                                // === ANNOTATIONS & IMAGES ===
-                                accumulatedAnnotations.addAll(delta?.annotations ?: emptyList())
-                                delta?.images?.forEach { accumulatedImages.add(it.image_url.url) }
-
-                            } catch (e: Exception) {
-                              //  Log.e("ChatViewModel", "Error parsing stream chunk: $jsonString", e)
                             }
                         }
+
+                        // === TOOL CALLS BUFFERING ===
+                        delta.toolCalls?.forEach { deltaTc ->
+                            val index = deltaTc.index
+                            if (index >= toolCallBuffer.size) {
+                                toolCallBuffer.add(
+                                    ToolCall(
+                                        id = deltaTc.id ?: "",
+                                        type = deltaTc.type ?: "function",
+                                        function = FunctionCall(
+                                            name = deltaTc.function?.name ?: "",
+                                            arguments = deltaTc.function?.arguments ?: ""
+                                        )
+                                    )
+                                )
+                            } else {
+                                val existing = toolCallBuffer[index]
+                                toolCallBuffer[index] = existing.copy(
+                                    function = existing.function.copy(
+                                        name = existing.function.name + (deltaTc.function?.name ?: ""),
+                                        arguments = existing.function.arguments + (deltaTc.function?.arguments ?: "")
+                                    )
+                                )
+                            }
+                        }
+
+                        // === ANNOTATIONS & IMAGES ===
+                        accumulatedAnnotations.addAll(delta.annotations ?: emptyList())
+                        delta.images?.forEach { accumulatedImages.add(it.image_url.url) }
                     }
 
                     // ============================================================
@@ -4381,8 +4464,10 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 if (lanKey.isNullOrBlank()) "any-non-empty-string" else lanKey
             )
         } else {
+            val cloudModelId = _activeChatModel.value
+            if (cloudModelId.isNullOrBlank()) return null
             Triple(
-                "google/gemma-4-26b-a4b-it",
+                cloudModelId,
                 "https://openrouter.ai/api/v1/chat/completions",
                 activeChatApiKey
             )

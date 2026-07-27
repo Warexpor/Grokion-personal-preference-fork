@@ -169,7 +169,7 @@ class InferenceParametersFragment : Fragment(R.layout.fragment_inference_paramet
                 intArrayOf(-android.R.attr.state_checked)
             ),
             intArrayOf(
-                "#a0610a".toColorInt(),  // Checked: Orange track
+                "#FF7D8187".toColorInt(),  // Checked: Orange track
                 "#000000".toColorInt()   // Unchecked: Black track
             )
         )

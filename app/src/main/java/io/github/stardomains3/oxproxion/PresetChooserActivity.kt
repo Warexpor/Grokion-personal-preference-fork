@@ -82,7 +82,7 @@ class PresetChooserActivity : AppCompatActivity() {
         val titleTextView = TextView(this).apply {
             text = "Choose Preset"
             textSize = 20f
-            setTextColor("#C2C2C2".toColorInt())
+            setTextColor("#DADBDF".toColorInt())
             gravity = Gravity.CENTER
             setPadding(24, 16, 24, 16)
         }

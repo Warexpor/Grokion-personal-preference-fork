@@ -56,6 +56,7 @@ class SharedPreferencesHelper(context: Context) {
 
         const val LAN_PROVIDER_HERMES_AGENT = "hermes_agent"  // NEW - Hermes Agent provider
         private const val KEY_AUTO_BACK = "auto_back_enabled"
+        private const val KEY_AUTO_SAVE_CHATS = "auto_save_chats"
         private const val KEY_VOLUME_SCROLL = "volume_scroll_enabled"
         private const val KEY_ENABLED_TOOLS = "enabled_tools"
         private const val KEY_TOOLS_ENABLED = "tools_enabled_preference"
@@ -387,6 +388,12 @@ class SharedPreferencesHelper(context: Context) {
     fun saveAutoBack(enabled: Boolean) {
         mainPrefs.edit { putBoolean(KEY_AUTO_BACK, enabled) }
     }
+    fun getAutoSaveChats(): Boolean {
+        return mainPrefs.getBoolean(KEY_AUTO_SAVE_CHATS, false)
+    }
+    fun saveAutoSaveChats(enabled: Boolean) {
+        mainPrefs.edit { putBoolean(KEY_AUTO_SAVE_CHATS, enabled) }
+    }
     fun setOpenRouterInfoDismissed(dismissed: Boolean) {
         mainPrefs.edit { putBoolean(KEY_INFO_BAR_DISMISSED, dismissed) }
     }
@@ -437,7 +444,8 @@ class SharedPreferencesHelper(context: Context) {
     }
 
     fun getStreamingPreference(): Boolean {
-        return mainPrefs.getBoolean(KEY_STREAMING_ENABLED, false)
+        // Default ON: OpenRouter / OpenAI-compatible SSE streaming
+        return mainPrefs.getBoolean(KEY_STREAMING_ENABLED, true)
     }
     fun getReasoningPreference(): Boolean {
         return mainPrefs.getBoolean(KEY_REASONING_ENABLED, false)
@@ -484,8 +492,8 @@ class SharedPreferencesHelper(context: Context) {
     fun getThemeMode(): Int {
         return mainPrefs.getInt(
             KEY_THEME_MODE,
-            THEME_SYSTEM
-        ) // Default to System
+            THEME_DARK
+        ) // Default to Dark (Grok is dark-only)
     }
 
     fun saveThemeMode(mode: Int) {

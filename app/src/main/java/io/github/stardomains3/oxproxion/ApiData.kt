@@ -268,11 +268,11 @@ data class SearchSource(
 
 @Serializable
 data class StreamedChatResponse(
-    val id: String,
-    val model: String,
-    val `object`: String,
-    val created: Long,
-    val choices: List<StreamedChoice>,
+    val id: String? = null,
+    val model: String? = null,
+    val `object`: String? = null,
+    val created: Long? = null,
+    val choices: List<StreamedChoice> = emptyList(),
     val provider: String? = null,
     val error: ApiError? = null
 )
@@ -285,8 +285,8 @@ data class ApiError(
 
 @Serializable
 data class StreamedChoice(
-    val index: Int,
-    val delta: StreamedDelta,
+    val index: Int = 0,
+    val delta: StreamedDelta? = null,
     val finish_reason: String? = null,
     val error: ErrorResponse? = null
 )

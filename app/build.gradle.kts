@@ -20,14 +20,16 @@ configurations.all {
 }
 android {
     namespace = "io.github.stardomains3.oxproxion"
-    compileSdk = 37
+    // 36 installed locally; 37 package not available via current repo mirror
+    compileSdk = 36
 
     defaultConfig {
-        applicationId = "io.github.stardomains3.oxproxion"
+        // Own id so Grokion is not treated as oxproxion (no false "update" prompts)
+        applicationId = "io.github.warexpor.grokion"
         minSdk = 31
-        targetSdk = 37
-        versionCode = 212
-        versionName = "2.1.102"
+        targetSdk = 36
+        versionCode = 230
+        versionName = "2.1.122-grokion"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -57,6 +59,8 @@ android {
     buildFeatures {
         buildConfig = true
     }
+    // Prefer installed build-tools (avoid AGP auto-download of 35.0.0 when offline/proxy)
+    buildToolsVersion = "36.0.0"
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

@@ -19,7 +19,7 @@ class SystemMessageDialogAdapterCh(
         val view = super.getView(position, convertView, parent)
         val textView = view.findViewById<TextView>(android.R.id.text1)
         if (position == currentIndex) {
-            textView.setTextColor("#a0610a".toColorInt())  // Orange for current
+            textView.setTextColor("#FF7D8187".toColorInt())  // Orange for current
         } else {
             textView.setTextColor(Color.WHITE)  // Default color
         }

@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Set Max Tokens"
-        android:textColor="#C2C2C2"
+        android:textColor="@color/xai_body"
         android:textAppearance="?attr/textAppearanceHeadline6"
         android:layout_marginBottom="16dp" />
 
@@ -20,8 +20,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Enter Max Tokens"
-        app:boxStrokeColor="#C2C2C2"
-        app:hintTextColor="#C2C2C2"
+        app:boxStrokeColor="@color/xai_hairline"
+        app:hintTextColor="@color/xai_mute"
         android:id="@+id/edit_text_lay_maxtokens"
         app:boxBackgroundMode="outline">
 
@@ -33,7 +33,7 @@
             android:inputType="number"
             android:digits="0123456789"
 
-            android:textColor="#ffffff"
+            android:textColor="@color/xai_ink"
             android:text="12000"
             android:singleLine="true" />
     </com.google.android.material.textfield.TextInputLayout>
@@ -42,7 +42,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Max tokens limit the length of the AI's response. A higher number allows longer replies but may increase costs. Default is 12000."
-        android:textColor="#C2C2C2"
+        android:textColor="@color/xai_body"
         android:textSize="14sp"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="16dp" />
@@ -59,7 +59,7 @@
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#C2C2C2"
+            android:textColor="@color/xai_body"
             android:text="Cancel" />
 
         <com.google.android.material.button.MaterialButton
@@ -67,7 +67,7 @@
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#C2C2C2"
+            android:textColor="@color/xai_body"
             android:layout_marginStart="8dp"
             android:text="Save" />
     </LinearLayout>

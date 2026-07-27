@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#000000"
+    android:background="@color/xai_canvas"
     android:fitsSystemWindows="true"
     tools:context="io.github.stardomains3.oxproxion.LicenseDetailFragment">
 
@@ -15,14 +15,14 @@
         android:layout_height="?attr/actionBarSize"
         app:title="Library License"
         app:titleTextColor="@android:color/white"
-        android:background="#1C1C1E"
+        android:background="@color/xai_canvas_card"
         app:navigationIcon="@drawable/is_backarrow" />
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:padding="16dp"
-        android:background="#000000"
+        android:background="@color/xai_canvas"
         android:fillViewport="true">
 
         <TextView
@@ -32,11 +32,11 @@
             android:textSize="14sp"
             android:lineSpacingExtra="4dp"
             android:typeface="monospace"
-            android:textColor="#F8F8F8"
+            android:textColor="@color/xai_ink"
             android:textIsSelectable="true"
             android:focusable="true"
             android:focusableInTouchMode="true"
-            android:textColorHighlight="#756151"
+            android:textColorHighlight="@color/xai_accent_sunset_soft"
             tools:text="Full license text appears here... (Long-press to select/copy)" />
 
     </ScrollView>

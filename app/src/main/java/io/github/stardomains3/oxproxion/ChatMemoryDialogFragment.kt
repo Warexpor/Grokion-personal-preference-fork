@@ -57,7 +57,7 @@ class ChatMemoryDialogFragment : DialogFragment() {
                 for (i in 0 until listView.childCount) {
                     val child = listView.getChildAt(i)
                     if (child is CheckedTextView) {
-                        child.setTextColor("#C2C2C2".toColorInt())
+                        child.setTextColor("#DADBDF".toColorInt())
                     }
                 }
             }

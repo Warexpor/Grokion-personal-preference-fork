@@ -217,7 +217,7 @@ class ToolsFragment : Fragment(R.layout.fragment_tools) {
                 intArrayOf(-android.R.attr.state_checked)
             ),
             intArrayOf(
-                "#a0610a".toColorInt(),
+                "#FF7D8187".toColorInt(),
                 "#000000".toColorInt()
             )
         )
