@@ -64,13 +64,12 @@ class BotModelAdapter(
         holder.modelIcon.imageTintList = ColorStateList.valueOf(mute)
         holder.editIcon.imageTintList = ColorStateList.valueOf(mute)
 
-        // Selected model: ink checkmark (SRC_IN so fill never stays Material-black)
+        // Selected model: theme ink checkmark
         if (model.apiIdentifier == currentModelId) {
-            holder.editIcon.setImageResource(R.drawable.ic_check)
             val ink = ContextCompat.getColor(holder.itemView.context, R.color.xai_ink)
+            holder.editIcon.setImageResource(R.drawable.ic_check)
             holder.editIcon.clearColorFilter()
-            holder.editIcon.setColorFilter(ink, android.graphics.PorterDuff.Mode.SRC_IN)
-            holder.editIcon.imageTintList = null
+            holder.editIcon.imageTintList = ColorStateList.valueOf(ink)
             holder.editIcon.isClickable = false
             holder.modelName.setTextColor(ink)
         } else {

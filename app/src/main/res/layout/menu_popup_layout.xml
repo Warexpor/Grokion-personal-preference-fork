@@ -8,29 +8,41 @@
 
     <TextView
         android:id="@+id/menu_edit"
-        style="?android:attr/listMenuViewStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:drawablePadding="8dp"
+        android:drawablePadding="12dp"
         android:gravity="center_vertical"
-        android:padding="16dp"
+        android:minWidth="160dp"
+        android:paddingStart="16dp"
+        android:paddingTop="14dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="14dp"
         android:text="Edit"
-        app:drawableStartCompat="@drawable/ic_edit" />
+        android:textColor="@color/xai_ink"
+        android:textSize="16sp"
+        app:drawableStartCompat="@drawable/ic_edit"
+        app:drawableTint="@color/xai_ink" />
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="?android:attr/listDivider" />
+        android:background="@color/xai_hairline" />
 
     <TextView
         android:id="@+id/menu_delete"
-        style="?android:attr/listMenuViewStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:drawablePadding="8dp"
+        android:drawablePadding="12dp"
         android:gravity="center_vertical"
-        android:padding="16dp"
+        android:minWidth="160dp"
+        android:paddingStart="16dp"
+        android:paddingTop="14dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="14dp"
         android:text="Delete"
-        app:drawableStartCompat="@drawable/ic_new_chat" />
+        android:textColor="@color/xai_error"
+        android:textSize="16sp"
+        app:drawableStartCompat="@drawable/ic_trash"
+        app:drawableTint="@color/xai_error" />
 
 </LinearLayout>

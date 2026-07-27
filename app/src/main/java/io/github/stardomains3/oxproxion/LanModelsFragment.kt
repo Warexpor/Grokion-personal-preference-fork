@@ -96,6 +96,7 @@ class LanModelsFragment : Fragment() {
         adapter = LanModelsAdapter(
             models = emptyList(),
             isLlamaCppProvider = isLlamaCpp,
+            isModelInLibrary = { id -> viewModel.modelExists(id) },
             onItemClicked = { model ->
                 addModel(model)
             },
@@ -135,6 +136,12 @@ class LanModelsFragment : Fragment() {
             }
         }
 
+        viewModel.customModelsUpdated.observe(viewLifecycleOwner) { event ->
+            event.getContentIfNotHandled()?.let {
+                adapter.refreshAddedStates()
+            }
+        }
+
         // START FETCH (with permission check)
         checkLocalNetworkAndFetch()
     }
@@ -162,11 +169,10 @@ class LanModelsFragment : Fragment() {
 
     private fun addModel(model: LlmModel) {
         if (viewModel.modelExists(model.apiIdentifier)) {
-            AppToast.makeText(context, "Model with this API Identifier already exists.", AppToast.LENGTH_SHORT).show()
+            adapter.animateAdded(model.apiIdentifier)
         } else {
             viewModel.addCustomModel(model)
-            val provider = viewModel.getCurrentLanProvider()
-            AppToast.makeText(context, "LAN Model added: ${model.displayName}", AppToast.LENGTH_SHORT).show()
+            adapter.animateAdded(model.apiIdentifier)
         }
     }
     private fun loadModel(model: LlmModel) {

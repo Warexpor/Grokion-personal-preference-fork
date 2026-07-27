@@ -76,3 +76,16 @@ CMakeLists.txt.user
 # Local APK extract / decompile dumps (not product source)
 references/
 tools/
+
+# Agent/debug session scratch (never product source)
+.tmp_mat/
+/ui.xml
+/alpha_*.png
+/chip*.png
+/model_*.png
+/picker*.png
+/screen_*.png
+/tick*.png
+/verify_*.png
+/other_chips.png
+/model_chip_fix.png

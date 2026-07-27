@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.1.130-grokion — 2026-07-28
+
+### Fixed
+- LAN model adder shows tap feedback (haptic, checkmark, pop-in) instead of
+  silenced toasts when adding a model.
+- Edit/Delete overflow popups (models, presets, prompts, system messages) use
+  correct trash icon and theme-aware ink/error tints (no black-on-dark SVGs).
+- Selected-model checkmark in Your Models follows `xai_ink` in dark/light themes.
+
+### Changed
+- `.gitignore` excludes agent/debug scratch (`.tmp_mat/`, screenshot dumps).
+
 ## 2.1.129-grokion — 2026-07-28
 
 ### Fixed
