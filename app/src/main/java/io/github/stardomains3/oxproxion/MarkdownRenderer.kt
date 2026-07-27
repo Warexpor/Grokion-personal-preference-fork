@@ -240,11 +240,12 @@ object MarkdownRenderer {
         )
 
         // --- DYNAMIC FONT CSS ---
-        val fontCss = if (fontName != "system_default") {
+        val normalizedFont = AppFonts.normalizeSelectable(fontName)
+        val fontCss = if (normalizedFont != AppFonts.SYSTEM_DEFAULT) {
             """
             @font-face {
                 font-family: 'UserSelectedFont';
-                src: url('file:///android_res/font/$fontName.ttf'); 
+                src: url('file:///android_res/font/$normalizedFont.ttf'); 
             }
             body { 
                 font-family: 'UserSelectedFont', -apple-system, sans-serif !important; 

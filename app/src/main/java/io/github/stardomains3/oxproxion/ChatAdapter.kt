@@ -18,6 +18,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -66,6 +67,8 @@ class ChatAdapter(
     // --- STATE & CACHE ---
     // Changed to Map to use stable keys (content hash) instead of unstable positions
     private val collapsedStates = mutableMapOf<String, Boolean>()
+    /** User bubble tap → show/hide action row (Grok-style). */
+    private val userActionsExpanded = mutableSetOf<String>()
     // The "Baked" Cache for Markdown CharSequences
     private val renderCache = HashMap<FlexibleMessage, CharSequence>()
 
@@ -424,12 +427,61 @@ class ChatAdapter(
 
     inner class UserViewHolder(itemView: View, private val markwon: Markwon) : RecyclerView.ViewHolder(itemView) {
         private val messageTextView: TextView = itemView.findViewById(R.id.messageTextView)
+        private val messageContainer: ConstraintLayout = itemView.findViewById(R.id.messageContainer)
+        private val buttonContainer: LinearLayout = itemView.findViewById(R.id.buttonContainer)
         private val copyButtonuser: ImageButton = itemView.findViewById(R.id.copyButtonuser)
         private val resendButton: ImageButton = itemView.findViewById(R.id.resendButton)
         private val editButton: ImageButton = itemView.findViewById(R.id.editButton)
         private val imageView: ImageView = itemView.findViewById(R.id.userImageView)
         private val deleteButton: ImageButton = itemView.findViewById(R.id.deleteButton)
         private val collapseToggleButton: ImageButton = itemView.findViewById(R.id.collapseToggleButton)
+        private var actionsMsgKey: String = ""
+
+        private fun applyActionsVisibility(expanded: Boolean, animate: Boolean) {
+            buttonContainer.animate().cancel()
+            if (expanded) {
+                if (buttonContainer.visibility == View.VISIBLE && buttonContainer.alpha >= 0.99f) return
+                buttonContainer.visibility = View.VISIBLE
+                if (animate && Motion.areAnimationsEnabled(itemView.context)) {
+                    buttonContainer.alpha = 0f
+                    buttonContainer.translationY = -6f
+                    buttonContainer.animate()
+                        .alpha(1f)
+                        .translationY(0f)
+                        .setDuration(180L)
+                        .setInterpolator(Motion.easeOut)
+                        .start()
+                } else {
+                    buttonContainer.alpha = 1f
+                    buttonContainer.translationY = 0f
+                }
+            } else {
+                if (buttonContainer.visibility != View.VISIBLE) return
+                if (animate && Motion.areAnimationsEnabled(itemView.context)) {
+                    buttonContainer.animate()
+                        .alpha(0f)
+                        .translationY(-6f)
+                        .setDuration(150L)
+                        .setInterpolator(Motion.easeOut)
+                        .withEndAction {
+                            buttonContainer.visibility = View.GONE
+                            buttonContainer.translationY = 0f
+                        }
+                        .start()
+                } else {
+                    buttonContainer.visibility = View.GONE
+                    buttonContainer.alpha = 0f
+                    buttonContainer.translationY = 0f
+                }
+            }
+        }
+
+        private fun toggleActions() {
+            if (actionsMsgKey.isEmpty()) return
+            val next = !userActionsExpanded.contains(actionsMsgKey)
+            if (next) userActionsExpanded.add(actionsMsgKey) else userActionsExpanded.remove(actionsMsgKey)
+            applyActionsVisibility(next, animate = true)
+        }
 
         fun bind(message: FlexibleMessage) {
             messageTextView.textSize = 16f * currentFontScale / 100f
@@ -437,6 +489,12 @@ class ChatAdapter(
             val rawUserContent = getMessageText(message.content)
             val pos = bindingAdapterPosition
             collapseToggleButton.visibility = View.GONE
+            actionsMsgKey = rawUserContent.hashCode().toString() + "_" + (message.imageUri ?: "")
+            applyActionsVisibility(userActionsExpanded.contains(actionsMsgKey), animate = false)
+
+            val tapToggle = View.OnClickListener { toggleActions() }
+            messageContainer.setOnClickListener(tapToggle)
+            messageTextView.setOnClickListener(tapToggle)
 
             if (pos >= 0 && message.role == "user") {
                 val displayMetrics = itemView.resources.displayMetrics
@@ -563,9 +621,8 @@ class ChatAdapter(
                     onEditMessage(bindingAdapterPosition, rawUserContent)
                 }
             }
-            resendButton.setOnClickListener {
-                onRedoMessage(bindingAdapterPosition, message.content)
-            }
+            // Regenerated from AI row now; keep listener no-op for ID stability
+            resendButton.setOnClickListener(null)
             deleteButton.setOnClickListener {
                 onDeleteMessage(bindingAdapterPosition)
             }
@@ -586,6 +643,7 @@ class ChatAdapter(
         private val markdownButton: ImageButton = itemView.findViewById(R.id.markdownButton)
         private val pngButton: ImageButton = itemView.findViewById(R.id.pngButton)
         val ttsButton: ImageButton = itemView.findViewById(R.id.ttsButton)
+        private val regenerateButton: ImageButton = itemView.findViewById(R.id.regenerateButton)
         private val generatedImageView: ImageView = itemView.findViewById(R.id.generatedImageView)
         val messageContainer: ConstraintLayout = itemView.findViewById(R.id.messageContainer)
         private var pulseAnimator: ObjectAnimator? = null
@@ -790,6 +848,9 @@ class ChatAdapter(
             val isError = message.role == "assistant" && text.startsWith("**Error:**")
             val isThinking = text == "working..."
 
+            itemView.findViewById<View>(R.id.aiActionRow).visibility =
+                if (isThinking) View.GONE else View.VISIBLE
+
             messageContainer.setBackgroundResource(R.drawable.bg_ai_message)
             if (isError) {
                 messageTextView.setTextColor(ContextCompat.getColor(itemView.context, R.color.xai_error))
@@ -867,6 +928,21 @@ class ChatAdapter(
                 val fullRawMarkdown = ensureTableSpacing(reasoningText + text)
                 onEditAssistantMessage(bindingAdapterPosition, fullRawMarkdown)
             }
+            regenerateButton.setOnClickListener {
+                val pos = bindingAdapterPosition
+                if (pos <= 0 || pos >= messages.size) return@setOnClickListener
+                val prev = messages[pos - 1]
+                if (prev.role == "user") {
+                    onRedoMessage(pos - 1, prev.content)
+                }
+            }
+            regenerateButton.visibility = if (
+                position > 0 &&
+                position < messages.size &&
+                messages[position - 1].role == "user" &&
+                !isThinking &&
+                !isError
+            ) View.VISIBLE else View.GONE
             copyButton.setOnClickListener {
                 val clipboard = itemView.context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val clip = ClipData.newPlainText("Copied Text", messageTextView.text.toString().trimEnd('\u258C'))

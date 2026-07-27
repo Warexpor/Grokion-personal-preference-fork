@@ -577,7 +577,8 @@ class SharedPreferencesHelper(context: Context) {
         return mainPrefs.getBoolean(KEY_EXTENDED_TOP_BAR, false)
     }
     fun getSelectedFont(): String {
-        return mainPrefs.getString(KEY_SELECTED_FONT, "geologica_light") ?: "geologica_light"
+        val stored = mainPrefs.getString(KEY_SELECTED_FONT, AppFonts.INTER) ?: AppFonts.INTER
+        return AppFonts.normalizeSelectable(stored)
     }
     fun saveFontSizeCh(size: Int) {
         mainPrefs.edit { putInt(KEY_FONT_SIZEC, size) }
@@ -693,9 +694,23 @@ class SharedPreferencesHelper(context: Context) {
 
     /** 32-byte SQLCipher passphrase, wrapped by Keystore in ApiKeysPrefsStore. */
     fun getOrCreateChatDbPassphrase(): ByteArray {
-        val existing = getApiKeyFromPrefs(CHAT_DB_PASSPHRASE_ALIAS)
+        val existing = getApiKeyFromPrefs(CHAT_DB_PASSPHRASE_ALIAS).trim()
         if (existing.isNotBlank()) {
-            return Base64.decode(existing, Base64.NO_WRAP)
+            return try {
+                Base64.decode(existing, Base64.NO_WRAP)
+            } catch (e: Exception) {
+                // Prefer DEFAULT (whitespace-tolerant) before minting a new key.
+                Base64.decode(existing, Base64.DEFAULT)
+            }
+        }
+        // Encrypted prefs present but decrypt failed — do not mint a new key
+        // (that would brick an existing SQLCipher DB).
+        val hasWrapped = !apiKeysPrefs.getString("${CHAT_DB_PASSPHRASE_ALIAS}_encrypted", null)
+            .isNullOrBlank()
+        if (hasWrapped) {
+            throw IllegalStateException(
+                "Chat DB passphrase is stored but could not be decrypted from Keystore"
+            )
         }
         val bytes = ByteArray(32)
         SecureRandom().nextBytes(bytes)
@@ -709,10 +724,10 @@ class SharedPreferencesHelper(context: Context) {
 
     fun saveShowCitations(show: Boolean) = mainPrefs.edit { putBoolean(KEY_SHOW_CITATIONS, show) }
     fun getApiKeyFromPrefs(alias: String): String {
-        val encryptedKeyString = apiKeysPrefs.getString("${alias}_encrypted", "")
-        val ivString = apiKeysPrefs.getString("${alias}_iv", "")
+        val encryptedKeyString = apiKeysPrefs.getString("${alias}_encrypted", "")?.trim().orEmpty()
+        val ivString = apiKeysPrefs.getString("${alias}_iv", "")?.trim().orEmpty()
 
-        return if (encryptedKeyString.isNullOrBlank() || ivString.isNullOrBlank()) {
+        return if (encryptedKeyString.isBlank() || ivString.isBlank()) {
             ""
         } else {
             try {

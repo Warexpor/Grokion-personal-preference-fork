@@ -43,8 +43,8 @@
         <item name="android:colorAccent">@color/xai_ink</item>
         <item name="colorAccent">@color/xai_ink</item>
         <item name="materialAlertDialogTheme">@style/CustomMaterialAlertDialogTheme</item>
-        <item name="android:fontFamily">sans-serif</item>
-        <item name="fontFamily">sans-serif</item>
+        <item name="android:fontFamily">@font/inter_regular</item>
+        <item name="fontFamily">@font/inter_regular</item>
     </style>
 
     <style name="Widget.App.CheckBox" parent="Widget.Material3.CompoundButton.CheckBox">
@@ -98,14 +98,14 @@
     <style name="CustomDialogBodyText" parent="TextAppearance.Material3.BodyMedium">
         <item name="android:textSize">16sp</item>
         <item name="android:textColor">@color/xai_body</item>
-        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:fontFamily">@font/inter_regular</item>
     </style>
 
     <style name="CustomDialogTitleText" parent="MaterialAlertDialog.Material3.Title.Text">
         <item name="android:textSize">20sp</item>
         <item name="android:textColor">@color/xai_ink</item>
         <item name="android:textStyle">normal</item>
-        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:fontFamily">@font/inter_regular</item>
         <item name="android:letterSpacing">-0.02</item>
     </style>
 
@@ -137,32 +137,14 @@
         <item name="boxBackgroundColor">@color/xai_canvas_soft</item>
     </style>
 
-    <style name="Font.AlanSansRegular" parent="Theme.Grokion"><item name="fontFamily">@font/alansans_regular</item></style>
-    <style name="Font.AlexandriaRegular" parent="Theme.Grokion"><item name="fontFamily">@font/alexandria_regular</item></style>
-    <style name="Font.AroneSansRegular" parent="Theme.Grokion"><item name="fontFamily">@font/aronesans_regular</item></style>
-    <style name="Font_AtkinsonhyperlegiblemonoRegular" parent="Theme.Grokion"><item name="fontFamily">@font/atkinsonhyperlegiblemono_regular</item></style>
-    <style name="Font_AtkinsonhyperlegiblenextRegular" parent="Theme.Grokion"><item name="fontFamily">@font/atkinsonhyperlegiblenext_regular</item></style>
-    <style name="Font.FunnelDisplayRegular" parent="Theme.Grokion"><item name="fontFamily">@font/funneldisplay_regular</item></style>
-    <style name="Font.GeologicaLight" parent="Theme.Grokion"><item name="fontFamily">@font/geologica_light</item></style>
-    <style name="Font.GoogleSansFlexRegular" parent="Theme.Grokion"><item name="fontFamily">@font/googlesansflex_regular</item></style>
-    <style name="Font.InstrumentSansRegular" parent="Theme.Grokion"><item name="fontFamily">@font/instrumentsans_regular</item></style>
-    <style name="Font.LexendRegular" parent="Theme.Grokion"><item name="fontFamily">@font/lexend_regular</item></style>
-    <style name="Font.Merriweather24ptRegular" parent="Theme.Grokion"><item name="fontFamily">@font/merriweather_24pt_regular</item></style>
-    <style name="Font.MerriweathersansLight" parent="Theme.Grokion"><item name="fontFamily">@font/merriweathersans_light</item></style>
-    <style name="Font.MPlus2Regular" parent="Theme.Grokion"><item name="fontFamily">@font/mplus2_regular</item></style>
-    <style name="Font.NokoraRegular" parent="Theme.Grokion"><item name="fontFamily">@font/nokora_regular</item></style>
-    <style name="Font.NotoSansRegular" parent="Theme.Grokion"><item name="fontFamily">@font/notosans_regular</item></style>
-    <style name="Font.NotoSerifRegular" parent="Theme.Grokion"><item name="fontFamily">@font/notoserif_regular</item></style>
-    <style name="Font.OpenSansRegular" parent="Theme.Grokion"><item name="fontFamily">@font/opensans_regular</item></style>
-    <style name="Font.OutfitRegular" parent="Theme.Grokion"><item name="fontFamily">@font/outfit_regular</item></style>
-    <style name="Font.PoppinsRegular" parent="Theme.Grokion"><item name="fontFamily">@font/poppins_regular</item></style>
-    <style name="Font.ReadexProRegular" parent="Theme.Grokion"><item name="fontFamily">@font/readexpro_regular</item></style>
-    <style name="Font.RobotoRegular" parent="Theme.Grokion"><item name="fontFamily">@font/roboto_regular</item></style>
-    <style name="Font.RobotoSerifRegular" parent="Theme.Grokion"><item name="fontFamily">@font/robotoserif_regular</item></style>
-    <style name="Font.SourceSerif4Regular" parent="Theme.Grokion"><item name="fontFamily">@font/sourceserif4_regular</item></style>
-    <style name="Font.TasaOrbiterRegular" parent="Theme.Grokion"><item name="fontFamily">@font/tasaorbiter_regular</item></style>
-    <style name="Font.UbuntuSansRegular" parent="Theme.Grokion"><item name="fontFamily">@font/ubuntusans_regular</item></style>
-    <style name="Font.VendSansRegular" parent="Theme.Grokion"><item name="fontFamily">@font/vendsans_regular</item></style>
+    <!-- Brand wordmark for history header — Iceland (display) -->
+    <style name="GrokionBrandWordmark" parent="@android:style/TextAppearance">
+        <item name="android:fontFamily">@font/iceland_regular</item>
+        <item name="fontFamily">@font/iceland_regular</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.14</item>
+        <item name="android:textStyle">normal</item>
+    </style>
 
     <style name="Theme.Grokion.AIFix" parent="Theme.Grokion">
         <item name="android:windowIsTranslucent">true</item>

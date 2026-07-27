@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.1.127-grokion — 2026-07-27
+
+### Fixed
+- Cold-start crash: SQLCipher migration no longer probes already-encrypted
+  `chat_database` as plaintext (`SQLiteNotADatabaseException`).
+- Stream stick-to-bottom no longer thrash-scrolls every token.
+
+### Changed
+- Model chip pinned top-right; Ask tab chrome removed.
+- Message action rows match Grok placement (user edit/copy on tap; regenerate
+  under assistant); equal icon gaps.
+- App-wide Inter; GROKION history wordmark uses Iceland.
+- Slimmed bundled selectable fonts to Inter (+ Iceland brand).
+
 ## 2.1.126-grokion — 2026-07-27
 
 ### Changed

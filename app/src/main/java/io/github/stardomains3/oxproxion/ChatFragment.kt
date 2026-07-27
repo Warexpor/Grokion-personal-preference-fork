@@ -253,6 +253,25 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
     private var hasScrolled = false
     /** When true during SSE, keep the viewport glued to the growing bottom of the reply. */
     private var stickToBottomDuringStream = false
+    private var followStreamPending = false
+    private val followStreamRunnable = Runnable {
+        followStreamPending = false
+        if (!stickToBottomDuringStream) return@Runnable
+        if (viewModel.isAwaitingResponse.value != true) return@Runnable
+        val last = chatAdapter.itemCount - 1
+        if (last < 0) return@Runnable
+        // Nudge only — avoid scrollToPosition every token (camera thrash / lag).
+        val vh = chatRecyclerView.findViewHolderForAdapterPosition(last)
+        if (vh != null) {
+            val excess = vh.itemView.bottom -
+                (chatRecyclerView.height - chatRecyclerView.paddingBottom)
+            if (excess > 4) {
+                chatRecyclerView.scrollBy(0, excess)
+            }
+        } else {
+            layoutManager.scrollToPosition(last)
+        }
+    }
     private var mediaRecorder: MediaRecorder? = null
     private var voiceRecordFile: File? = null
     private var isRecording = false
@@ -1279,40 +1298,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
         }
         */
         val selectedFontName = sharedPreferencesHelper.getSelectedFont()
-        val typeface = try {
-            when (selectedFontName) {
-                "system_default" -> Typeface.DEFAULT
-                "alansans_regular" -> ResourcesCompat.getFont(requireContext(), R.font.alansans_regular)
-                "atkinsonhyperlegiblemono_regular" -> ResourcesCompat.getFont(requireContext(), R.font.atkinsonhyperlegiblemono_regular)
-                "atkinsonhyperlegiblenext_regular" -> ResourcesCompat.getFont(requireContext(), R.font.atkinsonhyperlegiblenext_regular)
-                "notoserif_regular" -> ResourcesCompat.getFont(requireContext(), R.font.notoserif_regular)
-                "alexandria_regular" -> ResourcesCompat.getFont(requireContext(), R.font.alexandria_regular)
-                "aronesans_regular" -> ResourcesCompat.getFont(requireContext(), R.font.aronesans_regular)
-                "funneldisplay_regular" -> ResourcesCompat.getFont(requireContext(), R.font.funneldisplay_regular)
-                "geologica_light" -> ResourcesCompat.getFont(requireContext(), R.font.geologica_light)
-                "googlesansflex_regular" -> ResourcesCompat.getFont(requireContext(), R.font.googlesansflex_regular)
-                "instrumentsans_regular" -> ResourcesCompat.getFont(requireContext(), R.font.instrumentsans_regular)
-                "lexend_regular" -> ResourcesCompat.getFont(requireContext(), R.font.lexend_regular)
-                "merriweather_24pt_regular" -> ResourcesCompat.getFont(requireContext(), R.font.merriweather_24pt_regular)
-                "merriweathersans_light" -> ResourcesCompat.getFont(requireContext(), R.font.merriweathersans_light)
-                "mplus2_regular" -> ResourcesCompat.getFont(requireContext(), R.font.mplus2_regular)
-                "nokora_regular" -> ResourcesCompat.getFont(requireContext(), R.font.nokora_regular)
-                "notosans_regular" -> ResourcesCompat.getFont(requireContext(), R.font.notosans_regular)
-                "opensans_regular" -> ResourcesCompat.getFont(requireContext(), R.font.opensans_regular)
-                "outfit_regular" -> ResourcesCompat.getFont(requireContext(), R.font.outfit_regular)
-                "poppins_regular" -> ResourcesCompat.getFont(requireContext(), R.font.poppins_regular)
-                "readexpro_regular" -> ResourcesCompat.getFont(requireContext(), R.font.readexpro_regular)
-                "roboto_regular" -> ResourcesCompat.getFont(requireContext(), R.font.roboto_regular)
-                "robotoserif_regular" -> ResourcesCompat.getFont(requireContext(), R.font.robotoserif_regular)
-                "sourceserif4_regular" -> ResourcesCompat.getFont(requireContext(), R.font.sourceserif4_regular)
-                "tasaorbiter_regular" -> ResourcesCompat.getFont(requireContext(), R.font.tasaorbiter_regular)
-                "ubuntusans_regular" -> ResourcesCompat.getFont(requireContext(), R.font.ubuntusans_regular)
-                "vendsans_regular" -> ResourcesCompat.getFont(requireContext(), R.font.vendsans_regular)
-                else -> ResourcesCompat.getFont(requireContext(), R.font.geologica_light)
-            }
-        } catch (e: Exception) {
-            Typeface.DEFAULT  // Fallback if any font load fails
-        }
+        val typeface = AppFonts.resolveSelectable(requireContext(), selectedFontName)
         chatEditText.typeface = typeface ?: Typeface.DEFAULT
         modelNameTextView.typeface = typeface ?: Typeface.DEFAULT
         chatAdapter.updateFont(typeface)
@@ -1519,23 +1505,28 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
 
     /** Keep the last assistant row's bottom edge in view while stick-to-bottom is armed. */
     private fun followStreamBottom() {
-        chatRecyclerView.post {
-            val last = chatAdapter.itemCount - 1
-            if (last < 0) return@post
-            layoutManager.scrollToPosition(last)
-            chatRecyclerView.post {
-                val vh = chatRecyclerView.findViewHolderForAdapterPosition(last) ?: return@post
-                val excess = vh.itemView.bottom -
-                    (chatRecyclerView.height - chatRecyclerView.paddingBottom)
-                if (excess > 0) chatRecyclerView.scrollBy(0, excess)
-            }
-        }
+        if (!stickToBottomDuringStream) return
+        if (followStreamPending) return
+        followStreamPending = true
+        chatRecyclerView.removeCallbacks(followStreamRunnable)
+        chatRecyclerView.postOnAnimation(followStreamRunnable)
     }
 
     private fun updateStickToBottomFromScroll() {
         if (viewModel.isAwaitingResponse.value != true) return
-        // At (or past) the bottom → arm follow; scrolled up → disarm.
-        stickToBottomDuringStream = !chatRecyclerView.canScrollVertically(1)
+        // Hysteresis: arm only when truly at bottom; disarm once user scrolls up a bit.
+        val atBottom = !chatRecyclerView.canScrollVertically(1)
+        if (atBottom) {
+            stickToBottomDuringStream = true
+        } else {
+            val offset = chatRecyclerView.computeVerticalScrollOffset()
+            val range = chatRecyclerView.computeVerticalScrollRange() -
+                chatRecyclerView.computeVerticalScrollExtent()
+            val distanceFromBottom = (range - offset).coerceAtLeast(0)
+            if (distanceFromBottom > 80) {
+                stickToBottomDuringStream = false
+            }
+        }
     }
 
     private fun setupRecyclerView() {
@@ -1751,6 +1742,9 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
         }
     }
     override fun onDestroyView() {
+        if (::chatRecyclerView.isInitialized) {
+            chatRecyclerView.removeCallbacks(followStreamRunnable)
+        }
         if (::textToSpeech.isInitialized) {
             textToSpeech.stop()
             textToSpeech.shutdown()
@@ -2587,76 +2581,22 @@ $cleanContent
         fontsButton.setOnClickListener {
             hideMenu()
 
-            // Define font options (display name, font res ID or null for system default, style res ID)
             val fontOptions = listOf(
-                Triple("System Default", null, R.style.Theme_Grokion),
-                Triple("Alan Sans Regular", R.font.alansans_regular, R.style.Font_AlanSansRegular),
-                Triple("Atkinson Mono", R.font.atkinsonhyperlegiblemono_regular, R.style.Font_AtkinsonhyperlegiblemonoRegular),
-                Triple("Atkinson Next", R.font.atkinsonhyperlegiblenext_regular, R.style.Font_AtkinsonhyperlegiblenextRegular),
-                Triple("Alexandria Regular", R.font.alexandria_regular, R.style.Font_AlexandriaRegular),
-                Triple("Arone Sans Regular", R.font.aronesans_regular, R.style.Font_AroneSansRegular),
-                Triple("Funnel Display Regular", R.font.funneldisplay_regular, R.style.Font_FunnelDisplayRegular),
-                Triple("Geologica Light", R.font.geologica_light, R.style.Font_GeologicaLight),
-                Triple("Google Sans Flex Regular", R.font.googlesansflex_regular, R.style.Font_GoogleSansFlexRegular),
-                Triple("Instrument Sans Regular", R.font.instrumentsans_regular, R.style.Font_InstrumentSansRegular),
-                Triple("Lexend Regular", R.font.lexend_regular, R.style.Font_LexendRegular),
-                Triple("Merriweather 24pt Regular", R.font.merriweather_24pt_regular, R.style.Font_Merriweather24ptRegular),
-                Triple("Merriweather Sans Light", R.font.merriweathersans_light, R.style.Font_MerriweathersansLight),
-                Triple("M Plus 2 Regular", R.font.mplus2_regular, R.style.Font_MPlus2Regular),
-                Triple("Nokora Regular", R.font.nokora_regular, R.style.Font_NokoraRegular),
-                Triple("Noto Sans Regular", R.font.notosans_regular, R.style.Font_NotoSansRegular),
-                Triple("Noto Serif", R.font.notoserif_regular, R.style.Font_NotoSerifRegular),
-                Triple("Open Sans Regular", R.font.opensans_regular, R.style.Font_OpenSansRegular),
-                Triple("Outfit Regular", R.font.outfit_regular, R.style.Font_OutfitRegular),
-                Triple("Poppins Regular", R.font.poppins_regular, R.style.Font_PoppinsRegular),
-                Triple("Readex Pro Regular", R.font.readexpro_regular, R.style.Font_ReadexProRegular),
-                Triple("Roboto Regular", R.font.roboto_regular, R.style.Font_RobotoRegular),
-                Triple("Roboto Serif Regular", R.font.robotoserif_regular, R.style.Font_RobotoSerifRegular),
-                Triple("Source Serif 4 Regular", R.font.sourceserif4_regular, R.style.Font_SourceSerif4Regular),
-                Triple("Tasa Orbiter Regular", R.font.tasaorbiter_regular, R.style.Font_TasaOrbiterRegular),
-                Triple("Ubuntu Sans Regular", R.font.ubuntusans_regular, R.style.Font_UbuntuSansRegular),
-                Triple("Vend Sans Regular", R.font.vendsans_regular, R.style.Font_VendSansRegular)
+                Pair("System Default", null as Int?),
+                Pair("Inter", R.font.inter_regular),
             )
 
-            // Helper function: Maps fontResId to its string name (or "system_default" for null)
-            fun getFontNameFromRes(fontResId: Int?): String = when (fontResId) {
-                null -> "system_default"
-                R.font.alansans_regular -> "alansans_regular"
-                R.font.atkinsonhyperlegiblemono_regular -> "atkinsonhyperlegiblemono_regular"
-                R.font.atkinsonhyperlegiblenext_regular -> "atkinsonhyperlegiblenext_regular"
-                R.font.alexandria_regular -> "alexandria_regular"
-                R.font.notoserif_regular -> "notoserif_regular"
-                R.font.aronesans_regular -> "aronesans_regular"
-                R.font.funneldisplay_regular -> "funneldisplay_regular"
-                R.font.geologica_light -> "geologica_light"
-                R.font.googlesansflex_regular -> "googlesansflex_regular"
-                R.font.instrumentsans_regular -> "instrumentsans_regular"
-                R.font.lexend_regular -> "lexend_regular"
-                R.font.merriweather_24pt_regular -> "merriweather_24pt_regular"
-                R.font.merriweathersans_light -> "merriweathersans_light"
-                R.font.mplus2_regular -> "mplus2_regular"
-                R.font.nokora_regular -> "nokora_regular"
-                R.font.notosans_regular -> "notosans_regular"
-                R.font.opensans_regular -> "opensans_regular"
-                R.font.outfit_regular -> "outfit_regular"
-                R.font.poppins_regular -> "poppins_regular"
-                R.font.readexpro_regular -> "readexpro_regular"
-                R.font.roboto_regular -> "roboto_regular"
-                R.font.robotoserif_regular -> "robotoserif_regular"
-                R.font.sourceserif4_regular -> "sourceserif4_regular"
-                R.font.tasaorbiter_regular -> "tasaorbiter_regular"
-                R.font.ubuntusans_regular -> "ubuntusans_regular"
-                R.font.vendsans_regular -> "vendsans_regular"
-                else -> "geologica_light"  // Fallback
+            fun fontNameFromRes(fontResId: Int?): String = when (fontResId) {
+                null -> AppFonts.SYSTEM_DEFAULT
+                R.font.inter_regular -> AppFonts.INTER
+                else -> AppFonts.INTER
             }
 
-            // Create the dialog first (to make it accessible in the adapter)
             val dialog = MaterialAlertDialogBuilder(requireContext(), com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog_Centered)
                 .setTitle("Select Font")
                 .setNegativeButton("Cancel", null)
                 .create()
 
-            // Create a RecyclerView adapter for font previews
             val adapter = object : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
                     val textView = TextView(parent.context).apply {
@@ -2664,7 +2604,7 @@ $cleanContent
                             ViewGroup.LayoutParams.MATCH_PARENT,
                             ViewGroup.LayoutParams.WRAP_CONTENT
                         )
-                        setPadding(32, 16, 32, 16)  // Padding for touch targets
+                        setPadding(32, 16, 32, 16)
                         textSize = 18f
                         gravity = Gravity.CENTER
                         isClickable = true
@@ -2673,50 +2613,30 @@ $cleanContent
                 }
 
                 override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-                    val (displayName, fontResId, styleResId) = fontOptions[position]
+                    val (displayName, fontResId) = fontOptions[position]
                     val textView = holder.itemView as TextView
                     textView.text = displayName
-                    // Apply the font for preview (use system default if fontResId is null)
                     textView.typeface = if (fontResId != null) {
-                        try {
-                            ResourcesCompat.getFont(textView.context, fontResId)
-                        } catch (e: Exception) {
-                            ResourcesCompat.getFont(textView.context, R.font.geologica_light)  // Fallback
-                        }
+                        ResourcesCompat.getFont(textView.context, fontResId)
+                            ?: AppFonts.resolveSelectable(textView.context, AppFonts.INTER)
                     } else {
-                        Typeface.DEFAULT  // System default font
+                        Typeface.DEFAULT
                     }
 
-                    // Highlight current font in #a0610a (using helper for isSelected)
-                    val currentFont = sharedPreferencesHelper.getSelectedFont()
-                    val fontName = getFontNameFromRes(fontResId)
-                    val isSelected = fontName == currentFont
+                    val fontName = fontNameFromRes(fontResId)
+                    val isSelected = fontName == sharedPreferencesHelper.getSelectedFont()
                     if (isSelected) {
                         textView.setTextColor(ContextCompat.getColor(requireContext(), R.color.xai_mute))
                     } else {
                         textView.setTextColor(ContextCompat.getColor(requireContext(), R.color.xai_ink))
                     }
 
-                    // On tap: Save, apply, dismiss (using helper for fontName)
                     textView.setOnClickListener {
-                        val fontName = getFontNameFromRes(fontResId)
                         sharedPreferencesHelper.saveSelectedFont(fontName)
-
-                        // Manual font update for static views (e.g., chatEditText)
-                        val newTypeface = if (fontResId != null) {
-                            try {
-                                ResourcesCompat.getFont(requireContext(), fontResId)
-                            } catch (e: Exception) {
-                                ResourcesCompat.getFont(requireContext(), R.font.geologica_light)
-                            }
-                        } else {
-                            Typeface.DEFAULT  // System default
-                        }
-                        // Apply to your static TextViews (add more as needed)
+                        val newTypeface = AppFonts.resolveSelectable(requireContext(), fontName)
                         chatEditText.typeface = newTypeface
                         modelNameTextView.typeface = newTypeface
                         chatAdapter.updateFont(newTypeface)
-
                         dialog.dismiss()
                     }
                 }
@@ -2724,7 +2644,6 @@ $cleanContent
                 override fun getItemCount() = fontOptions.size
             }
 
-            // Set up RecyclerView and show dialog
             val recyclerView = RecyclerView(requireContext()).apply {
                 layoutManager = LinearLayoutManager(requireContext())
                 this.adapter = adapter
@@ -2734,7 +2653,6 @@ $cleanContent
             dialog.setView(recyclerView)
             dialog.show()
 
-            // Force underline the title after showing
             val titleView = dialog.findViewById<TextView>(androidx.appcompat.R.id.alertTitle)
             titleView?.paintFlags = titleView.paintFlags or Paint.UNDERLINE_TEXT_FLAG
         }

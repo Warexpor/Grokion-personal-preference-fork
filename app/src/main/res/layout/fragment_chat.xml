@@ -71,39 +71,56 @@
                 app:barrierDirection="start"
                 app:constraint_referenced_ids="newChatButton" />
 
-            <!-- Ask title (model chip lives inside composer) -->
+            <!-- Model chip — pinned to top-right -->
             <TextView
-                android:id="@+id/askTitleTextView"
+                android:id="@+id/modelNameTextView"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/grok_ask_tab"
-                android:textColor="@color/xai_ink"
-                android:textSize="17sp"
-                android:textStyle="bold"
-                android:paddingBottom="4dp"
-                app:layout_constraintStart_toEndOf="@id/topBarStartBarrier"
-                app:layout_constraintEnd_toStartOf="@id/topBarEndBarrier"
+                android:layout_height="36dp"
+                android:layout_marginEnd="8dp"
+                android:maxWidth="220dp"
+                android:background="@drawable/bg_model_chip"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="Active model"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:gravity="center_vertical"
+                android:paddingStart="12dp"
+                android:paddingEnd="10dp"
+                android:textColor="@color/xai_body"
+                android:textSize="13sp"
+                android:drawablePadding="4dp"
+                app:drawableEndCompat="@drawable/ic_expand_more"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintHorizontal_bias="0.5" />
+                tools:text="Grok" />
+
+            <!-- Kept gone for ChatFragment ID wiring; Ask tab removed -->
+            <TextView
+                android:id="@+id/askTitleTextView"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone"
+                android:text="@string/grok_ask_tab"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
             <View
                 android:id="@+id/askTabIndicator"
-                android:layout_width="28dp"
-                android:layout_height="3dp"
-                android:background="@color/xai_ink"
-                android:layout_marginTop="2dp"
-                app:layout_constraintTop_toBottomOf="@id/askTitleTextView"
-                app:layout_constraintStart_toStartOf="@id/askTitleTextView"
-                app:layout_constraintEnd_toEndOf="@id/askTitleTextView" />
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
             <!-- New chat moved to history bottom bar; keep ID for wiring -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/newChatButton"
                 style="@style/Widget.Material3.Button.IconButton"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:visibility="invisible"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone"
                 android:contentDescription="@string/grok_new_conversation"
                 app:icon="@drawable/ic_new_chat"
                 app:iconSize="24dp"
@@ -111,8 +128,7 @@
                 app:backgroundTint="@android:color/transparent"
                 app:rippleColor="@color/xai_canvas_mid"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent" />
+                app:layout_constraintTop_toTopOf="parent" />
 
             <!-- Kept for ChatFragment IDs / share chrome anchors; not shown in top bar -->
             <com.google.android.material.button.MaterialButton
@@ -877,27 +893,6 @@
                         android:padding="0dp" />
                 </LinearLayout>
 
-                <TextView
-                    android:id="@+id/modelNameTextView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="36dp"
-                    android:layout_marginStart="4dp"
-                    android:maxWidth="160dp"
-                    android:background="@drawable/bg_model_chip"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:contentDescription="Active model"
-                    android:ellipsize="end"
-                    android:singleLine="true"
-                    android:gravity="center_vertical"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="10dp"
-                    android:textColor="@color/xai_body"
-                    android:textSize="13sp"
-                    android:drawablePadding="4dp"
-                    app:drawableEndCompat="@drawable/ic_expand_more"
-                    tools:text="Grok" />
-
                 <View
                     android:layout_width="0dp"
                     android:layout_height="1dp"
@@ -942,7 +937,7 @@
                         app:icon="@drawable/ic_send"
                         app:iconGravity="textStart"
                         app:iconPadding="0dp"
-                        app:iconSize="20dp"
+                        app:iconSize="22dp"
                         app:iconTint="@color/send_icon_tint"
                         android:insetLeft="0dp"
                         android:insetTop="0dp"

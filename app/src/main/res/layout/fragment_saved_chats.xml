@@ -22,28 +22,28 @@
         android:paddingBottom="8dp"
         android:minHeight="56dp">
 
-        <ImageView
-            android:id="@+id/historyProfileAvatar"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:src="@drawable/ic_grok_mark_mono"
-            android:background="@drawable/bg_circle_soft"
-            android:padding="7dp"
-            android:contentDescription="@null"
-            app:tint="@color/xai_ink" />
-
         <TextView
             android:id="@+id/historyTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="12dp"
-            android:text="@string/app_name"
+            android:text="@string/grokion_wordmark"
             android:textColor="@color/xai_ink"
-            android:textSize="17sp"
-            android:textStyle="bold"
+            android:textSize="22sp"
+            android:textAllCaps="true"
+            android:letterSpacing="0.14"
+            android:textStyle="normal"
             android:maxLines="1"
-            android:ellipsize="end" />
+            android:ellipsize="end"
+            style="@style/GrokionBrandWordmark" />
+
+        <!-- Kept for ID stability if anything still resolves it -->
+        <ImageView
+            android:id="@+id/historyProfileAvatar"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone"
+            android:contentDescription="@null" />
 
         <ImageButton
             android:id="@+id/historyCloseButton"

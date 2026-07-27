@@ -8,6 +8,7 @@ import androidx.room.RoomDatabase
 import net.zetetic.database.sqlcipher.SQLiteDatabase
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import java.io.File
+import java.io.RandomAccessFile
 
 @Database(entities = [ChatSession::class, ChatMessage::class], version = 1, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
@@ -17,6 +18,7 @@ abstract class AppDatabase : RoomDatabase() {
     companion object {
         const val DB_NAME = "chat_database"
         private const val TAG = "AppDatabase"
+        private val SQLITE_MAGIC = "SQLite format 3\u0000".toByteArray(Charsets.US_ASCII)
 
         @Volatile
         private var INSTANCE: AppDatabase? = null
@@ -50,11 +52,14 @@ abstract class AppDatabase : RoomDatabase() {
         /**
          * One-shot: if an unencrypted Room DB already exists, rewrite it via
          * sqlcipher_export before Room opens with SupportOpenHelperFactory.
+         *
+         * Already-encrypted (or corrupt) files must not enter this path — probing
+         * them with an empty key throws and used to crash cold start.
          */
         private fun encryptPlaintextIfNeeded(context: Context, passphrase: ByteArray) {
             val dbFile = context.getDatabasePath(DB_NAME)
-            if (!dbFile.exists()) return
-            if (!isPlaintextDatabase(dbFile)) return
+            if (!dbFile.exists() || dbFile.length() == 0L) return
+            if (!isPlaintextSqliteHeader(dbFile)) return
 
             val parent = dbFile.parentFile ?: return
             val encryptedTemp = File(parent, "$DB_NAME.encrypting")
@@ -74,7 +79,6 @@ abstract class AppDatabase : RoomDatabase() {
                     null
                 )
                 plaintext.rawExecSQL("PRAGMA wal_checkpoint(FULL);")
-                // Raw key form avoids quoting issues with passphrase bytes.
                 plaintext.rawExecSQL(
                     "ATTACH DATABASE '${encryptedTemp.absolutePath}' AS encrypted KEY \"x'$hexKey'\";"
                 )
@@ -110,19 +114,17 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        private fun isPlaintextDatabase(dbFile: File): Boolean {
+        /** True only when the file header is standard unencrypted SQLite. */
+        private fun isPlaintextSqliteHeader(dbFile: File): Boolean {
             return try {
-                val db = SQLiteDatabase.openDatabase(
-                    dbFile.absolutePath,
-                    "",
-                    null,
-                    SQLiteDatabase.OPEN_READONLY,
-                    null,
-                    null
-                )
-                db.close()
-                true
-            } catch (_: Exception) {
+                RandomAccessFile(dbFile, "r").use { raf ->
+                    if (raf.length() < SQLITE_MAGIC.size) return false
+                    val header = ByteArray(SQLITE_MAGIC.size)
+                    raf.readFully(header)
+                    header.contentEquals(SQLITE_MAGIC)
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Could not read DB header for $DB_NAME", e)
                 false
             }
         }

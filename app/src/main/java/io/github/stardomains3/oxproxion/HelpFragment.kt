@@ -115,40 +115,7 @@ class HelpFragment : Fragment(R.layout.fragment_help) {
         val helpContentTextView = view.findViewById<TextView>(R.id.helpContentTextView)
         val sharedPreferencesHelper = SharedPreferencesHelper(requireContext())
         val selectedFontName = sharedPreferencesHelper.getSelectedFont()
-        val typeface = try {
-            when (selectedFontName) {
-                "system_default" -> Typeface.DEFAULT
-                "atkinsonhyperlegiblemono_regular" -> ResourcesCompat.getFont(requireContext(), R.font.atkinsonhyperlegiblemono_regular)
-                "atkinsonhyperlegiblenext_regular" -> ResourcesCompat.getFont(requireContext(), R.font.atkinsonhyperlegiblenext_regular)
-                "alansans_regular" -> ResourcesCompat.getFont(requireContext(), R.font.alansans_regular)
-                "notoserif_regular" -> ResourcesCompat.getFont(requireContext(), R.font.notoserif_regular)
-                "alexandria_regular" -> ResourcesCompat.getFont(requireContext(), R.font.alexandria_regular)
-                "aronesans_regular" -> ResourcesCompat.getFont(requireContext(), R.font.aronesans_regular)
-                "funneldisplay_regular" -> ResourcesCompat.getFont(requireContext(), R.font.funneldisplay_regular)
-                "geologica_light" -> ResourcesCompat.getFont(requireContext(), R.font.geologica_light)
-                "googlesansflex_regular" -> ResourcesCompat.getFont(requireContext(), R.font.googlesansflex_regular)
-                "instrumentsans_regular" -> ResourcesCompat.getFont(requireContext(), R.font.instrumentsans_regular)
-                "lexend_regular" -> ResourcesCompat.getFont(requireContext(), R.font.lexend_regular)
-                "merriweather_24pt_regular" -> ResourcesCompat.getFont(requireContext(), R.font.merriweather_24pt_regular)
-                "merriweathersans_light" -> ResourcesCompat.getFont(requireContext(), R.font.merriweathersans_light)
-                "mplus2_regular" -> ResourcesCompat.getFont(requireContext(), R.font.mplus2_regular)
-                "nokora_regular" -> ResourcesCompat.getFont(requireContext(), R.font.nokora_regular)
-                "notosans_regular" -> ResourcesCompat.getFont(requireContext(), R.font.notosans_regular)
-                "opensans_regular" -> ResourcesCompat.getFont(requireContext(), R.font.opensans_regular)
-                "outfit_regular" -> ResourcesCompat.getFont(requireContext(), R.font.outfit_regular)
-                "poppins_regular" -> ResourcesCompat.getFont(requireContext(), R.font.poppins_regular)
-                "readexpro_regular" -> ResourcesCompat.getFont(requireContext(), R.font.readexpro_regular)
-                "roboto_regular" -> ResourcesCompat.getFont(requireContext(), R.font.roboto_regular)
-                "robotoserif_regular" -> ResourcesCompat.getFont(requireContext(), R.font.robotoserif_regular)
-                "sourceserif4_regular" -> ResourcesCompat.getFont(requireContext(), R.font.sourceserif4_regular)
-                "tasaorbiter_regular" -> ResourcesCompat.getFont(requireContext(), R.font.tasaorbiter_regular)
-                "ubuntusans_regular" -> ResourcesCompat.getFont(requireContext(), R.font.ubuntusans_regular)
-                "vendsans_regular" -> ResourcesCompat.getFont(requireContext(), R.font.vendsans_regular)
-                else -> ResourcesCompat.getFont(requireContext(), R.font.geologica_light)
-            }
-        } catch (e: Exception) {
-            Typeface.DEFAULT  // Fallback
-        }
+        val typeface = AppFonts.resolveSelectable(requireContext(), selectedFontName)
         val versionName = getAppVersionName(requireContext())
         helpContentTextView.typeface = typeface
         val markwon = Markwon.builder(requireContext())
@@ -289,7 +256,7 @@ class HelpFragment : Fragment(R.layout.fragment_help) {
             *   **Stream Button** {{ic_stream}} : Toggles streaming responses on or off.
             *   **Tools Button**  {{ic_tools}} : **Experimental, use at own risk!**. Many models do not run tools well/correctly. Exit app by swiping upwards if model misuses/repeats etc tools. Toggles tools on/off. Long press to see available tools: There you can toggle which tools you want available to the model. Available tools are: create file, set timer, brave search,  set alarm, add calendar event, list file in folder, open file, delete file(s), get location, find nearby places, read file in folder. Not all models support tool use. It is recommended to have tools on only when wanted as if adds to your input token count. When you first press this button it will ask which folder to use for reading and listing files; It is recommended you select grokion folder that is in Download folder as that where create file tool makes sends created files. For now only 9 tool uses can be used sequentially.
             *   **Conversation Button** {{ic_convo}} : Toggles "Audio Conversation" mode on or off. When enabled, Speech-to-Text automatically sends recognized prompts to the model, and responses are automatically read aloud via Text-to-Speech.
-            *   **Fonts Button** {{ic_fonts}} : Opens the fonts dialog where you can choose one of many different fonts for the main chat screen.
+            *   **Fonts Button** {{ic_fonts}} : Opens the fonts dialog where you can choose System Default or Inter for the main chat screen.
             *   **Font Size Button** {{ic_format}} : Makes visible the font resizing buttons for to change the size of the font in the main chat screen.
             *   **Presets Button** {{ic_presets}} : Opens the Presets screen.
             *   **Settings Button** {{ic_settings}} : Opens the Settings screen.

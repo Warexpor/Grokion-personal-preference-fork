@@ -28,8 +28,8 @@ android {
         applicationId = "io.github.warexpor.grokion"
         minSdk = 31
         targetSdk = 36
-        versionCode = 234
-        versionName = "2.1.126-grokion"
+        versionCode = 235
+        versionName = "2.1.127-grokion"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -54,6 +54,11 @@ android {
         }
         getByName("debug") {
             isDebuggable = true
+            // Dev APK: arm64 phones + x86_64 emulators only (drops unused 32-bit ABIs).
+            ndk {
+                abiFilters.clear()
+                abiFilters += listOf("arm64-v8a", "x86_64")
+            }
         }
     }
     buildFeatures {
