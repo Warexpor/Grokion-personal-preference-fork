@@ -1,5 +1,7 @@
 package io.github.stardomains3.oxproxion
 
+import io.github.stardomains3.oxproxion.Motion.withGrokStackAnimations
+
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Color
@@ -158,6 +160,7 @@ class SystemMessageLibraryFragment : Fragment() {
 
         view.findViewById<FloatingActionButton>(R.id.fab_add_system_message).setOnClickListener {
             parentFragmentManager.beginTransaction()
+                .withGrokStackAnimations()
                 .replace(R.id.fragment_container, AddEditSystemMessageFragment())
                 .addToBackStack(null)
                 .commit()
@@ -373,6 +376,7 @@ class SystemMessageLibraryFragment : Fragment() {
             }
         }
         parentFragmentManager.beginTransaction()
+            .withGrokStackAnimations()
             .replace(R.id.fragment_container, fragment)
             .addToBackStack(null)
             .commit()

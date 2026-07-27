@@ -17,6 +17,7 @@
         app:titleTextColor="?android:attr/textColorPrimary"
         android:background="?attr/colorSurface"
         app:navigationIcon="@drawable/is_backarrow"
+        app:navigationIconTint="@color/xai_ink"
         app:menu="@menu/add_edit_preset_menu" />
 
     <ScrollView
@@ -96,7 +97,7 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.materialswitch.MaterialSwitch
+            <androidx.appcompat.widget.SwitchCompat
                 android:id="@+id/switchStreaming"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -105,7 +106,7 @@
                 android:textColor="?android:attr/textColorPrimary"
                 android:textSize="16sp" />
 
-            <com.google.android.material.materialswitch.MaterialSwitch
+            <androidx.appcompat.widget.SwitchCompat
                 android:id="@+id/switchReasoning"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -114,7 +115,7 @@
                 android:textColor="?android:attr/textColorPrimary"
                 android:textSize="16sp" />
 
-            <com.google.android.material.materialswitch.MaterialSwitch
+            <androidx.appcompat.widget.SwitchCompat
                 android:id="@+id/switchConversation"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -123,7 +124,7 @@
                 android:textColor="?android:attr/textColorPrimary"
                 android:textSize="16sp" />
 
-            <com.google.android.material.materialswitch.MaterialSwitch
+            <androidx.appcompat.widget.SwitchCompat
                 android:id="@+id/switchWebSearch"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -132,7 +133,7 @@
                 android:textColor="?android:attr/textColorPrimary"
                 android:textSize="16sp" />
 
-            <com.google.android.material.materialswitch.MaterialSwitch
+            <androidx.appcompat.widget.SwitchCompat
                 android:id="@+id/switchTools"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

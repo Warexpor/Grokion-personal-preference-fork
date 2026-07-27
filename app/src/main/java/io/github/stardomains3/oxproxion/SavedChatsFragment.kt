@@ -1,18 +1,25 @@
 package io.github.stardomains3.oxproxion
 
+import io.github.stardomains3.oxproxion.Motion.withGrokStackAnimations
+
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.ImageButton
+import android.widget.PopupMenu
 import android.widget.PopupWindow
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.widget.SearchView
+import androidx.core.graphics.drawable.toDrawable
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -20,16 +27,16 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import kotlinx.coroutines.launch
-import androidx.core.graphics.drawable.toDrawable
-import androidx.appcompat.widget.SearchView  // NEW: For search functionality
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.util.Calendar
 
 class SavedChatsFragment : Fragment() {
 
     companion object {
         private const val ARG_EMBEDDED = "embedded"
+        private const val DAY_MS = 24L * 60L * 60L * 1000L
 
         fun newEmbedded(): SavedChatsFragment = SavedChatsFragment().apply {
             arguments = Bundle().apply { putBoolean(ARG_EMBEDDED, true) }
@@ -42,8 +49,10 @@ class SavedChatsFragment : Fragment() {
     private val viewModel: ChatViewModel by activityViewModels()
     private val savedChatsViewModel: SavedChatsViewModel by viewModels()
     private lateinit var savedChatsAdapter: SavedChatsAdapter
-    private lateinit var searchView: SearchView  // NEW: Reference to SearchView
-    private var allSessions: List<ChatSession> = emptyList()  // NEW: Store the full list for filtering
+    private lateinit var searchView: SearchView
+    private lateinit var historyEmptyView: TextView
+    private lateinit var prefs: SharedPreferencesHelper
+    private var allSessions: List<ChatSession> = emptyList()
 
     private val exportChatsLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -55,7 +64,7 @@ class SavedChatsFragment : Fragment() {
                             outputStream.write(json.toByteArray())
                         }
                         Toast.makeText(requireContext(), "Chats exported successfully", Toast.LENGTH_SHORT).show()
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
                         Toast.makeText(requireContext(), "Error exporting chats", Toast.LENGTH_SHORT).show()
                     }
                 }
@@ -72,19 +81,18 @@ class SavedChatsFragment : Fragment() {
                             it.bufferedReader().readText()
                         }
                         if (json != null) {
-                            savedChatsViewModel.importChatsFromJson(json) { result ->
-                                when (result) {
+                            savedChatsViewModel.importChatsFromJson(json) { importResult ->
+                                when (importResult) {
                                     is ChatImportResult.Success ->
                                         Toast.makeText(requireContext(), "Chats imported successfully", Toast.LENGTH_SHORT).show()
                                     is ChatImportResult.Error ->
-                                        Toast.makeText(requireContext(), result.message, Toast.LENGTH_LONG).show()
+                                        Toast.makeText(requireContext(), importResult.message, Toast.LENGTH_LONG).show()
                                 }
                             }
                         } else {
                             throw Exception("Failed to read file content.")
                         }
-                    } catch (e: Exception) {
-                       // Log.e("Import", "Import failed", e)
+                    } catch (_: Exception) {
                         Toast.makeText(requireContext(), "Import failed. Check file format.", Toast.LENGTH_SHORT).show()
                     }
                 }
@@ -95,17 +103,21 @@ class SavedChatsFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_saved_chats, container, false)
-    }
+    ): View? = inflater.inflate(R.layout.fragment_saved_chats, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        prefs = SharedPreferencesHelper(requireContext())
 
         val recyclerView = view.findViewById<RecyclerView>(R.id.savedChatsRecyclerView)
-        val toolbar = view.findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.toolbar)
+        historyEmptyView = view.findViewById(R.id.historyEmptyView)
+        searchView = view.findViewById(R.id.historySearchView)
 
-        toolbar.setNavigationOnClickListener {
+        val closeButton = view.findViewById<ImageButton>(R.id.historyCloseButton)
+        val settingsButton = view.findViewById<ImageButton>(R.id.historySettingsButton)
+
+        // Embedded: collapse drawer. Full-screen: pop back.
+        closeButton.setOnClickListener {
             if (isEmbedded) {
                 (parentFragment as? HistoryPanelHost)?.closeHistoryPanel()
             } else {
@@ -113,53 +125,36 @@ class SavedChatsFragment : Fragment() {
             }
         }
 
-        toolbar.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.action_import -> {
-                    importChats()
-                    true
-                }
-                R.id.action_export -> {
-                    exportChats()
-                    true
-                }
-                R.id.action_search -> {
-                    // NEW: Handle search expansion (if needed)
-                    true
-                }
-                else -> false
+        settingsButton.setOnClickListener { openSettings() }
+        settingsButton.setOnLongClickListener {
+            showLibraryMenu(settingsButton)
+            true
+        }
+
+        view.findViewById<ImageButton>(R.id.historyNewChatButton).setOnClickListener {
+            if (isEmbedded) {
+                (parentFragment as? HistoryPanelHost)?.startNewChatFromHistory()
+            } else {
+                viewModel.startNewChat()
+                parentFragmentManager.popBackStack()
             }
         }
 
-
-        // NEW: Setup SearchView
-        val searchItem = toolbar.menu.findItem(R.id.action_search)
-        if (searchItem != null) {
-            searchView = searchItem.actionView as SearchView
-            searchView.queryHint = "Search chats..."
-
-            // NEW: For debouncing
-            var searchJob: Job? = null
-
-            searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-                override fun onQueryTextSubmit(query: String?): Boolean {
-                    return true
+        searchView.queryHint = getString(R.string.grok_history_search)
+        // Quiet SearchView chrome
+        searchView.findViewById<View>(androidx.appcompat.R.id.search_plate)?.setBackgroundColor(Color.TRANSPARENT)
+        var searchJob: Job? = null
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean = true
+            override fun onQueryTextChange(newText: String?): Boolean {
+                searchJob?.cancel()
+                searchJob = viewLifecycleOwner.lifecycleScope.launch {
+                    delay(300)
+                    filterSessions(newText ?: "")
                 }
-
-                override fun onQueryTextChange(newText: String?): Boolean {
-                    // NEW: Cancel previous job and start a new one with delay
-                    searchJob?.cancel()
-                    searchJob = viewLifecycleOwner.lifecycleScope.launch {
-                        delay(400)  // Wait 300ms
-                        filterSessions(newText ?: "")
-                    }
-                    return true
-                }
-            })
-        } else {
-            Toast.makeText(requireContext(), "Search not available", Toast.LENGTH_SHORT).show()
-        }
-
+                return true
+            }
+        })
 
         savedChatsAdapter = SavedChatsAdapter(
             onClick = { session ->
@@ -170,35 +165,124 @@ class SavedChatsFragment : Fragment() {
                     parentFragmentManager.popBackStack()
                 }
             },
-            onLongClick = { session, view ->  // ← Now you get the view!
-                showOptionsDialog(session, view)  // ← Pass the view to your dialog
-            }
+            onOverflowClick = { session, anchor -> showOptionsDialog(session, anchor) }
         )
 
         recyclerView.adapter = savedChatsAdapter
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-        // UPDATED: Observe allSessions and apply current search filter
         savedChatsViewModel.allSessions.observe(viewLifecycleOwner) { sessions ->
-            allSessions = sessions ?: emptyList()  // NEW: Store full list
-            filterSessions(searchView.query.toString())  // NEW: Apply current search
+            allSessions = sessions ?: emptyList()
+            filterSessions(searchView.query?.toString().orEmpty())
         }
     }
 
-    // NEW: Function to filter sessions based on search query
+    private fun showLibraryMenu(anchor: View) {
+        PopupMenu(requireContext(), anchor, Gravity.END).apply {
+            menu.add(0, 1, 0, R.string.grok_history_import)
+            menu.add(0, 2, 1, R.string.grok_history_export)
+            setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    1 -> {
+                        importChats()
+                        true
+                    }
+                    2 -> {
+                        exportChats()
+                        true
+                    }
+                    else -> false
+                }
+            }
+            show()
+        }
+    }
+
+    private fun openSettings() {
+        if (isEmbedded) {
+            (parentFragment as? HistoryPanelHost)?.closeHistoryPanel(animated = false)
+        }
+        val host = if (isEmbedded) {
+            requireActivity().supportFragmentManager
+        } else {
+            parentFragmentManager
+        }
+        val chat = requireActivity().supportFragmentManager.fragments
+            .firstOrNull { it is ChatFragment && it.isAdded }
+        host.beginTransaction()
+            .withGrokStackAnimations()
+            .apply {
+                if (chat != null) hide(chat)
+                else if (!isEmbedded) hide(this@SavedChatsFragment)
+            }
+            .add(R.id.fragment_container, SettingsFragment())
+            .addToBackStack(null)
+            .commit()
+    }
+
+    private fun startOfDayMillis(now: Long = System.currentTimeMillis()): Long {
+        return Calendar.getInstance().apply {
+            timeInMillis = now
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+    }
+
+    private fun bucketLabel(timestamp: Long, startToday: Long): String {
+        return when {
+            timestamp >= startToday -> getString(R.string.grok_history_today)
+            timestamp >= startToday - DAY_MS -> getString(R.string.grok_history_yesterday)
+            timestamp >= startToday - 7L * DAY_MS -> getString(R.string.grok_history_previous_7_days)
+            else -> getString(R.string.grok_history_older)
+        }
+    }
+
     private fun filterSessions(query: String) {
         viewLifecycleOwner.lifecycleScope.launch {
-            val filteredSessions = if (query.isEmpty()) {
-                allSessions  // Show all sessions
+            val filtered = if (query.isEmpty()) {
+                allSessions
             } else {
-                savedChatsViewModel.searchSessions(query)  // NEW: Use optimized search
+                savedChatsViewModel.searchSessions(query)
             }
-            savedChatsAdapter.submitList(filteredSessions)
+            val pinnedIds = prefs.getPinnedSessionIds()
+            val pinned = filtered.filter { it.id in pinnedIds }
+                .sortedByDescending { it.timestamp }
+            val rest = filtered.filter { it.id !in pinnedIds }
+                .sortedByDescending { it.timestamp }
+
+            val startToday = startOfDayMillis()
+            val items = buildList {
+                if (pinned.isNotEmpty()) {
+                    add(HistoryListItem.Header(getString(R.string.grok_history_pinned_title)))
+                    pinned.forEach { add(HistoryListItem.Session(it, pinned = true)) }
+                }
+                var lastBucket: String? = null
+                rest.forEach { session ->
+                    val bucket = bucketLabel(session.timestamp, startToday)
+                    if (bucket != lastBucket) {
+                        add(HistoryListItem.Header(bucket))
+                        lastBucket = bucket
+                    }
+                    add(HistoryListItem.Session(session, pinned = false))
+                }
+            }
+            savedChatsAdapter.submitList(items)
+
+            val empty = filtered.isEmpty()
+            historyEmptyView.isVisible = empty
+            view?.findViewById<RecyclerView>(R.id.savedChatsRecyclerView)?.isVisible = !empty
+            historyEmptyView.text = if (query.isBlank()) {
+                "${getString(R.string.grok_history_empty_title)}\n\n${getString(R.string.grok_history_empty_text)}"
+            } else {
+                "${getString(R.string.grok_history_search_empty_title)}\n\n${getString(R.string.grok_history_search_empty_text)}"
+            }
         }
     }
 
     private fun exportChats() {
-        if (savedChatsAdapter.itemCount == 0) {
+        if (allSessions.isEmpty()) {
             Toast.makeText(requireContext(), "No chats to export.", Toast.LENGTH_SHORT).show()
             return
         }
@@ -219,103 +303,61 @@ class SavedChatsFragment : Fragment() {
     }
 
     private fun showOptionsDialog(session: ChatSession, anchorView: View) {
-        val inflater = LayoutInflater.from(requireContext())
-        val menuView = inflater.inflate(R.layout.saved_popup_layout, null)
-
+        val menuView = LayoutInflater.from(requireContext()).inflate(R.layout.saved_popup_layout, null)
         val popupWindow = PopupWindow(
             menuView,
             ViewGroup.LayoutParams.WRAP_CONTENT,
             ViewGroup.LayoutParams.WRAP_CONTENT,
             true
         )
-
-        // Setup background and positioning
         popupWindow.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
         popupWindow.isOutsideTouchable = true
 
         val rootView = requireActivity().window.decorView.findViewById<ViewGroup>(android.R.id.content)
         val dimView = View(requireContext()).apply {
-            setBackgroundColor(Color.argb(204, 0, 0, 0))
+            setBackgroundColor(Color.argb(153, 0, 0, 0))
             layoutParams = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
         }
         rootView.addView(dimView)
+        popupWindow.setOnDismissListener { rootView.removeView(dimView) }
 
-        popupWindow.setOnDismissListener {
-            rootView.removeView(dimView)
-        }
-
+        val pinOption = menuView.findViewById<TextView>(R.id.menu_pin)
         val renameOption = menuView.findViewById<TextView>(R.id.menu_edit)
         val deleteOption = menuView.findViewById<TextView>(R.id.menu_delete)
+        val pinned = prefs.isSessionPinned(session.id)
+        pinOption.text = getString(if (pinned) R.string.grok_history_unpin else R.string.grok_history_pin)
 
+        pinOption.setOnClickListener {
+            popupWindow.dismiss()
+            prefs.setSessionPinned(session.id, !pinned)
+            filterSessions(searchView.query?.toString().orEmpty())
+        }
         renameOption.setOnClickListener {
             popupWindow.dismiss()
             showRenameDialog(session)
         }
-
         deleteOption.setOnClickListener {
             popupWindow.dismiss()
             showDeleteConfirmationDialog(session)
         }
 
-        // Measure the popup content to get its dimensions
         menuView.measure(
             View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
             View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
         )
-        val popupWidth = menuView.measuredWidth
-        val popupHeight = menuView.measuredHeight
-
-        // Get the location of the anchor view on screen
-        val location = IntArray(2)
-        anchorView.getLocationOnScreen(location)
-        val anchorX = location[0]
-        val anchorY = location[1]
-        val anchorWidth = anchorView.width
-        val anchorHeight = anchorView.height
-
-        // Get screen dimensions
-        val displayMetrics = resources.displayMetrics
-        val screenWidth = displayMetrics.widthPixels
-        val screenHeight = displayMetrics.heightPixels
-
-        // Calculate available space
-        val spaceBelow = screenHeight - anchorY - anchorHeight
-        val spaceAbove = anchorY
-        val spaceRight = screenWidth - anchorX - anchorWidth
-        val spaceLeft = anchorX
-
-        // Determine vertical position (above or below anchor)
-        val showAbove = spaceBelow < popupHeight && spaceAbove >= popupHeight
-        val yOffset = if (showAbove) {
-            -anchorHeight - popupHeight
-        } else {
-            0
-        }
-
-        // Determine horizontal position (left or right of anchor)
-        val showLeft = spaceRight < popupWidth && spaceLeft >= popupWidth
-        val xOffset = if (showLeft) {
-            -popupWidth + anchorWidth
-        } else {
-            0
-        }
-
-        // Show the popup with calculated offsets
-        popupWindow.showAsDropDown(anchorView, xOffset, yOffset)
+        popupWindow.showAsDropDown(anchorView, anchorView.width - menuView.measuredWidth, -anchorView.height / 2)
     }
 
     private fun showRenameDialog(session: ChatSession) {
-        val editText = EditText(requireContext()).apply {  //, R.style.MyEditTextTheme
+        val editText = EditText(requireContext()).apply {
             setText(session.title)
             setSelection(session.title.length)
         }
-        // AlertDialog.Builder(requireContext())
-        // MaterialAlertDialogBuilder(requireContext(), R.style.MyCustomAlertDialogTheme)
-        MaterialAlertDialogBuilder(requireContext())// R.style.CustomMaterialAlertDialogTheme)
-            .setTitle("Rename Chat")
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Rename")
             .setView(editText)
             .setPositiveButton("Rename") { _, _ ->
                 val newTitle = editText.text.toString()
@@ -328,12 +370,11 @@ class SavedChatsFragment : Fragment() {
     }
 
     private fun showDeleteConfirmationDialog(session: ChatSession) {
-        //  AlertDialog.Builder(requireContext())
-        //  MaterialAlertDialogBuilder(requireContext(), R.style.MyCustomAlertDialogTheme)
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Delete Chat")
-            .setMessage("Are you sure you want to delete this chat session?")
+            .setTitle(R.string.grok_history_delete_title)
+            .setMessage(R.string.grok_history_delete_description)
             .setPositiveButton("Delete") { _, _ ->
+                prefs.setSessionPinned(session.id, false)
                 savedChatsViewModel.deleteSession(session.id)
             }
             .setNegativeButton("Cancel", null)

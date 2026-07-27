@@ -5,7 +5,7 @@
     <item
         android:id="@+id/menu_advanced_toggle"
         android:title="Advanced"
-        app:actionViewClass="com.google.android.material.materialswitch.MaterialSwitch"
+        app:actionViewClass="androidx.appcompat.widget.SwitchCompat"
     app:showAsAction="always" />
 
 </menu>

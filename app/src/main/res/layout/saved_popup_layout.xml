@@ -7,6 +7,22 @@
     android:background="@drawable/popup_rounded_bg">
 
     <TextView
+        android:id="@+id/menu_pin"
+        style="?android:attr/listMenuViewStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:drawablePadding="8dp"
+        android:gravity="center_vertical"
+        android:padding="16dp"
+        android:text="@string/grok_history_pin"
+        app:drawableStartCompat="@drawable/ic_edit" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?android:attr/listDivider" />
+
+    <TextView
         android:id="@+id/menu_edit"
         style="?android:attr/listMenuViewStyle"
         android:layout_width="match_parent"
@@ -31,6 +47,6 @@
         android:gravity="center_vertical"
         android:padding="16dp"
         android:text="Delete"
-        app:drawableStartCompat="@drawable/ic_new_chat" />
+        app:drawableStartCompat="@drawable/ic_trash" />
 
 </LinearLayout>

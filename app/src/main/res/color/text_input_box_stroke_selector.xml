@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:state_focused="true" android:color="@color/xai_accent_sunset"/>
-    <item android:state_activated="true" android:color="?attr/colorError"/>
+    <item android:state_focused="true" android:color="@color/xai_ink"/>
+    <item android:state_activated="true" android:color="@color/xai_error"/>
     <item android:state_enabled="false" android:color="@color/xai_hairline"/>
     <item android:color="@color/xai_hairline"/>
 </selector>

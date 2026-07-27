@@ -1,6 +1,7 @@
 package io.github.stardomains3.oxproxion
 
 import android.animation.ObjectAnimator
+import android.content.res.ColorStateList
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -31,7 +32,6 @@ import io.noties.markwon.utils.NoCopySpannableFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonArray
@@ -80,17 +80,42 @@ class ChatAdapter(
     private var isUserApplyingEdit: Boolean = false
     private var editTargetPosition: Int = -1
     private var currentFontScale: Int = 100
+    private var streamRevealBoundHolder: AssistantViewHolder? = null
+    private var pendingStreamFinalize: Boolean = false
+    /** Invoked when the stream reveal paints a new frame (for stick-to-bottom follow). */
+    var onStreamVisualUpdate: (() -> Unit)? = null
+    private val streamReveal = StreamRevealAnimator(
+        onFrame = { displayed, fadeFrom ->
+            streamRevealBoundHolder?.renderStreamFrame(displayed, fadeFrom)
+                ?: run {
+                    if (messages.isNotEmpty()) {
+                        notifyItemChanged(messages.size - 1, "STREAMING")
+                    }
+                }
+            onStreamVisualUpdate?.invoke()
+        },
+        onCaughtUp = {
+            if (!pendingStreamFinalize) return@StreamRevealAnimator
+            pendingStreamFinalize = false
+            if (messages.isNotEmpty()) {
+                val lastIndex = messages.size - 1
+                getPreRenderedContent(messages[lastIndex])
+                notifyItemChanged(lastIndex)
+            }
+        }
+    )
     init {
-        // OPTIMIZATION: Consumer loop
+        // Apply SSE updates at full speed (conflated = latest only; no artificial delay).
         scope.launch(Dispatchers.Main) {
             for (newMessage in updateChannel) {
                 if (messages.isNotEmpty()) {
                     messages[messages.size - 1] = newMessage
-                    // Send "STREAMING" payload to update ONLY text (avoids full re-bind)
+                    val text = getMessageText(newMessage.content)
+                    if (text != "working..." && text.isNotBlank()) {
+                        streamReveal.setTarget(text)
+                    }
                     notifyItemChanged(messages.size - 1, "STREAMING")
                 }
-                // Throttle updates to ~20fps (50ms)
-                delay(50)
             }
         }
     }
@@ -100,6 +125,8 @@ class ChatAdapter(
     fun clearCache() {
         renderCache.clear()
         collapsedStates.clear()
+        streamReveal.reset()
+        streamRevealBoundHolder = null
     }
     fun getLatestPlainText(): String? {
         return messages.lastOrNull()?.let { getMessageText(it.content) }
@@ -116,23 +143,16 @@ class ChatAdapter(
     }
 
     fun finalizeStreaming() {
-        scope.launch(Dispatchers.Main) {
-            delay(100)
-            if (messages.isNotEmpty()) {
-                val lastIndex = messages.size - 1
-                val message = messages[lastIndex]
-
-                // OPTIMIZATION:
-                // 1. Force the heavy calculation (Regex + Markdown) NOW.
-                // This populates the renderCache[message] with the fixed table spacing.
-                getPreRenderedContent(message)
-
-                // 2. Notify the view.
-                // When onBindViewHolder runs, it will call getPreRenderedContent,
-                // find the data we just cached, and skip the heavy work.
-                notifyItemChanged(lastIndex)
-            }
+        val text = getLatestPlainText().orEmpty()
+        if (text.isBlank() || text == "working...") {
+            pendingStreamFinalize = false
+            streamReveal.reset()
+            if (messages.isNotEmpty()) notifyItemChanged(messages.size - 1)
+            return
         }
+        pendingStreamFinalize = true
+        streamReveal.setTarget(text)
+        streamReveal.finishFast()
     }
 
     fun setMessages(newMessages: List<FlexibleMessage>) {
@@ -147,6 +167,8 @@ class ChatAdapter(
 
         if (newMessages.isEmpty()) {
             messages.clear()
+            streamReveal.reset()
+            streamRevealBoundHolder = null
             notifyDataSetChanged()
             return
         }
@@ -211,6 +233,12 @@ class ChatAdapter(
         updateChannel.trySend(newMessage)
     }
 
+    fun streamDisplayedText(): String = streamReveal.displayed()
+
+    fun attachStreamRevealHolder(holder: AssistantViewHolder?) {
+        streamRevealBoundHolder = holder
+    }
+
     // --- DATA HELPERS ---
     fun flagEditUpdate(position: Int) {
         isUserApplyingEdit = true
@@ -254,8 +282,8 @@ class ChatAdapter(
             getMessageText(message.content)
         }
 
-        val reasoningText = message.reasoning?.let { "\n\n$it" } ?: ""
-        val rawText = reasoningText + text
+        // Reasoning lives in its own collapsible UI — do not bake it into the body.
+        val rawText = text
 
         // 3. Run Regex (Expensive)
         val fullText = ensureTableSpacing(rawText)
@@ -285,6 +313,22 @@ class ChatAdapter(
         )
         return md.replace(pattern) { "${it.value}\n\n" }
     }
+
+    /** Strip legacy ``` fences / --- separators from stored reasoning for the dedicated UI. */
+    private fun normalizeReasoning(raw: String?): String {
+        if (raw.isNullOrBlank()) return ""
+        var s = raw.trim()
+        if (s.startsWith("```")) {
+            s = s.removePrefix("```").removePrefix("thinking").removePrefix("reasoning").trimStart('\n')
+            val close = s.lastIndexOf("```")
+            if (close >= 0) s = s.substring(0, close)
+        }
+        s = s.replace(Regex("""\n*-{3,}\n*$"""), "").trim()
+        return s
+    }
+
+    private fun reasoningSource(message: FlexibleMessage): String =
+        normalizeReasoning(message.reasoning ?: message.thinking)
 
     // --- VIEW HOLDER LOGIC ---
 
@@ -342,6 +386,7 @@ class ChatAdapter(
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int, payloads: MutableList<Any>) {
         if (payloads.isNotEmpty()) {
             if (payloads.first() == "STREAMING" && holder is AssistantViewHolder) {
+                attachStreamRevealHolder(holder)
                 holder.bindTextOnly(messages[position])
                 return
             }
@@ -367,7 +412,12 @@ class ChatAdapter(
 
     override fun onViewRecycled(holder: RecyclerView.ViewHolder) {
         super.onViewRecycled(holder)
-        if (holder is AssistantViewHolder) holder.stopPulse()
+        if (holder is AssistantViewHolder) {
+            if (streamRevealBoundHolder === holder) {
+                streamRevealBoundHolder = null
+            }
+            holder.stopPulse()
+        }
     }
 
     // --- VIEW HOLDERS ---
@@ -544,33 +594,151 @@ class ChatAdapter(
         private val collapseToggleButton: ImageButton = itemView.findViewById(R.id.collapseToggleButton)
         private val saveFileButton: ImageButton = itemView.findViewById(R.id.saveFileButton)
         private val editButton: ImageButton = itemView.findViewById(R.id.editButton)
+        private val reasoningBlock: View = itemView.findViewById(R.id.reasoningBlock)
+        private val reasoningHeader: View = itemView.findViewById(R.id.reasoningHeader)
+        private val reasoningChevron: ImageView = itemView.findViewById(R.id.reasoningChevron)
+        private val reasoningTitle: TextView = itemView.findViewById(R.id.reasoningTitle)
+        private val reasoningTextView: TextView = itemView.findViewById(R.id.reasoningTextView)
         // Configuration for "Long Message" detection
         private val CHAR_THRESHOLD = 350
 
-        fun bindTextOnly(message: FlexibleMessage) {
-            val text = getMessageText(message.content)
-            val reasoning = message.reasoning
-            val displayText = if (!reasoning.isNullOrBlank()) {
-                "$reasoning\n\n$text"
-            } else {
-                text
+        private fun bindReasoning(message: FlexibleMessage, streaming: Boolean) {
+            val reasoning = reasoningSource(message)
+            if (reasoning.isBlank()) {
+                reasoningBlock.visibility = View.GONE
+                reasoningTextView.visibility = View.GONE
+                return
             }
-            messageTextView.text = displayText
-
-            // Subtle streaming indicator: pulse the container softly while tokens arrive
-            if (pulseAnimator == null || !pulseAnimator!!.isRunning) {
-                pulseAnimator = ObjectAnimator.ofFloat(messageContainer, "alpha", 0.85f, 1f).apply {
-                    duration = 600
-                    repeatCount = ObjectAnimator.INFINITE
-                    repeatMode = ObjectAnimator.REVERSE
-                }
-                pulseAnimator?.start()
+            reasoningBlock.visibility = View.VISIBLE
+            reasoningTitle.text = if (streaming && getMessageText(message.content).isBlank()) {
+                "Thinking…"
+            } else {
+                "Thinking"
+            }
+            val key = "reasoning_${reasoning.hashCode()}"
+            // Expanded while streaming so the user can watch thoughts; collapse default after.
+            val defaultCollapsed = !streaming
+            val collapsed = collapsedStates.getOrDefault(key, defaultCollapsed)
+            reasoningTextView.text = reasoning
+            reasoningTextView.visibility = if (collapsed) View.GONE else View.VISIBLE
+            reasoningChevron.setImageResource(
+                if (collapsed) R.drawable.ic_expand_more else R.drawable.ic_expand_less2
+            )
+            reasoningHeader.setOnClickListener {
+                val next = !collapsedStates.getOrDefault(key, defaultCollapsed)
+                collapsedStates[key] = next
+                reasoningTextView.visibility = if (next) View.GONE else View.VISIBLE
+                reasoningChevron.setImageResource(
+                    if (next) R.drawable.ic_expand_more else R.drawable.ic_expand_less2
+                )
+                onCollapse()
             }
         }
 
+        private var fadeTicker: android.view.Choreographer.FrameCallback? = null
+
+        private fun ensureFadeTicker() {
+            if (fadeTicker != null) return
+            val ticker = object : android.view.Choreographer.FrameCallback {
+                override fun doFrame(frameTimeNs: Long) {
+                    val text = messageTextView.text
+                    val fades = if (text is android.text.Spanned) {
+                        text.getSpans(0, text.length, StreamFadeSpan::class.java)
+                    } else emptyArray()
+                    val cursors = if (text is android.text.Spanned) {
+                        text.getSpans(0, text.length, StreamCursorSpan::class.java)
+                    } else emptyArray()
+                    val fadesDone = fades.isEmpty() || fades.all { it.isDone() }
+                    if (fadesDone && cursors.isEmpty()) {
+                        fadeTicker = null
+                        if (text is android.text.Spannable) {
+                            fades.forEach { text.removeSpan(it) }
+                        }
+                        return
+                    }
+                    if (fadesDone && text is android.text.Spannable) {
+                        fades.forEach { text.removeSpan(it) }
+                    }
+                    messageTextView.invalidate()
+                    android.view.Choreographer.getInstance().postFrameCallback(this)
+                }
+            }
+            fadeTicker = ticker
+            android.view.Choreographer.getInstance().postFrameCallback(ticker)
+        }
+
+        fun renderStreamFrame(displayed: String, fadeFrom: Int = displayed.length) {
+            pulseAnimator?.cancel()
+            pulseAnimator = null
+            messageContainer.alpha = 1f
+            val fullText = ensureTableSpacing(displayed)
+            val cursorColor = ContextCompat.getColor(itemView.context, R.color.xai_ink)
+            try {
+                val spanned = android.text.SpannableStringBuilder(markwon.toMarkdown(fullText))
+                val start = fadeFrom.coerceIn(0, spanned.length)
+                if (start < spanned.length) {
+                    spanned.setSpan(
+                        StreamFadeSpan(),
+                        start,
+                        spanned.length,
+                        android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                }
+                val cursorStart = spanned.length
+                spanned.append('\u258C') // ▌
+                spanned.setSpan(
+                    StreamCursorSpan(cursorColor),
+                    cursorStart,
+                    spanned.length,
+                    android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+                messageTextView.setText(spanned, TextView.BufferType.SPANNABLE)
+                ensureFadeTicker()
+            } catch (_: Exception) {
+                messageTextView.text = "$displayed\u258C"
+            }
+        }
+
+        fun bindTextOnly(message: FlexibleMessage) {
+            attachStreamRevealHolder(this)
+            val text = getMessageText(message.content)
+            bindReasoning(message, streaming = true)
+
+            if (text == "working..." || text.isBlank()) {
+                if (text == "working...") {
+                    streamReveal.reset()
+                    messageTextView.text = " "
+                    if (pulseAnimator == null || !pulseAnimator!!.isRunning) {
+                        pulseAnimator = ObjectAnimator.ofFloat(messageContainer, "alpha", 0.35f, 1f).apply {
+                            duration = 900
+                            repeatCount = ObjectAnimator.INFINITE
+                            repeatMode = ObjectAnimator.REVERSE
+                        }
+                        pulseAnimator?.start()
+                    }
+                } else {
+                    messageTextView.text = ""
+                }
+                return
+            }
+
+            streamReveal.setTarget(text)
+            val displayed = streamReveal.displayed().ifEmpty {
+                text.take(1.coerceAtMost(text.length))
+            }
+            // Already-painted prefix: no re-fade; Choreographer frames pass real fadeFrom.
+            renderStreamFrame(displayed, fadeFrom = displayed.length)
+        }
+
         fun bind(message: FlexibleMessage, position: Int, isSpeaking: Boolean, currentPosition: Int) {
+            if (streamRevealBoundHolder === this) {
+                streamRevealBoundHolder = null
+            }
+            streamReveal.reset()
             messageTextView.textSize = 16f * currentFontScale / 100f
             messageTextView.typeface = currentTypeface
+
+            bindReasoning(message, streaming = false)
 
             // 1. DISPLAY TEXT (Optimized: Uses Cache)
             val finalContent = getPreRenderedContent(message)
@@ -614,21 +782,20 @@ class ChatAdapter(
             }
             // ---------------------------------------------------
 
-            val reasoningText = message.reasoning?.let { "\n\n$it" } ?: ""
+            val reasoningText = reasoningSource(message).let { if (it.isBlank()) "" else "\n\n$it" }
 
             // 3. UI STATE LOGIC
             ttsButton.visibility = if (ttsAvailable) View.VISIBLE else View.GONE
 
             val isError = message.role == "assistant" && text.startsWith("**Error:**")
             val isThinking = text == "working..."
-            val hasActiveTools = message.toolCalls != null && message.toolCalls.isNotEmpty()
 
+            messageContainer.setBackgroundResource(R.drawable.bg_ai_message)
             if (isError) {
-                messageContainer.setBackgroundResource(R.drawable.bg_error_message)
-            } else if (hasActiveTools) {
-                messageContainer.setBackgroundResource(R.drawable.bg_ai_message_outlined)
+                messageTextView.setTextColor(ContextCompat.getColor(itemView.context, R.color.xai_error))
             } else {
-                messageContainer.setBackgroundResource(R.drawable.bg_ai_message)
+                // Restore after recycled error rows; Markwon spans still override for links.
+                messageTextView.setTextColor(ContextCompat.getColor(itemView.context, R.color.xai_ink))
             }
 
             // 4. ANIMATIONS
@@ -637,7 +804,7 @@ class ChatAdapter(
             pulseAnimator = null
             bgColorAnimator = null
 
-            if (isThinking) {
+            if (isThinking && Motion.areAnimationsEnabled(itemView.context)) {
                 // Grok-like: soft alpha pulse on flat text, no heavy bubble flash
                 val alphaAnimator = ObjectAnimator.ofFloat(messageContainer, "alpha", 0.35f, 1f).apply {
                     duration = 1200
@@ -702,8 +869,18 @@ class ChatAdapter(
             }
             copyButton.setOnClickListener {
                 val clipboard = itemView.context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                val clip = ClipData.newPlainText("Copied Text", messageTextView.text.toString())
+                val clip = ClipData.newPlainText("Copied Text", messageTextView.text.toString().trimEnd('\u258C'))
                 clipboard.setPrimaryClip(clip)
+                val previous = copyButton.drawable
+                val previousTint = copyButton.imageTintList
+                copyButton.setImageResource(R.drawable.ic_check)
+                copyButton.imageTintList = ColorStateList.valueOf(
+                    ContextCompat.getColor(itemView.context, R.color.xai_success)
+                )
+                copyButton.postDelayed({
+                    copyButton.setImageDrawable(previous)
+                    copyButton.imageTintList = previousTint
+                }, 1200L)
             }
 
             copyButton.setOnLongClickListener {
@@ -846,6 +1023,8 @@ class ChatAdapter(
         }
 
         internal fun stopPulse() {
+            fadeTicker?.let { android.view.Choreographer.getInstance().removeFrameCallback(it) }
+            fadeTicker = null
             pulseAnimator?.cancel()
             bgColorAnimator?.cancel()
             pulseAnimator = null

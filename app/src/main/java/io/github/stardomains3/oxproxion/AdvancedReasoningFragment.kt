@@ -12,7 +12,6 @@ import androidx.fragment.app.Fragment
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
-import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.textfield.TextInputEditText
 import kotlin.ranges.until
 import kotlin.text.toIntOrNull
@@ -21,7 +20,7 @@ class AdvancedReasoningFragment : Fragment(R.layout.fragment_advanced_reasoning)
 
     private lateinit var sharedPreferencesHelper: SharedPreferencesHelper
     private lateinit var effortGroup: MaterialButtonToggleGroup
-    private lateinit var includeSwitch: MaterialSwitch
+    private lateinit var includeSwitch: SwitchCompat
     private lateinit var maxTokensEdit: TextInputEditText
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -38,7 +37,7 @@ class AdvancedReasoningFragment : Fragment(R.layout.fragment_advanced_reasoning)
         toolbar.inflateMenu(R.menu.advanced_reasoning_menu)
         val menuItem = toolbar.menu.findItem(R.id.menu_advanced_toggle)
         if (menuItem != null) {
-            val advancedToggle = menuItem.actionView as MaterialSwitch // CHANGE THIS LINE
+            val advancedToggle = menuItem.actionView as SwitchCompat // CHANGE THIS LINE
             val isEnabled = sharedPreferencesHelper.getAdvancedReasoningEnabled()
             advancedToggle.isChecked = isEnabled
 

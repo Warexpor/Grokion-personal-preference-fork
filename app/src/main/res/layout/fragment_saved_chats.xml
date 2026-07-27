@@ -1,30 +1,132 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Grok history: profile header, list, bottom search | settings | new chat -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="?attr/colorSurface"
+    android:background="@color/xai_canvas"
     android:fitsSystemWindows="true"
     tools:context="SavedChatsFragment">
 
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/toolbar"
+    <LinearLayout
+        android:id="@+id/historyHeader"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorSurface"
-        app:navigationIcon="@drawable/is_backarrow"
-        app:menu="@menu/saved_chats_menu"
-        app:title="Saved Chats"
-        app:titleTextColor="?android:attr/textColorPrimary" />
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="8dp"
+        android:minHeight="56dp">
+
+        <ImageView
+            android:id="@+id/historyProfileAvatar"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/ic_grok_mark_mono"
+            android:background="@drawable/bg_circle_soft"
+            android:padding="7dp"
+            android:contentDescription="@null"
+            app:tint="@color/xai_ink" />
+
+        <TextView
+            android:id="@+id/historyTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="12dp"
+            android:text="@string/app_name"
+            android:textColor="@color/xai_ink"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <ImageButton
+            android:id="@+id/historyCloseButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_circle_soft"
+            android:contentDescription="@string/grok_history_close"
+            android:src="@drawable/ic_drawer_collapse"
+            android:padding="8dp"
+            android:visibility="visible"
+            app:tint="@color/xai_ink" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/historyEmptyView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:padding="32dp"
+        android:visibility="gone"
+        android:textColor="@color/xai_mute"
+        android:textSize="15sp"
+        android:lineSpacingMultiplier="1.35"
+        tools:text="@string/grok_history_empty_text" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/savedChatsRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:scrollbars="vertical"
+        android:clipToPadding="false"
+        android:paddingBottom="8dp"
+        android:scrollbars="none"
+        android:overScrollMode="never"
+        android:background="@color/xai_canvas"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+
+    <!-- Bottom utility: Search | Settings | New chat -->
+    <LinearLayout
+        android:id="@+id/historyBottomBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="12dp"
+        android:background="@color/xai_canvas">
+
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/historySearchView"
+            android:layout_width="0dp"
+            android:layout_height="44dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_history_search"
+            android:queryHint="@string/grok_history_search"
+            app:queryHint="@string/grok_history_search"
+            app:iconifiedByDefault="false"
+            app:queryBackground="@android:color/transparent" />
+
+        <ImageButton
+            android:id="@+id/historySettingsButton"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_circle_soft"
+            android:contentDescription="@string/grok_settings"
+            android:src="@drawable/ic_settings"
+            android:padding="10dp"
+            app:tint="@color/xai_ink" />
+
+        <ImageButton
+            android:id="@+id/historyNewChatButton"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_circle_soft"
+            android:contentDescription="@string/grok_new_conversation"
+            android:src="@drawable/ic_new_chat"
+            android:padding="10dp"
+            app:tint="@color/xai_ink" />
+    </LinearLayout>
 
 </LinearLayout>

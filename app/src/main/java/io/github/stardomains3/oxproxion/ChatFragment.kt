@@ -1,5 +1,7 @@
 package io.github.stardomains3.oxproxion
 
+import io.github.stardomains3.oxproxion.Motion.withGrokStackAnimations
+
 import android.Manifest
 import android.animation.ArgbEvaluator
 import android.animation.ValueAnimator
@@ -88,6 +90,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
@@ -191,6 +194,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
     private lateinit var scrollToBottomButton: MaterialButton
     private lateinit var convoButton: MaterialButton
     private lateinit var saveChatButton: MaterialButton
+    private lateinit var newChatButton: MaterialButton
     private lateinit var openSavedChatsButton: MaterialButton
     private lateinit var copyChatButton: MaterialButton
     private lateinit var buttonsRow2: LinearLayout
@@ -247,6 +251,8 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
     private var isScrollProgressEnabled = false
     private var lastContentLength = 0
     private var hasScrolled = false
+    /** When true during SSE, keep the viewport glued to the growing bottom of the reply. */
+    private var stickToBottomDuringStream = false
     private var mediaRecorder: MediaRecorder? = null
     private var voiceRecordFile: File? = null
     private var isRecording = false
@@ -259,6 +265,8 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
         super.onViewCreated(view, savedInstanceState)
         sharedPreferencesHelper = SharedPreferencesHelper(requireContext())
         speechLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            // STT disabled
+            /*
             if (result.resultCode == Activity.RESULT_OK) {
                 val data = result.data
                 val results = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
@@ -269,17 +277,19 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                     if (sharedPreferencesHelper.getConversationModeEnabled()) {
                         sendChatButton.performClick()
                     }
-
-                    //   updateButtonVisibility()  // Update your buttons
                 }
             }
+            */
         }
         permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            // STT disabled — mic permission was only used for voice input
+            /*
             if (isGranted) {
-                startSpeechRecognition()  // Auto-start after grant
+                startSpeechRecognition()
             } else {
                 Toast.makeText(requireContext(), "Microphone permission needed for voice input", Toast.LENGTH_SHORT).show()
             }
+            */
         }
         cameraPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
             if (isGranted) {
@@ -466,6 +476,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
         originalSendIcon = sendChatButton.icon
         resetChatButton = view.findViewById(R.id.resetChatButton)
         saveChatButton = view.findViewById(R.id.saveChatButton)
+        newChatButton = view.findViewById(R.id.newChatButton)
         openSavedChatsButton = view.findViewById(R.id.openSavedChatsButton)
         copyChatButton = view.findViewById(R.id.copyChatButton)
         saveMarkdownFileButton  = view.findViewById(R.id.saveMarkdownFileButton)
@@ -697,8 +708,10 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
             }
             override fun afterTextChanged(s: android.text.Editable?) {
                 updateButtonVisibility()
+                updateSendButtonChrome()
             }
         })
+        updateSendButtonChrome()
         pdfGenerator = PdfGenerator(requireContext())
         plusButton = view.findViewById(R.id.plusButton)
         btnDecreaseFont = view.findViewById(R.id.btnDecreaseFont)
@@ -802,15 +815,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
         }
         viewModel.isExtendedDockEnabled.observe(viewLifecycleOwner) { isEnabled ->
             utilityButton.visibility = if (isEnabled) View.VISIBLE else View.GONE
-
-            val hasText = !chatEditText.text.isNullOrEmpty()
-            if (isEnabled) {
-                clearButton.visibility = if (hasText) View.VISIBLE else View.GONE
-                speechButton.visibility = if (hasText) View.GONE else View.VISIBLE
-            } else {
-                clearButton.visibility = View.GONE
-                speechButton.visibility = View.GONE
-            }
+            updateComposerAccessoryVisibility()
         }
 
         viewModel.isPresetsExtendedEnabled.observe(viewLifecycleOwner) { isPresetsOnChatScreen ->
@@ -826,16 +831,16 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
         viewModel.chatMessages.observe(viewLifecycleOwner) { messages ->
             chatAdapter.setMessages(messages)
             val hasMessages = messages.isNotEmpty()
+            // STT disabled — watermark never used for hold-to-talk
+            centerWatermarkIcon.isClickable = false
+            /*
             val isFeatureEnabled = sharedPreferencesHelper.getWatermarkSttEnabled()
             if (hasMessages || !isFeatureEnabled) {
-                // Disable if chat has messages OR feature is turned off in settings
                 centerWatermarkIcon.isClickable = false
-
             } else {
-                // Enable if chat is empty AND feature is ON
                 centerWatermarkIcon.isClickable = true
-
             }
+            */
             if(hasMessages){
                 resetChatButton.icon.alpha = 255
                 saveChatButton.icon.alpha = 255
@@ -847,68 +852,18 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                     val currentLen = contentStr.length
                     if (contentStr == "working...") {
                         lastContentLength = 0
-                        /*huh? chatRecyclerView.post {
-                             chatRecyclerView.post {
-                                 chatRecyclerView.post {
-                                     val lastPos = chatAdapter.itemCount - 1
-                                     val lastVh = chatRecyclerView.findViewHolderForAdapterPosition(lastPos)
-                                     if (lastVh != null) {
-                                         // Start with good position: leave some margin at top (-12px)
-                                         layoutManager.scrollToPositionWithOffset(lastPos, -12)
-                                     } else {
-                                         layoutManager.scrollToPositionWithOffset(lastPos, -1000000)
-                                     }
-                                 }
-                             }
-                         }*/
-                        chatRecyclerView.post {
-                            chatRecyclerView.post {
-                                val lastPos = chatAdapter.itemCount - 1
-                                val lastVh = chatRecyclerView.findViewHolderForAdapterPosition(lastPos)
-                                if (lastVh != null) {
-                                    // Exact: Bottom-align (RV height - item height)
-                                    val offset = -(chatRecyclerView.height - lastVh.itemView.height)
-                                    layoutManager.scrollToPositionWithOffset(lastPos, offset)
-                                } else {
-                                    // Fallback: smooth scroll
-                                    layoutManager.scrollToPositionWithOffset(lastPos, -1000000)
-                                }
-                            }
-                        }
-                    }  else if (currentLen > lastContentLength && !hasScrolled) {
+                        stickToBottomDuringStream = false
+                        // Grok-style: pin the user message near the top; leave room below for the reply.
+                        pinUserMessageForReply()
+                    } else if (currentLen > lastContentLength) {
                         lastContentLength = currentLen
-                        chatRecyclerView.post {
-                            chatRecyclerView.post {
-                                chatRecyclerView.post {  // Triple post handles layout/draw timing
-                                    if(isShare){
-                                        homeButton.visibility = View.GONE
-                                        backcopyButton.visibility = View.VISIBLE
-                                        isShare = false
-                                    }
-                                    val lastPos = chatAdapter.itemCount - 1
-                                    val lastVh = chatRecyclerView.findViewHolderForAdapterPosition(lastPos)
-
-                                    if (lastVh != null) {
-                                        val bubbleTop = lastVh.itemView.top
-
-                                        // Fix the jitter: use more conservative threshold
-                                        // Only stop when we're really getting close to going off-screen
-                                        if (bubbleTop >= -8) {
-                                            // Still OK → keep auto-scrolling with fixed offset
-                                            layoutManager.scrollToPositionWithOffset(lastPos, -12)
-                                        } else {
-                                            // Too high! Stop here and lock position
-                                            hasScrolled = true
-                                            viewModel.setUserScrolledDuringStream(true)
-                                            layoutManager.scrollToPositionWithOffset(lastPos, -12)
-                                        }
-
-                                    } else {
-                                        // Fallback until view is ready
-                                        chatRecyclerView.smoothScrollToPosition(lastPos)
-                                    }
-                                }
-                            }
+                        if (isShare) {
+                            homeButton.visibility = View.GONE
+                            backcopyButton.visibility = View.VISIBLE
+                            isShare = false
+                        }
+                        if (stickToBottomDuringStream) {
+                            followStreamBottom()
                         }
                     } else {
                         lastContentLength = currentLen
@@ -972,18 +927,44 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
             }
             sendChatButton.isEnabled = true
             val materialButton = sendChatButton
+            val morphMs = resources.getInteger(R.integer.motion_send_morph).toLong()
+            val morphAnim = Motion.areAnimationsEnabled(requireContext())
+            fun applyAwaitingChrome() {
+                materialButton.setIconResource(R.drawable.ic_stop_grok)
+                materialButton.iconTint = ColorStateList.valueOf(
+                    ContextCompat.getColor(requireContext(), R.color.xai_ink)
+                )
+                materialButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.bg_send_disabled)
+            }
+            fun applyIdleChrome() {
+                materialButton.icon = originalSendIcon
+                updateSendButtonChrome()
+            }
             if (isAwaiting) {
+                if (sharedPreferencesHelper.getHapticResponding()) {
+                    sendChatButton.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
+                }
                 sendChatButton.contentDescription = "Stop generation"
-                materialButton.animate().alpha(0f).setDuration(100).withEndAction {
-                    materialButton.setIconResource(R.drawable.ic_stop)
-                    materialButton.animate().alpha(1f).setDuration(100).start()
-                }.start()
+                if (!morphAnim) {
+                    applyAwaitingChrome()
+                } else {
+                    materialButton.animate().cancel()
+                    materialButton.animate().alpha(0f).setDuration(morphMs / 2).setInterpolator(Motion.easeOut).withEndAction {
+                        applyAwaitingChrome()
+                        materialButton.animate().alpha(1f).setDuration(morphMs / 2).setInterpolator(Motion.easeOut).start()
+                    }.start()
+                }
             } else {
                 sendChatButton.contentDescription = "Send message"
-                materialButton.animate().alpha(0f).setDuration(100).withEndAction {
-                    materialButton.icon = originalSendIcon
-                    materialButton.animate().alpha(1f).setDuration(100).start()
-                }.start()
+                if (!morphAnim) {
+                    applyIdleChrome()
+                } else {
+                    materialButton.animate().cancel()
+                    materialButton.animate().alpha(0f).setDuration(morphMs / 2).setInterpolator(Motion.easeOut).withEndAction {
+                        applyIdleChrome()
+                        materialButton.animate().alpha(1f).setDuration(morphMs / 2).setInterpolator(Motion.easeOut).start()
+                    }.start()
+                }
                 val messages = viewModel.chatMessages.value
                 if (messages?.isNotEmpty() == true) {
                     val lastMessage = messages.last()
@@ -999,10 +980,8 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                         modelNameTextView.animateColor(originalColor, targetColor,   1000)
                         modelNameTextView.animateColor(targetColor,   originalColor, 3000)
                         if ( sharedPreferencesHelper.getAnimateBarOnError()) {
-                          //  animateBarBackground(topBarLayout, targetColor)
-                           // animateBarBackground(chatInputContainer, targetColor)
                             val borderOverlayView = view.findViewById<View>(R.id.borderOverlayView)
-                            val accentColor = ContextCompat.getColor(requireContext(), R.color.xai_accent_sunset)
+                            val accentColor = ContextCompat.getColor(requireContext(), R.color.xai_mute)
                             val errorColor = ContextCompat.getColor(requireContext(), R.color.xai_error)
                             borderOverlayView.animateOutlineFlash(
                                 targetColorStr = if (isError) {
@@ -1272,35 +1251,33 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
         }*/
         viewModel.scrollToBottomEvent.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let {
+                // Grok-style: do not yank the camera when the stream finishes.
+                // Only refresh optional scroll affordances.
                 chatRecyclerView.post {
-                    val position = chatAdapter.itemCount - 1
-                    if (position >= 0) {
-                        hasScrolled = false
-                        layoutManager.scrollToPositionWithOffset(position, -12)
-                        chatRecyclerView.post {
-                            if (sharedPreferencesHelper.getScrollersPreference()) {
-                                val canScrollUp = chatRecyclerView.canScrollVertically(-1)
-                                val canScrollDown = chatRecyclerView.canScrollVertically(1)
-                                scrollToTopButton.visibility =
-                                    if (canScrollUp) View.VISIBLE else View.INVISIBLE
-                                scrollToBottomButton.visibility =
-                                    if (canScrollDown) View.VISIBLE else View.INVISIBLE
-                            }
-                        }
+                    if (sharedPreferencesHelper.getScrollersPreference()) {
+                        val canScrollUp = chatRecyclerView.canScrollVertically(-1)
+                        val canScrollDown = chatRecyclerView.canScrollVertically(1)
+                        scrollToTopButton.visibility =
+                            if (canScrollUp) View.VISIBLE else View.INVISIBLE
+                        scrollToBottomButton.visibility =
+                            if (canScrollDown) View.VISIBLE else View.INVISIBLE
                     }
                 }
             }
         }
+        // STT disabled
+        /*
         val shouldStartStt = arguments?.getBoolean("start_stt_on_launch", false) ?: false
         if (shouldStartStt) {
-            arguments?.remove("start_stt_on_launch")  // Clear flag to prevent re-trigger
+            arguments?.remove("start_stt_on_launch")
             hideKeyboard()
             if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-                permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)  // NEW: Use launcher
+                permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
             } else {
-                startSpeechRecognition()  // Your existing method
+                startSpeechRecognition()
             }
         }
+        */
         val selectedFontName = sharedPreferencesHelper.getSelectedFont()
         val typeface = try {
             when (selectedFontName) {
@@ -1464,9 +1441,9 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
 
         } else {
             containerParams.height = LinearLayout.LayoutParams.WRAP_CONTENT
-            editParams.height = LinearLayout.LayoutParams.MATCH_PARENT
+            editParams.height = LinearLayout.LayoutParams.WRAP_CONTENT
             editParams.weight = 0f
-            chatEditText.maxLines = 5
+            chatEditText.maxLines = 6
             chatFrameView.visibility = View.VISIBLE
 
             // Restore Left side in order
@@ -1528,6 +1505,39 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
         // 3. Remove Insets Listener (Stop listening to keyboard)
         ViewCompat.setOnApplyWindowInsetsListener(rootView, null)
     }
+    /** Pin the just-sent user row near the top so the reply has empty space below (Grok-style). */
+    private fun pinUserMessageForReply() {
+        chatRecyclerView.post {
+            chatRecyclerView.post {
+                val userPos = chatAdapter.itemCount - 2
+                if (userPos >= 0) {
+                    layoutManager.scrollToPositionWithOffset(userPos, 16)
+                }
+            }
+        }
+    }
+
+    /** Keep the last assistant row's bottom edge in view while stick-to-bottom is armed. */
+    private fun followStreamBottom() {
+        chatRecyclerView.post {
+            val last = chatAdapter.itemCount - 1
+            if (last < 0) return@post
+            layoutManager.scrollToPosition(last)
+            chatRecyclerView.post {
+                val vh = chatRecyclerView.findViewHolderForAdapterPosition(last) ?: return@post
+                val excess = vh.itemView.bottom -
+                    (chatRecyclerView.height - chatRecyclerView.paddingBottom)
+                if (excess > 0) chatRecyclerView.scrollBy(0, excess)
+            }
+        }
+    }
+
+    private fun updateStickToBottomFromScroll() {
+        if (viewModel.isAwaitingResponse.value != true) return
+        // At (or past) the bottom → arm follow; scrolled up → disarm.
+        stickToBottomDuringStream = !chatRecyclerView.canScrollVertically(1)
+    }
+
     private fun setupRecyclerView() {
         layoutManager = NonScrollingOnFocusLayoutManager(requireContext()).apply {
             stackFromEnd = false
@@ -1631,6 +1641,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
             onEditAssistantMessage = { position, currentRawText ->
                 val editFragment = EditMessageFragment.newInstance(position, currentRawText)
                 parentFragmentManager.beginTransaction()
+                    .withGrokStackAnimations()
                     .hide(this)
                     .add(R.id.fragment_container, editFragment)
                     .addToBackStack(null)
@@ -1645,6 +1656,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                 val modeltoPass = viewModel.getModelDisplayName(modelString)
                 val selectedFontName = sharedPreferencesHelper.getSelectedFont()
                 parentFragmentManager.beginTransaction()
+                    .withGrokStackAnimations()
                     //.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out, android.R.anim.fade_in, android.R.anim.fade_out)
                     .hide(this)  // Hides chat fragment
                     .add(R.id.fragment_container, MarkdownViewerFragment.newInstance(markdown,selectedFontName,modeltoPass))
@@ -1682,9 +1694,16 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
         }
         chatRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                if ((newState == RecyclerView.SCROLL_STATE_DRAGGING && !hasScrolled) && viewModel.isAwaitingResponse.value == true) {
-                    hasScrolled = true
-                    viewModel.setUserScrolledDuringStream(true)
+                if (viewModel.isAwaitingResponse.value == true) {
+                    if (newState == RecyclerView.SCROLL_STATE_DRAGGING ||
+                        newState == RecyclerView.SCROLL_STATE_IDLE
+                    ) {
+                        updateStickToBottomFromScroll()
+                    }
+                    if (newState == RecyclerView.SCROLL_STATE_DRAGGING && !hasScrolled) {
+                        hasScrolled = true
+                        viewModel.setUserScrolledDuringStream(true)
+                    }
                 }
             }
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
@@ -1701,11 +1720,19 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                     }
             }
         })
-        // Stream follow-lock is drag-only (scroll listener above) — do not lock on taps.
+        chatAdapter.onStreamVisualUpdate = {
+            if (stickToBottomDuringStream && viewModel.isAwaitingResponse.value == true) {
+                followStreamBottom()
+            }
+        }
+        // Stick-to-bottom arms only when the user scrolls to the end during a stream.
 
         // Smooth fade-in for new list items
         (chatRecyclerView.itemAnimator as? androidx.recyclerview.widget.SimpleItemAnimator)?.apply {
             supportsChangeAnimations = false
+            addDuration = 0L
+            moveDuration = 0L
+            removeDuration = 120L
         }
     }
 
@@ -1786,6 +1813,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
             hideMenu()
 
             parentFragmentManager.beginTransaction()
+                .withGrokStackAnimations()
                 .hide(this)
                 .add(R.id.fragment_container, ToolsFragment())
                 .addToBackStack(null)
@@ -1806,6 +1834,9 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
             }
         }
         sendChatButton.setOnClickListener {
+            if (sharedPreferencesHelper.getHapticButtons()) {
+                sendChatButton.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
+            }
             if (viewModel.isAwaitingResponse.value == true) {
                 hasScrolled = false
                 viewModel.cancelCurrentRequest()
@@ -1850,6 +1881,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                 }
                 hideKeyboard()
                 hasScrolled = false
+                stickToBottomDuringStream = false
                 var prompt = chatEditText.text.toString().trim()
                 if (pendingFiles.isNotEmpty()) {
                     val fileSections = pendingFiles.mapIndexed { index, file ->  // Explicit -> String
@@ -2007,6 +2039,7 @@ $cleanContent
                 }
             }
             parentFragmentManager.beginTransaction()
+                .withGrokStackAnimations()
                 .hide(this)
                 .add(R.id.fragment_container, picker)
                 .addToBackStack(null)
@@ -2016,6 +2049,7 @@ $cleanContent
         systemMessageButton.setOnClickListener {
             hideKeyboard()
             parentFragmentManager.beginTransaction()
+                .withGrokStackAnimations()
                 .hide(this)
                 .add(R.id.fragment_container, SystemMessageLibraryFragment())
                 .addToBackStack(null)
@@ -2074,11 +2108,11 @@ $cleanContent
                 }
                 .show()
         }
+        // STT disabled — watermark hold-to-talk
+        centerWatermarkIcon.setOnTouchListener { _, _ -> false }
+        /*
         centerWatermarkIcon.setOnTouchListener { v, event ->
-            // Check if the feature is enabled in settings
             val isFeatureEnabled = sharedPreferencesHelper.getWatermarkSttEnabled()
-
-            // Only allow interaction if feature is ON and chat is empty
             val isChatEmpty = viewModel.chatMessages.value.isNullOrEmpty()
 
             if (!isFeatureEnabled || !isChatEmpty) {
@@ -2087,41 +2121,36 @@ $cleanContent
 
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    // START RECORDING
                     if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
                         permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                     } else {
                         startVoiceRecording()
                         fromWater = true
-                        // Visual Feedback: Grow the icon
                         v.animate()
                             .scaleX(2.6f)
                             .scaleY(2.6f)
                             .setDuration(300)
                             .start()
                     }
-                    true // Consume event
+                    true
                 }
-
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    // STOP RECORDING
                     if (isRecording) {
                         stopVoiceRecording()
-
-                        // Visual Feedback: Reset icon size
-                        v.animate()
-                            .scaleX(1.0f)
-                            .scaleY(1.0f)
-                            .setDuration(300)
-                            .start()
                     }
-                    true // Consume event
+                    v.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(300)
+                        .start()
+                    true
                 }
                 else -> false
             }
         }
+        */
 
-// IMPORTANT: Remove the OnLongClickListener to prevent conflict with OnTouchListener
+        // IMPORTANT: Remove the OnLongClickListener to prevent conflict with OnTouchListener
         centerWatermarkIcon.setOnLongClickListener { true }
         topReasoningButton.setOnClickListener { reasoningButton.performClick() }
         topWebSearchButton.setOnClickListener { webSearchButton.performClick() }
@@ -2166,6 +2195,12 @@ $cleanContent
             }
             popup.show()
         }
+        newChatButton.setOnClickListener {
+            resetChatButton.performClick()
+        }
+        newChatButton.setOnLongClickListener {
+            resetChatButton.performLongClick()
+        }
         topWebSearchButton.setOnLongClickListener {
             showWebSearchEngineDialog()
             true
@@ -2174,6 +2209,7 @@ $cleanContent
             if(reasoningButton.isSelected)
             {
                 parentFragmentManager.beginTransaction()
+                    .withGrokStackAnimations()
                     .hide(this)
                     .add(R.id.fragment_container, AdvancedReasoningFragment())
                     .addToBackStack(null)
@@ -2419,12 +2455,8 @@ $cleanContent
 
 
         menuButton.setOnClickListener {
-            if (headerContainer.isVisible) {
-                hideMenu()
-            } else {
-                hideKeyboard()
-                showMenu()
-            }
+            hideKeyboard()
+            showAttachSheet()
         }
         menuButton.setOnLongClickListener {
             val inputText = chatEditText.text.toString().trim()
@@ -2459,6 +2491,7 @@ $cleanContent
         settingsButton.setOnClickListener {
             hideMenu()
             parentFragmentManager.beginTransaction()
+                .withGrokStackAnimations()
                 .hide(this)
                 .add(R.id.fragment_container, SettingsFragment())
                 .addToBackStack(null)
@@ -2467,6 +2500,7 @@ $cleanContent
         presetsButton.setOnClickListener {
             hideMenu()
             parentFragmentManager.beginTransaction()
+                .withGrokStackAnimations()
                 .hide(this)
                 .add(R.id.fragment_container, PresetsListFragment())
                 .addToBackStack(null)
@@ -2476,6 +2510,7 @@ $cleanContent
             hideKeyboard()
             hideMenu()
             parentFragmentManager.beginTransaction()
+                .withGrokStackAnimations()
                 .hide(this)
                 .add(R.id.fragment_container, PresetsListFragment())
                 .addToBackStack(null)
@@ -2485,6 +2520,7 @@ $cleanContent
             hideMenu()
             hideKeyboard()
             parentFragmentManager.beginTransaction()
+                .withGrokStackAnimations()
                 .hide(this)
                 .add(R.id.fragment_container, PromptLibraryFragment())
                 .addToBackStack(null)
@@ -2495,6 +2531,7 @@ $cleanContent
             hideMenu()
             hideKeyboard()
             parentFragmentManager.beginTransaction()
+                .withGrokStackAnimations()
                 .hide(this)
                 .add(R.id.fragment_container, PromptLibraryFragment())
                 .addToBackStack(null)
@@ -2505,6 +2542,7 @@ $cleanContent
             if(reasoningButton.isSelected)
             {
                 parentFragmentManager.beginTransaction()
+                    .withGrokStackAnimations()
                     .hide(this)
                     .add(R.id.fragment_container, AdvancedReasoningFragment())
                     .addToBackStack(null)
@@ -2796,12 +2834,12 @@ $cleanContent
             }
             true
         }
+        // STT disabled
+        /*
         speechButton.setOnClickListener {
             if (isRecording) {
-                // If already recording, a single tap stops it
                 stopVoiceRecording()
             } else {
-                // If not recording, check permissions and start
                 if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
                     permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                 } else {
@@ -2817,6 +2855,10 @@ $cleanContent
             }
             true
         }
+        */
+        speechButton.visibility = View.GONE
+        speechButton.setOnClickListener(null)
+        speechButton.setOnLongClickListener(null)
 
         clearButton.setOnClickListener {
             chatEditText.text.clear()
@@ -2869,18 +2911,24 @@ $cleanContent
             presetsButton2.visibility = View.VISIBLE
             presetsButton.visibility = View.GONE
         }
-        val hasText = !chatEditText.text.isNullOrEmpty()
         convoButton.isSelected = sharedPreferencesHelper.getConversationModeEnabled()
       //  topConvoButton.isSelected = sharedPreferencesHelper.getConversationModeEnabled()
         utilityButton.visibility = if (isExtended) View.VISIBLE else View.GONE
+        updateComposerAccessoryVisibility()
+    }
 
-        if (isExtended) {
-            clearButton.visibility = if (hasText) View.VISIBLE else View.GONE
-            speechButton.visibility = if (hasText) View.GONE else View.VISIBLE
-        } else {
-            clearButton.visibility = View.GONE
-            speechButton.visibility = View.GONE
-        }
+    /** Mic is core Ask chrome; clear button stays gated by extended dock. */
+    private fun updateComposerAccessoryVisibility() {
+        if (!::speechButton.isInitialized || !::clearButton.isInitialized || !::chatEditText.isInitialized) return
+        val isExtended = sharedPreferencesHelper.getExtPreference()
+        val hasText = !chatEditText.text.isNullOrEmpty()
+        clearButton.visibility = if (isExtended && hasText) View.VISIBLE else View.GONE
+        // STT disabled
+        speechButton.visibility = View.GONE
+    }
+
+    private fun updateButtonVisibility() {
+        updateComposerAccessoryVisibility()
     }
     private fun processAudioUri(uri: Uri) {
         lifecycleScope.launch {
@@ -3112,18 +3160,6 @@ $cleanContent
             updateIconDirectlyOrNotify(pos, R.drawable.ic_volume_up)
         }
     }
-    private fun updateButtonVisibility() {
-        val isExtended = sharedPreferencesHelper.getExtPreference()
-        val hasText = !chatEditText.text.isNullOrEmpty()
-        // Match the same logic as isExtendedDockEnabled observer
-        if (isExtended) {
-            clearButton.visibility = if (hasText) View.VISIBLE else View.GONE
-            speechButton.visibility = if (hasText) View.GONE else View.VISIBLE
-        } else {
-            clearButton.visibility = View.GONE
-            speechButton.visibility = View.GONE
-        }
-    }
     override fun handleKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         when (keyCode) {
             KeyEvent.KEYCODE_VOLUME_UP -> {
@@ -3181,28 +3217,103 @@ $cleanContent
         return false // Event not handled by this fragment
     }
     private fun showMenu() {
+        val menuMs = resources.getInteger(R.integer.motion_menu).toLong()
         overlayView?.visibility = View.VISIBLE
+        headerContainer.animate().cancel()
         headerContainer.apply {
             alpha = 0f
             visibility = View.VISIBLE
-            animate().alpha(1f).setDuration(200).setInterpolator(android.view.animation.AccelerateDecelerateInterpolator()).start()
+            animate().alpha(1f).setDuration(menuMs).setInterpolator(Motion.easeOut).start()
         }
         (chatFrameView as ViewGroup).bringChildToFront(headerContainer)
         dimOverlay?.apply {
+            animate().cancel()
             alpha = 0f
             visibility = View.VISIBLE
-            animate().alpha(0.65f).setDuration(200).start()
+            animate().alpha(0.6f).setDuration(menuMs).setInterpolator(Motion.easeOut).start()
         }
         // Fade empty-state (mark + prompt) while menu is open
         if (emptyStateContainer.isVisible) {
             emptyStateContainer.visibility = View.GONE
         }
     }
+
+    private fun showAttachSheet() {
+        val dialog = BottomSheetDialog(requireContext(), R.style.ThemeOverlay_Grokion_BottomSheet)
+        val sheet = layoutInflater.inflate(R.layout.bottom_sheet_attach, null)
+        dialog.setContentView(sheet)
+
+        sheet.findViewById<View>(R.id.attachCamera).setOnClickListener {
+            dialog.dismiss()
+            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+            } else {
+                launchCamera()
+            }
+        }
+        sheet.findViewById<View>(R.id.attachGallery).setOnClickListener {
+            dialog.dismiss()
+            val model = viewModel.activeChatModel.value
+            if (model == null || !viewModel.isVisionModel(model)) {
+                Toast.makeText(requireContext(), "Image selection not supported for the current model.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            val allowedMimeTypes: Array<String> = when {
+                model.lowercase().contains("grok") -> arrayOf("image/jpeg", "image/png")
+                else -> arrayOf("image/jpeg", "image/png", "image/webp")
+            }
+            val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "image/*"
+                putExtra(Intent.EXTRA_MIME_TYPES, allowedMimeTypes)
+            }
+            imagePicker.launch(intent)
+        }
+        sheet.findViewById<View>(R.id.attachFiles).setOnClickListener {
+            dialog.dismiss()
+            textFilePicker.launch("*/*")
+        }
+        sheet.findViewById<View>(R.id.attachSystemMessage).setOnClickListener {
+            dialog.dismiss()
+            parentFragmentManager.beginTransaction()
+                .withGrokStackAnimations()
+                .hide(this)
+                .add(R.id.fragment_container, SystemMessageLibraryFragment())
+                .addToBackStack(null)
+                .commit()
+        }
+        sheet.findViewById<View>(R.id.attachTools).setOnClickListener {
+            dialog.dismiss()
+            parentFragmentManager.beginTransaction()
+                .withGrokStackAnimations()
+                .hide(this)
+                .add(R.id.fragment_container, ToolsFragment())
+                .addToBackStack(null)
+                .commit()
+        }
+        sheet.findViewById<View>(R.id.attachSaveChat).setOnClickListener {
+            dialog.dismiss()
+            if (!viewModel.chatMessages.value.isNullOrEmpty()) {
+                showSaveChatDialogWithResultApi()
+            } else {
+                Toast.makeText(requireContext(), "Nothing to save", Toast.LENGTH_SHORT).show()
+            }
+        }
+        sheet.findViewById<View>(R.id.attachMore).setOnClickListener {
+            dialog.dismiss()
+            showMenu()
+        }
+        dialog.show()
+    }
+
     private fun hideMenu() {
-        dimOverlay?.animate()?.alpha(0f)?.setDuration(150)?.withEndAction {
+        val menuMs = resources.getInteger(R.integer.motion_menu).toLong()
+        dimOverlay?.animate()?.cancel()
+        headerContainer.animate().cancel()
+        dimOverlay?.animate()?.alpha(0f)?.setDuration(menuMs)?.setInterpolator(Motion.easeOut)?.withEndAction {
             dimOverlay?.visibility = View.GONE
         }?.start()
-        headerContainer.animate().alpha(0f).setDuration(150).withEndAction {
+        headerContainer.animate().alpha(0f).setDuration(menuMs).setInterpolator(Motion.easeOut).withEndAction {
             headerContainer.visibility = View.GONE
             overlayView?.visibility = View.GONE
         }.start()
@@ -3210,8 +3321,10 @@ $cleanContent
         // Only restore empty state if the chat is empty
         val hasMessages = !(viewModel.chatMessages.value.isNullOrEmpty())
         if (!hasMessages) {
+            emptyStateContainer.alpha = 0f
             emptyStateContainer.visibility = View.VISIBLE
             centerWatermarkIcon.visibility = View.VISIBLE
+            emptyStateContainer.animate().alpha(1f).setDuration(menuMs).setInterpolator(Motion.easeOut).start()
         }
     }
 
@@ -3361,16 +3474,19 @@ $cleanContent
     }
 
     private fun startSpeechRecognition() {
+        // STT disabled
+        /*
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now...")
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
         }
         try {
-            speechLauncher.launch(intent)  // Use the launcher instead of startActivityForResult
+            speechLauncher.launch(intent)
         } catch (e: Exception) {
             Toast.makeText(requireContext(), "Speech recognition not supported", Toast.LENGTH_SHORT).show()
         }
+        */
     }
     private fun startForegroundService() {
         try {
@@ -3393,13 +3509,13 @@ $cleanContent
         val isLan = viewModel.activeModelIsLan()
         val iconRes = if (isLan) R.drawable.ic_lan2 else R.drawable.ic_cloudnew2
         val description = if (isLan) "LAN Model" else "Cloud Model"
-
+        val endChevron = ContextCompat.getDrawable(requireContext(), R.drawable.ic_expand_more)
+        val startIcon = ContextCompat.getDrawable(requireContext(), iconRes)
         modelNameTextView.setCompoundDrawablesRelativeWithIntrinsicBounds(
-
-            null,  // start
-            null,  // top
-            ContextCompat.getDrawable(requireContext(), iconRes),  // end
-            null   // bottom
+            startIcon,
+            null,
+            endChevron,
+            null
         )
         modelNameTextView.contentDescription = description
     }
@@ -3477,23 +3593,53 @@ $cleanContent
     }
 
 
-    override fun closeHistoryPanel() {
+    private fun cancelDrawerAnimation() {
+        historyDrawerContainer?.animate()?.cancel()
+        historyDrawerScrim?.animate()?.cancel()
+    }
+
+    override fun closeHistoryPanel(animated: Boolean) {
         val panel = historyDrawerContainer ?: return
         val scrim = historyDrawerScrim ?: return
         if (panel.visibility != View.VISIBLE) return
+        cancelDrawerAnimation()
+        val finishClose = {
+            panel.visibility = View.GONE
+            panel.translationX = -panel.width.toFloat().coerceAtMost(0f)
+            scrim.visibility = View.GONE
+            scrim.alpha = 0f
+            childFragmentManager.findFragmentById(R.id.historyDrawerContainer)?.let { child ->
+                childFragmentManager.beginTransaction().remove(child).commitAllowingStateLoss()
+            }
+        }
+        if (!animated || !Motion.areAnimationsEnabled(requireContext())) {
+            finishClose()
+            return
+        }
+        val drawerMs = resources.getInteger(R.integer.motion_drawer).toLong()
+        val scrimMs = resources.getInteger(R.integer.motion_scrim).toLong()
         panel.animate()
             .translationX(-panel.width.toFloat())
-            .setDuration(220)
-            .withEndAction {
-                panel.visibility = View.GONE
-                childFragmentManager.findFragmentById(R.id.historyDrawerContainer)?.let { child ->
-                    childFragmentManager.beginTransaction().remove(child).commitAllowingStateLoss()
-                }
-            }
+            .setDuration(drawerMs)
+            .setInterpolator(Motion.easeOut)
+            .withEndAction { finishClose() }
             .start()
-        scrim.animate().alpha(0f).setDuration(200).withEndAction {
-            scrim.visibility = View.GONE
-        }.start()
+        scrim.animate()
+            .alpha(0f)
+            .setDuration(scrimMs)
+            .setInterpolator(Motion.easeOut)
+            .withEndAction { scrim.visibility = View.GONE }
+            .start()
+    }
+
+    override fun startNewChatFromHistory() {
+        closeHistoryPanel(animated = true)
+        val hasMessages = !viewModel.chatMessages.value.isNullOrEmpty()
+        if (hasMessages) {
+            resetChatButton.performClick()
+        } else {
+            viewModel.startNewChat()
+        }
     }
 
     private fun openHistoryPanel() {
@@ -3501,6 +3647,7 @@ $cleanContent
         val panel = historyDrawerContainer ?: return
         val scrim = historyDrawerScrim ?: return
         if (panel.visibility == View.VISIBLE) return
+        cancelDrawerAnimation()
 
         if (childFragmentManager.findFragmentById(R.id.historyDrawerContainer) == null) {
             childFragmentManager.beginTransaction()
@@ -3508,14 +3655,43 @@ $cleanContent
                 .commit()
         }
 
-        scrim.alpha = 0f
-        scrim.visibility = View.VISIBLE
-        scrim.animate().alpha(0.65f).setDuration(200).start()
+        val drawerMs = resources.getInteger(R.integer.motion_drawer).toLong()
+        val scrimMs = resources.getInteger(R.integer.motion_scrim).toLong()
+        val anim = Motion.areAnimationsEnabled(requireContext())
 
+        scrim.visibility = View.VISIBLE
         panel.visibility = View.VISIBLE
+        if (!anim) {
+            scrim.alpha = 0.6f
+            panel.translationX = 0f
+            panel.post {
+                val parentW = (panel.parent as? View)?.width ?: panel.width
+                val targetW = (parentW * 0.84f).toInt().coerceAtLeast(1)
+                val lp = panel.layoutParams as FrameLayout.LayoutParams
+                lp.width = targetW
+                lp.gravity = Gravity.START
+                panel.layoutParams = lp
+            }
+            return
+        }
+
+        scrim.alpha = 0f
+        scrim.animate().alpha(0.6f).setDuration(scrimMs).setInterpolator(Motion.easeOut).start()
+
         panel.post {
-            panel.translationX = -panel.width.toFloat()
-            panel.animate().translationX(0f).setDuration(250).start()
+            // ~84% viewport width, leading-aligned (Grok history drawer)
+            val parentW = (panel.parent as? View)?.width ?: panel.width
+            val targetW = (parentW * 0.84f).toInt().coerceAtLeast(1)
+            val lp = panel.layoutParams as FrameLayout.LayoutParams
+            lp.width = targetW
+            lp.gravity = Gravity.START
+            panel.layoutParams = lp
+            panel.translationX = -targetW.toFloat()
+            panel.animate()
+                .translationX(0f)
+                .setDuration(drawerMs)
+                .setInterpolator(Motion.easeOut)
+                .start()
         }
     }
 
@@ -3563,12 +3739,15 @@ $cleanContent
         }
     }
     fun startSpeechRecognitionSafely() {
+        // STT disabled
+        /*
         hideKeyboard()
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)  // NEW: Use launcher
+            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
         } else {
             startSpeechRecognition()
         }
+        */
     }
     private fun processPdfUri(pdfUri: Uri) {
         lifecycleScope.launch {
@@ -3818,8 +3997,33 @@ $cleanContent
 
 
 
+    private fun updateSendButtonChrome() {
+        if (!::sendChatButton.isInitialized) return
+        val awaiting = viewModel.isAwaitingResponse.value == true
+        if (awaiting) {
+            sendChatButton.isEnabled = true
+            return
+        }
+        val hasContent = !chatEditText.text.isNullOrBlank() ||
+            pendingFiles.isNotEmpty() ||
+            currentTempImageFile != null ||
+            selectedAudioBytes != null
+        sendChatButton.isEnabled = hasContent
+        sendChatButton.setBackgroundResource(
+            if (hasContent) R.drawable.bg_send_enabled else R.drawable.bg_send_disabled
+        )
+        sendChatButton.iconTint = ColorStateList.valueOf(
+            ContextCompat.getColor(
+                requireContext(),
+                if (hasContent) R.color.xai_send_icon_enabled else R.color.xai_mute
+            )
+        )
+        sendChatButton.icon = originalSendIcon
+    }
+
     private fun updateAttachmentButton() {
         attachmentButton.isSelected = pendingFiles.isNotEmpty()
+        updateSendButtonChrome()
     }
 
     private fun showAttachedFiles() {
@@ -4288,6 +4492,9 @@ $cleanContent
     }
     @SuppressLint("MissingPermission")
     private fun startVoiceRecording() {
+        // STT disabled
+        return
+        /*
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
             return
@@ -4317,9 +4524,13 @@ $cleanContent
             voiceRecordFile?.delete()
             voiceRecordFile = null
         }
+        */
     }
 
     private fun stopVoiceRecording() {
+        // STT disabled
+        return
+        /*
         try {
             mediaRecorder?.apply {
                 stop()
@@ -4343,9 +4554,14 @@ $cleanContent
             speechButton.setIconResource(R.drawable.ic_mic)
             speechButton.isSelected = false
         }
+        */
     }
 
     private fun processVoiceRecording(file: File) {
+        // STT disabled
+        file.delete()
+        return
+        /*
         lifecycleScope.launch {
             try {
                 val audioBytes = withContext(Dispatchers.IO) {
@@ -4380,6 +4596,7 @@ $cleanContent
                 fromWater = false
             }
         }
+        */
     }
     private fun substituteVariables(input: String): String {
         if (!input.contains("{{ox")) return input  // 🔥 EARLY EXIT: Instant if no vars (99% cases)

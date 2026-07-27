@@ -16,7 +16,8 @@
         app:title="AI"
         app:titleTextColor="@android:color/white"
         android:background="@color/xai_canvas_card"
-        app:navigationIcon="@drawable/is_backarrow" />
+        app:navigationIcon="@drawable/is_backarrow"
+        app:navigationIconTint="@color/xai_ink" />
 
     <WebView
         android:id="@+id/webview_markdown"

@@ -39,7 +39,9 @@ class AssistantActivity : AppCompatActivity() {
         if (digitalAssistantPreset != null) {
             setupAssistantMode(vm, digitalAssistantPreset)
         } else if (transcriptionPreset != null) {
-            launchTranscriptionActivity()
+            // STT disabled — do not launch Transactivity; fall through to chat
+            // launchTranscriptionActivity()
+            setupStandardChatMode(vm)
         } else {
             setupStandardChatMode(vm)
         }
@@ -68,7 +70,8 @@ class AssistantActivity : AppCompatActivity() {
         if (supportFragmentManager.findFragmentById(R.id.fragment_container) == null) {
             val chatFragment = ChatFragment().apply {
                 arguments = Bundle().apply {
-                    putBoolean("start_stt_on_launch", true)
+                    // STT disabled
+                    // putBoolean("start_stt_on_launch", true)
                 }
             }
             supportFragmentManager.beginTransaction()

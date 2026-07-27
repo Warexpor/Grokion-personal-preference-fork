@@ -1,12 +1,17 @@
 package io.github.stardomains3.oxproxion
 
-import android.graphics.PorterDuff
+import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.ContextCompat
-import com.google.android.material.materialswitch.MaterialSwitch
 
-fun MaterialSwitch.applyGrokionSwitchStyle() {
-    thumbTintList = ContextCompat.getColorStateList(context, R.color.switch_thumb_tint)
-    trackTintList = ContextCompat.getColorStateList(context, R.color.switch_track_tint)
-    thumbTintMode = PorterDuff.Mode.SRC_ATOP
-    trackTintMode = PorterDuff.Mode.SRC_ATOP
+/** Grok Ask switch: M3 52×32 track, monochrome thumb/track from theme colors. */
+fun SwitchCompat.applyGrokionSwitchStyle() {
+    showText = false
+    thumbDrawable = ContextCompat.getDrawable(context, R.drawable.switch_thumb)?.mutate()
+    trackDrawable = ContextCompat.getDrawable(context, R.drawable.switch_track)?.mutate()
+    thumbTintList = null
+    trackTintList = null
+    switchMinWidth = resources.getDimensionPixelSize(R.dimen.grokion_switch_min_width)
+    thumbTextPadding = 0
+    // Keep handle inset so the stadium reads like Grok/Material3, not a stretched oval.
+    switchPadding = 0
 }

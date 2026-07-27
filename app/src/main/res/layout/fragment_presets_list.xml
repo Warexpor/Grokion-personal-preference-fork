@@ -15,13 +15,14 @@
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorSurface"
         app:navigationIcon="@drawable/is_backarrow"
+        app:navigationIconTint="@color/xai_ink"
         app:title="Presets"
         app:titleTextColor="?android:attr/textColorPrimary" >
 
         <!-- Note: If you want the switch to look like the Settings layout,
              it is best placed inside a LinearLayout within the Toolbar or
              handled via a Menu. For now, I have kept your structure but themed it. -->
-        <com.google.android.material.materialswitch.MaterialSwitch
+        <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/switchClearChat"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -52,7 +53,7 @@
         android:layout_margin="16dp"
         android:contentDescription="Add Preset"
         android:src="@drawable/ic_addmod"
-        app:backgroundTint="?attr/colorPrimary"
-        app:tint="?attr/colorOnPrimary" />
+        app:backgroundTint="@color/xai_ink"
+        app:tint="@color/xai_canvas" />
 
 </LinearLayout>

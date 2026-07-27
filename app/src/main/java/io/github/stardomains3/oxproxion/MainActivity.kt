@@ -80,7 +80,8 @@ class MainActivity : AppCompatActivity() {
                         putString("shared_text", intent.getStringExtra(Intent.EXTRA_TEXT))
                     }
                     if (intent?.action in listOf(Intent.ACTION_ASSIST, Intent.ACTION_VOICE_COMMAND)) {
-                        putBoolean("start_stt_on_launch", true)
+                        // STT disabled
+                        // putBoolean("start_stt_on_launch", true)
                     }
                 }
             }
@@ -270,7 +271,8 @@ class MainActivity : AppCompatActivity() {
                 vm.signalPresetApplied()
             }
             val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container) as? ChatFragment
-            fragment?.startSpeechRecognitionSafely()  // Custom method below
+            // STT disabled
+            // fragment?.startSpeechRecognitionSafely()
         }
     }
 

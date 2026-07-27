@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.1.126-grokion — 2026-07-27
+
+### Changed
+- Grok Ask shell parity: tall composer with in-panel model chip, Ask tab chrome,
+  history drawer (profile header, title+time+overflow, bottom search/settings/new),
+  settings as grouped cards with X close.
+- Shared fragment stack motion + smoother history drawer / send morph.
+- Semantic dark palette tuned to Grok canvas/surfaces; monochrome switches.
+
+### Fixed
+- Mic gated behind extended dock; expandable-input collapse height; model picker
+  LAN/OpenRouter navigation container; history→settings drawer race.
+
+### Removed
+- Live STT (mic, Voice settings, assist auto-STT, watermark hold-to-talk,
+  Transactivity). TTS and transcription-model file upload remain.
+
 ## 2.1.125-grokion — 2026-07-27
 
 ### Security

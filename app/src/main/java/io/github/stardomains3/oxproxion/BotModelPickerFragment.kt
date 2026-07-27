@@ -1,5 +1,7 @@
 package io.github.stardomains3.oxproxion
 
+import io.github.stardomains3.oxproxion.Motion.withGrokStackAnimations
+
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -116,13 +118,15 @@ class BotModelPickerFragment : Fragment() {
             when (menuItem.itemId) {
                 R.id.action_lan_models -> {
                     parentFragmentManager.beginTransaction()
-                        .replace(android.R.id.content, LanModelsFragment())
+                        .withGrokStackAnimations()
+                        .replace(R.id.fragment_container, LanModelsFragment())
                         .addToBackStack(null).commit()
                     true
                 }
                 R.id.action_open_router_models -> {
                     parentFragmentManager.beginTransaction()
-                        .replace(android.R.id.content, OpenRouterModelsFragment())
+                        .withGrokStackAnimations()
+                        .replace(R.id.fragment_container, OpenRouterModelsFragment())
                         .addToBackStack(null).commit()
                     true
                 }
@@ -133,7 +137,7 @@ class BotModelPickerFragment : Fragment() {
         // Search Setup
         val searchItem = toolbar.menu.findItem(R.id.action_search)
         searchView = searchItem.actionView as SearchView
-        searchView.queryHint = "Search models..."
+        searchView.queryHint = getString(R.string.grok_model_search_hint)
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean = true
             override fun onQueryTextChange(newText: String?): Boolean {

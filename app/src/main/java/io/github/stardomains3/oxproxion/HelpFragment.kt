@@ -1,5 +1,7 @@
 package io.github.stardomains3.oxproxion
 
+import io.github.stardomains3.oxproxion.Motion.withGrokStackAnimations
+
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
@@ -597,6 +599,7 @@ class HelpFragment : Fragment(R.layout.fragment_help) {
                 val clickableSpan = object : ClickableSpan() {
                     override fun onClick(widget: View) {
                         parentFragmentManager.beginTransaction()
+                            .withGrokStackAnimations()
                             .hide(this@HelpFragment)  // ← Matches your pattern: hide current (HelpFragment)
                             .add(R.id.fragment_container, LicenseListFragment())
                             .addToBackStack(null)

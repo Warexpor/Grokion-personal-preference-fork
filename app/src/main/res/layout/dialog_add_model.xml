@@ -41,7 +41,7 @@
             />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <com.google.android.material.materialswitch.MaterialSwitch
+    <androidx.appcompat.widget.SwitchCompat
         android:id="@+id/switchVisionCapable"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -51,7 +51,7 @@
         android:visibility="visible"
         />
 
-    <com.google.android.material.materialswitch.MaterialSwitch
+    <androidx.appcompat.widget.SwitchCompat
         android:id="@+id/switchReasoningCapable"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -61,28 +61,28 @@
         android:visibility="visible"
         />
 
-    <com.google.android.material.materialswitch.MaterialSwitch
+    <androidx.appcompat.widget.SwitchCompat
         android:id="@+id/switchLanModel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="LAN Model"
         android:textColor="?android:attr/textColorPrimary" />
 
-    <com.google.android.material.materialswitch.MaterialSwitch
+    <androidx.appcompat.widget.SwitchCompat
         android:id="@+id/switchImageGen"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Image Generation"
         android:textColor="?android:attr/textColorPrimary" />
 
-    <com.google.android.material.materialswitch.MaterialSwitch
+    <androidx.appcompat.widget.SwitchCompat
         android:id="@+id/switchTranscription"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Transcription"
         android:textColor="?android:attr/textColorPrimary" />
 
-    <com.google.android.material.materialswitch.MaterialSwitch
+    <androidx.appcompat.widget.SwitchCompat
         android:id="@+id/switchIsFree"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

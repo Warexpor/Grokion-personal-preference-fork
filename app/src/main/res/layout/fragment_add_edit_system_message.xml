@@ -17,6 +17,7 @@
         app:titleTextColor="?android:attr/textColorPrimary"
         android:background="?attr/colorSurface"
         app:navigationIcon="@drawable/is_backarrow"
+        app:navigationIconTint="@color/xai_ink"
         app:menu="@menu/add_edit_system_message_menu" />
 
     <LinearLayout

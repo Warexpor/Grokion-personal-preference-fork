@@ -14,9 +14,10 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         app:title="Third-Party Licenses"
-        app:titleTextColor="@android:color/white"
-        android:background="@color/xai_canvas_card"
-        app:navigationIcon="@drawable/is_backarrow" />
+        app:titleTextColor="@color/xai_ink"
+        android:background="@color/xai_canvas"
+        app:navigationIcon="@drawable/is_backarrow"
+        app:navigationIconTint="@color/xai_ink" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"

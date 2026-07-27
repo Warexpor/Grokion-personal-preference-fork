@@ -18,7 +18,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
 import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
-import com.google.android.material.materialswitch.MaterialSwitch
+import androidx.appcompat.widget.SwitchCompat
 import kotlin.collections.remove
 
 class ToolsFragment : Fragment(R.layout.fragment_tools) {
@@ -108,7 +108,7 @@ class ToolsFragment : Fragment(R.layout.fragment_tools) {
 
         for (item in allItems) {
             val row = inflater.inflate(R.layout.item_tool_toggle2, container, false)
-            val checkBox = row.findViewById<MaterialSwitch>(R.id.checkbox_tool)
+            val checkBox = row.findViewById<SwitchCompat>(R.id.checkbox_tool)
             val titleTv = row.findViewById<TextView>(R.id.text_tool_title)
             val descTv = row.findViewById<TextView>(R.id.text_tool_desc)
             val permissionWarning = row.findViewById<TextView>(R.id.text_permission_warning)
@@ -190,7 +190,7 @@ class ToolsFragment : Fragment(R.layout.fragment_tools) {
         return hasPermission
     }
 
-    private fun MaterialSwitch.styleSwitch() = applyGrokionSwitchStyle()
+    private fun SwitchCompat.styleSwitch() = applyGrokionSwitchStyle()
 
     private fun refreshUI() {
         val container = view?.findViewById<LinearLayout>(R.id.tools_container)

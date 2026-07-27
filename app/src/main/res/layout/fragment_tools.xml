@@ -15,7 +15,8 @@
         app:title="Manage Tools"
         app:titleTextColor="?android:attr/textColorPrimary"
         android:background="?attr/colorSurface"
-        app:navigationIcon="@drawable/is_backarrow" />
+        app:navigationIcon="@drawable/is_backarrow"
+        app:navigationIconTint="@color/xai_ink" />
 
     <ScrollView
         android:layout_width="match_parent"

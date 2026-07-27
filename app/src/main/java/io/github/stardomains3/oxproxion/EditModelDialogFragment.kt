@@ -10,7 +10,7 @@ import androidx.core.graphics.toColorInt
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.DialogFragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.materialswitch.MaterialSwitch
+import androidx.appcompat.widget.SwitchCompat
 import kotlin.toString
 
 class EditModelDialogFragment : DialogFragment() {
@@ -26,12 +26,12 @@ class EditModelDialogFragment : DialogFragment() {
 
         val editName      = view.findViewById<EditText>(R.id.editModelName)
         val editApiId     = view.findViewById<EditText>(R.id.editApiIdentifier)
-        val switchVision  = view.findViewById<MaterialSwitch>(R.id.switchVisionCapable)
-        val switchReason  = view.findViewById<MaterialSwitch>(R.id.switchReasoningCapable)
-        val switchLan     = view.findViewById<MaterialSwitch>(R.id.switchLanModel)
-        val switchImage   = view.findViewById<MaterialSwitch>(R.id.switchImageGen)
-        val switchTranscription = view.findViewById<MaterialSwitch>(R.id.switchTranscription) // NEW
-        val switchIsFree  = view.findViewById<MaterialSwitch>(R.id.switchIsFree)
+        val switchVision  = view.findViewById<SwitchCompat>(R.id.switchVisionCapable)
+        val switchReason  = view.findViewById<SwitchCompat>(R.id.switchReasoningCapable)
+        val switchLan     = view.findViewById<SwitchCompat>(R.id.switchLanModel)
+        val switchImage   = view.findViewById<SwitchCompat>(R.id.switchImageGen)
+        val switchTranscription = view.findViewById<SwitchCompat>(R.id.switchTranscription) // NEW
+        val switchIsFree  = view.findViewById<SwitchCompat>(R.id.switchIsFree)
 
         listOf(switchVision, switchReason, switchLan, switchImage, switchTranscription, switchIsFree).forEach {
             it.applyGrokionSwitchStyle()

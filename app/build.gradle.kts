@@ -28,8 +28,8 @@ android {
         applicationId = "io.github.warexpor.grokion"
         minSdk = 31
         targetSdk = 36
-        versionCode = 233
-        versionName = "2.1.125-grokion"
+        versionCode = 234
+        versionName = "2.1.126-grokion"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

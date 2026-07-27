@@ -931,78 +931,9 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     suspend fun transcribeAudioForInput(audioBytes: ByteArray, audioFormat: String, fileName: String): String? {
-        val modelId = sharedPreferencesHelper.getVoiceInputModel()
-        if (modelId.isBlank()) {
-            _toastUiEvent.postValue(Event("Voice input model not set"))
-            return null
-        }
-
-        val provider = sharedPreferencesHelper.getVoiceInputProvider()
-        if (provider == "off") {
-            _toastUiEvent.postValue(Event("Voice input is disabled"))
-            return null
-        }
-
-        return withContext(Dispatchers.IO) {
-            try {
-                if (provider == "cloud") {
-                    if (activeChatApiKey.isBlank()) {
-                        _toastUiEvent.postValue(Event("OpenRouter API key not set"))
-                        return@withContext null
-                    }
-                    val base64Audio = Base64.getEncoder().encodeToString(audioBytes)
-                    val requestBody = buildJsonObject {
-                        put("model", JsonPrimitive(modelId))
-                        putJsonObject("input_audio") {
-                            put("data", JsonPrimitive(base64Audio))
-                            put("format", JsonPrimitive(audioFormat))
-                        }
-                    }
-                    val response = httpClient.post("https://openrouter.ai/api/v1/audio/transcriptions") {
-                        header("Authorization", "Bearer $activeChatApiKey")
-                        contentType(ContentType.Application.Json)
-                        setBody(requestBody)
-                    }
-                    if (!response.status.isSuccess()) {
-                        val errorBody = try { response.bodyAsText() } catch (_: Exception) { "No details" }
-                        _toastUiEvent.postValue(Event("Cloud transcription failed: ${response.status}"))
-                        return@withContext null
-                    }
-                    val result = response.body<JsonObject>()
-                    result["text"]?.jsonPrimitive?.content
-                } else {
-                    val lanEndpoint = sharedPreferencesHelper.getLanEndpoint()
-                    if (lanEndpoint.isNullOrBlank()) {
-                        _toastUiEvent.postValue(Event("LAN endpoint not configured"))
-                        return@withContext null
-                    }
-                    val response = lanHttpClient.submitFormWithBinaryData(
-                        url = "$lanEndpoint/v1/audio/transcriptions",
-                        formData = formData {
-                            append("file", audioBytes, Headers.build {
-                                append(HttpHeaders.ContentDisposition, "filename=\"$fileName\"")
-                                append(HttpHeaders.ContentType, "audio/$audioFormat")
-                            })
-                            append("model", modelId)
-                        }
-                    ) {
-                        header("Authorization", "Bearer ${sharedPreferencesHelper.getLanApiKeyForRequest()}")
-                    }
-                    if (!response.status.isSuccess()) {
-                        val errorBody = try { response.bodyAsText() } catch (_: Exception) { "No details" }
-                        _toastUiEvent.postValue(Event("LAN transcription failed: ${response.status} - $errorBody"))
-                        return@withContext null
-                    }
-                    val result = response.body<JsonObject>()
-                    result["text"]?.jsonPrimitive?.content
-                }
-            } catch (e: Exception) {
-                _toastUiEvent.postValue(Event("Transcription error: ${e.message}"))
-                null
-            }
-        }
+        // STT disabled
+        return null
     }
-
     fun sendTranscriptionOpenRouter(audioBytes: ByteArray, audioFormat: String) {
         val modelId = _activeChatModel.value ?: return
 
@@ -3348,14 +3279,15 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                             if (isFirstContentChunk) {
                                 withContext(Dispatchers.Main) {
                                     updateMessages { list ->
-                                        val index = list.indexOf(thinkingMessage)
-                                        if (index != -1) {
-                                            list[index] = FlexibleMessage(
+                                        putAssistantMessage(
+                                            list,
+                                            thinkingMessage,
+                                            FlexibleMessage(
                                                 role = "assistant",
                                                 content = JsonPrimitive(accumulatedResponse),
-                                                reasoning = accumulatedReasoning
+                                                reasoning = accumulatedReasoning.ifBlank { null }
                                             )
-                                        }
+                                        )
                                     }
                                 }
                                 return@forEachSseJsonPayload
@@ -3367,7 +3299,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                             delta.reasoning_details.forEach { detail ->
                                 if (detail.type == "reasoning.text" && detail.text != null) {
                                     if (!reasoningStarted) {
-                                        accumulatedReasoning = "```\n"
+                                        accumulatedReasoning = ""
                                         reasoningStarted = true
                                     }
                                     accumulatedReasoning += detail.text
@@ -3376,7 +3308,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                             }
                         } else if (!hasUsedReasoningDetails && !delta.reasoning.isNullOrEmpty()) {
                             if (!reasoningStarted) {
-                                accumulatedReasoning = "```\n"
+                                accumulatedReasoning = ""
                                 reasoningStarted = true
                             }
                             accumulatedReasoning += delta.reasoning
@@ -3386,13 +3318,15 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                         if (contentChanged || reasoningChanged) {
                             withContext(Dispatchers.Main) {
                                 updateMessages { list ->
-                                    if (list.isNotEmpty()) {
-                                        val last = list.last()
-                                        list[list.size - 1] = last.copy(
+                                    putAssistantMessage(
+                                        list,
+                                        thinkingMessage,
+                                        FlexibleMessage(
+                                            role = "assistant",
                                             content = JsonPrimitive(accumulatedResponse),
-                                            reasoning = accumulatedReasoning
+                                            reasoning = accumulatedReasoning.ifBlank { null }
                                         )
-                                    }
+                                    )
                                 }
                             }
                         }
@@ -3462,7 +3396,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     }
 
                     if (reasoningStarted) {
-                        accumulatedReasoning += "\n```\n\n---\n\n"
+                        // keep raw reasoning for expand/collapse UI
                     }
 
                     val hadToolCalls = toolCallBuffer.isNotEmpty()
@@ -3493,7 +3427,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
                                     list[list.size - 1] = last.copy(
                                         content = JsonPrimitive(finalContent),
-                                        reasoning = accumulatedReasoning,
+                                        reasoning = accumulatedReasoning.ifBlank { null },
                                         imageUri = downloadedUris.firstOrNull()
                                     )
                                 }
@@ -3681,14 +3615,15 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                             if (isFirstContentChunk) {
                                 withContext(Dispatchers.Main) {
                                     updateMessages { list ->
-                                        val index = list.indexOf(thinkingMessage)
-                                        if (index != -1) {
-                                            list[index] = FlexibleMessage(
+                                        putAssistantMessage(
+                                            list,
+                                            thinkingMessage,
+                                            FlexibleMessage(
                                                 role = "assistant",
                                                 content = JsonPrimitive(accumulatedResponse),
-                                                reasoning = accumulatedReasoning
+                                                reasoning = accumulatedReasoning.ifBlank { null }
                                             )
-                                        }
+                                        )
                                     }
                                 }
                                 return@forEachSseJsonPayload
@@ -3702,7 +3637,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                             delta.reasoning_details.forEach { detail ->
                                 if (detail.type == "reasoning.text" && detail.text != null) {
                                     if (!reasoningStarted) {
-                                        accumulatedReasoning = "```\n"
+                                        accumulatedReasoning = ""
                                         reasoningStarted = true
                                     }
                                     accumulatedReasoning += detail.text
@@ -3711,7 +3646,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                             }
                         } else if (!hasUsedReasoningDetails && !delta.reasoning.isNullOrEmpty()) {
                             if (!reasoningStarted) {
-                                accumulatedReasoning = "```\n"
+                                accumulatedReasoning = ""
                                 reasoningStarted = true
                             }
                             accumulatedReasoning += delta.reasoning
@@ -3722,13 +3657,15 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                         if (contentChanged || reasoningChanged) {
                             withContext(Dispatchers.Main) {
                                 updateMessages { list ->
-                                    if (list.isNotEmpty()) {
-                                        val last = list.last()
-                                        list[list.size - 1] = last.copy(
+                                    putAssistantMessage(
+                                        list,
+                                        thinkingMessage,
+                                        FlexibleMessage(
+                                            role = "assistant",
                                             content = JsonPrimitive(accumulatedResponse),
-                                            reasoning = accumulatedReasoning
+                                            reasoning = accumulatedReasoning.ifBlank { null }
                                         )
-                                    }
+                                    )
                                 }
                             }
                         }
@@ -3804,7 +3741,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
                     // --- 2. Close reasoning code fence ---
                     if (reasoningStarted) {
-                        accumulatedReasoning += "\n```\n\n---\n\n"
+                        // keep raw reasoning for expand/collapse UI
                     }
 
                     // --- 3. Download generated images ---
@@ -3856,7 +3793,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                                     val last = list.last()
                                     list[list.size - 1] = last.copy(
                                         content = JsonPrimitive(finalContent),
-                                        reasoning = accumulatedReasoning,
+                                        reasoning = accumulatedReasoning.ifBlank { null },
                                         imageUri = downloadedUris.firstOrNull()
                                     )
                                 }

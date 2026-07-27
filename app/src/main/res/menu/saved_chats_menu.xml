@@ -1,20 +1,26 @@
-<!-- res/menu/saved_chats_menu.xml -->
+<?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <!-- Existing items -->
+    <item
+        android:id="@+id/action_settings"
+        android:title="@string/grok_settings"
+        android:icon="@drawable/ic_settings"
+        app:showAsAction="always"
+        app:iconTint="@color/xai_ink" />
+
     <item
         android:id="@+id/action_import"
         android:title="Import"
         android:icon="@drawable/ic_import"
         app:showAsAction="ifRoom" />
+
     <item
         android:id="@+id/action_export"
         android:title="Export"
         android:icon="@drawable/ic_export"
         app:showAsAction="ifRoom" />
 
-    <!-- New search item -->
     <item
         android:id="@+id/action_search"
         android:title="Search"

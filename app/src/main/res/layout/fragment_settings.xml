@@ -5,768 +5,232 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="?attr/colorSurface"
+    android:background="@color/xai_canvas"
     android:fitsSystemWindows="true"
-    android:padding="16dp"
     tools:context=".SettingsFragment">
 
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        app:title="Settings"
-        app:titleTextColor="?android:attr/textColorPrimary"
-        android:background="?attr/colorSurface"
-        app:navigationIcon="@drawable/is_backarrow" />
+        android:background="@color/xai_canvas"
+        app:navigationIcon="@drawable/ic_close_x"
+        app:navigationIconTint="@color/xai_ink"
+        app:title="@string/settings_title"
+        app:titleTextColor="@color/xai_ink" />
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="0dp">
+        android:fillViewport="true"
+        android:clipToPadding="false"
+        android:paddingBottom="24dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/lanButton"
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="LAN Settings"
-                app:icon="@drawable/ic_lan"
-                app:iconSize="28dp"
-                app:iconTint="@color/xai_icon"
-                app:iconTintMode="src_in"
-                app:iconGravity="start"
-                app:iconPadding="12dp"
-                android:textColor="?android:attr/textColorPrimary"
-                app:strokeColor="@color/chestnut"
-                app:strokeWidth="1dp"
-                app:backgroundTint="?attr/colorSurface" />
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
+                android:layout_marginStart="4dp"
+                android:text="@string/settings_group_app"
+                android:textColor="@color/xai_mute"
+                android:textSize="13sp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="16dp"
-                android:gravity="center_vertical">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Trust self-signed LAN TLS:"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/trustSelfSignedLanSwitch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="false" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="16dp"
-                android:gravity="center_vertical">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Allow destructive file tools:"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/allowDestructiveToolsSwitch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="false" />
-            </LinearLayout>
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/toolsButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Manage AI Tools"
-                app:icon="@drawable/ic_tools"
-                app:iconSize="28dp"
-                app:iconTint="@color/xai_icon"
-                app:iconTintMode="src_in"
-                app:iconGravity="start"
-                app:iconPadding="12dp"
-                android:textColor="?android:attr/textColorPrimary"
-                app:strokeColor="@color/chestnut"
-                app:strokeWidth="1dp"
-                app:backgroundTint="?attr/colorSurface" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/promptsButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Prompt Library"
-                app:icon="@drawable/ic_prompts"
-                app:iconSize="28dp"
-                app:iconTint="@color/xai_icon"
-                app:iconTintMode="src_in"
-                app:iconGravity="start"
-                app:iconPadding="12dp"
-                android:textColor="?android:attr/textColorPrimary"
-                app:strokeColor="@color/chestnut"
-                app:strokeWidth="1dp"
-                app:backgroundTint="?attr/colorSurface" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/timeoutButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Request Timeout"
-                app:icon="@drawable/ic_timeout"
-                app:iconSize="28dp"
-                app:iconTint="@color/xai_icon"
-                app:iconTintMode="src_in"
-                app:iconGravity="start"
-                app:iconPadding="12dp"
-                android:textColor="?android:attr/textColorPrimary"
-                app:strokeColor="@color/chestnut"
-                app:strokeWidth="1dp"
-                app:backgroundTint="?attr/colorSurface" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/maxTokensButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Max Tokens"
-                app:icon="@drawable/ic_ruler"
-                app:iconSize="28dp"
-                app:iconTint="@color/xai_icon"
-                app:iconTintMode="src_in"
-                app:iconGravity="start"
-                app:iconPadding="12dp"
-                android:textColor="?android:attr/textColorPrimary"
-                app:strokeColor="@color/chestnut"
-                app:strokeWidth="1dp"
-                app:backgroundTint="?attr/colorSurface" />
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/inferenceParamsButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Inference Parameters"
-                app:icon="@drawable/ic_param"
-                app:iconSize="28dp"
-                app:iconTint="@color/xai_icon"
-                app:iconTintMode="src_in"
-                app:iconGravity="start"
-                app:iconPadding="12dp"
-                android:textColor="?android:attr/textColorPrimary"
-                app:strokeColor="@color/chestnut"
-                app:strokeWidth="1dp"
-                app:backgroundTint="?attr/colorSurface" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/apiKeyButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="OpenRouter API Key"
-                app:icon="@drawable/ic_key"
-                app:iconSize="28dp"
-                app:iconTint="@color/xai_icon"
-                app:iconTintMode="src_in"
-                app:iconGravity="start"
-                app:iconPadding="12dp"
-                android:textColor="?android:attr/textColorPrimary"
-                app:strokeColor="@color/chestnut"
-                app:strokeWidth="1dp"
-                app:backgroundTint="?attr/colorSurface" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/braveApiKeyButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Brave Search API Key"
-                app:icon="@drawable/ic_key"
-                app:iconSize="28dp"
-                app:iconTint="@color/xai_icon"
-                app:iconTintMode="src_in"
-                app:iconGravity="start"
-                app:iconPadding="12dp"
-                android:textColor="?android:attr/textColorPrimary"
-                app:strokeColor="@color/chestnut"
-                app:strokeWidth="1dp"
-                app:backgroundTint="?attr/colorSurface" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/creditsButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Check Remaining Credits"
-                app:icon="@drawable/ic_credits"
-                app:iconSize="28dp"
-                app:iconTint="@color/xai_icon"
-                app:iconTintMode="src_in"
-                app:iconGravity="start"
-                app:iconPadding="12dp"
-                android:textColor="?android:attr/textColorPrimary"
-                app:strokeColor="@color/chestnut"
-                app:strokeWidth="1dp"
-                app:backgroundTint="?attr/colorSurface" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/helpButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Help Screen"
-                app:icon="@drawable/ic_help"
-                app:iconSize="28dp"
-                app:iconTint="@color/xai_icon"
-                app:iconTintMode="src_in"
-                app:iconGravity="start"
-                app:iconPadding="12dp"
-                android:textColor="?android:attr/textColorPrimary"
-                app:strokeColor="@color/chestnut"
-                app:strokeWidth="1dp"
-                app:backgroundTint="?attr/colorSurface" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="16dp"
-                android:gravity="center_vertical">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Chat Memory:"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+                android:orientation="vertical"
+                android:background="@drawable/bg_settings_card"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp">
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/chatMemoryButton"
-                    android:layout_width="wrap_content"
+                    android:id="@+id/settingsRowAppearance"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="8 messages"
-                    android:textColor="?android:attr/textColorPrimary"
-                    app:strokeColor="@color/chestnut"
-                    app:strokeWidth="1dp"
-                    app:backgroundTint="?attr/colorSurface" />
-            </LinearLayout>
-            <!-- Theme Mode: System / Light / Dark -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="16dp"
-                android:gravity="center_vertical">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Theme Mode:"
-                    android:textColor="?android:attr/textColorPrimary"
+                    android:gravity="start|center_vertical"
+                    android:minHeight="56dp"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:text="@string/settings_section_appearance"
+                    android:textColor="@color/xai_ink"
                     android:textSize="16sp"
-                    android:textStyle="bold" />
+                    app:icon="@drawable/ic_palette"
+                    app:iconGravity="start"
+                    app:iconPadding="16dp"
+                    app:iconSize="22dp"
+                    app:iconTint="@color/xai_ink"
+                    app:rippleColor="@color/xai_canvas_mid" />
 
-                <com.google.android.material.button.MaterialButtonToggleGroup
-                    android:id="@+id/themeToggleGroup"
-                    android:layout_width="wrap_content"
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="54dp"
+                    android:background="@color/xai_hairline" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/settingsRowHaptics"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:singleSelection="true"
-                    app:selectionRequired="true">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnThemeSystem"
-                        style="?attr/materialButtonOutlinedStyle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        app:backgroundTint="@color/toggle_background_selector"
-                        app:strokeColor="@color/chestnut"
-                        android:text="System" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnThemeLight"
-                        style="?attr/materialButtonOutlinedStyle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        app:backgroundTint="@color/toggle_background_selector"
-                        app:strokeColor="@color/chestnut"
-                        android:text="Light" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnThemeDark"
-                        style="?attr/materialButtonOutlinedStyle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        app:backgroundTint="@color/toggle_background_selector"
-                        app:strokeColor="@color/chestnut"
-                        android:text="Dark" />
-
-                </com.google.android.material.button.MaterialButtonToggleGroup>
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="16dp"
-                android:gravity="center_vertical">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Extended Dock:"
-                    android:textColor="?android:attr/textColorPrimary"
+                    android:gravity="start|center_vertical"
+                    android:minHeight="56dp"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:text="@string/settings_section_haptics"
+                    android:textColor="@color/xai_ink"
                     android:textSize="16sp"
-                    android:textStyle="bold" />
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/extendedDockSwitch"
-                    android:layout_width="wrap_content"
+                    app:icon="@drawable/ic_mobilesound"
+                    app:iconGravity="start"
+                    app:iconPadding="16dp"
+                    app:iconSize="22dp"
+                    app:iconTint="@color/xai_ink"
+                    app:rippleColor="@color/xai_canvas_mid" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="54dp"
+                    android:background="@color/xai_hairline" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/settingsRowAdvanced"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:checked="false" />
-            </LinearLayout>
-
-
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="16dp"
-                android:gravity="center_vertical">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Expand Input on Focus:"
-                    android:textColor="?android:attr/textColorPrimary"
+                    android:gravity="start|center_vertical"
+                    android:minHeight="56dp"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:text="@string/settings_section_advanced"
+                    android:textColor="@color/xai_ink"
                     android:textSize="16sp"
-                    android:textStyle="bold" />
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/expandableInputSwitch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="false" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="16dp"
-                android:gravity="center_vertical">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Scroll Progress Indicator:"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/scrollProgressSwitch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="true"
-                    app:useMaterialThemeColors="true" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="16dp"
-                android:gravity="center_vertical">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Scroll to Top/Bottom Buttons:"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/scrollButtonsSwitch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="false" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="16dp"
-                android:gravity="center_vertical">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Volume Keys Scroll to Top/Bottom:"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/volumeScrollSwitch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="false" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="16dp"
-                android:gravity="center_vertical">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Presets Button on Chat Screen:"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/presetsExtendedSwitch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="false" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="16dp"
-                android:gravity="center_vertical">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Keep Screen On:"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/keepScreenOnSwitch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="false" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="16dp"
-                android:gravity="center_vertical">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Biometrics Check:"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/biometricsSwitch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="false" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="16dp"
-                android:gravity="center_vertical">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Notifications:"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/notificationsSwitch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="true"
-                    app:useMaterialThemeColors="true" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="16dp"
-                android:gravity="center_vertical">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Auto-disable Web Search:"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/autoDisableWebSearchSwitch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="true"
-                    app:useMaterialThemeColors="true" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="16dp"
-                android:gravity="center_vertical">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Extended Top Bar:"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/extendedTopBarSwitch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="false" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="16dp"
-                android:gravity="center_vertical">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Show Citations:"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/showCitationsSwitch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="false" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="16dp"
-                android:gravity="center_vertical">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Copy Button on Notification(instead of Dismiss):"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/copyOrdismissSwitch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="false" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="16dp"
-                android:gravity="center_vertical">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Copy Button on Notification(instead of Open):"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/copyOropenSwitch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="false" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="16dp"
-                android:gravity="center_vertical">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Auto Save Chats:"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/autoSaveChatsSwitch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="false" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="16dp"
-                android:gravity="center_vertical">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="OpenRouter Middle-Out Transform:"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/openRouterTransformsSwitch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="false" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="16dp"
-                android:gravity="center_vertical">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Animate border on new message:"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/animateBarOnErrorSwitch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="true"
-                    app:useMaterialThemeColors="true" />
+                    app:icon="@drawable/ic_tune"
+                    app:iconGravity="start"
+                    app:iconPadding="16dp"
+                    app:iconSize="22dp"
+                    app:iconTint="@color/xai_ink"
+                    app:rippleColor="@color/xai_canvas_mid" />
             </LinearLayout>
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="Voice Input (STT)"
-                android:textColor="?android:attr/textColorPrimary"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="8dp"
+                android:layout_marginStart="4dp"
+                android:text="@string/settings_group_grok"
+                android:textColor="@color/xai_mute"
+                android:textSize="13sp" />
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:hint="STT Model ID (e.g., Qwen3-ASR-1.7B-8bit)"
-                app:boxStrokeColor="?attr/colorOutline"
-                app:hintTextColor="?android:attr/textColorSecondary"
-                android:textColorHint="?android:attr/textColorSecondary">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/voiceInputModelEdit"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:inputType="text" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.button.MaterialButtonToggleGroup
-                android:id="@+id/voiceInputProviderToggle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                app:singleSelection="true">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/providerLanButton"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="LAN"
-                    style="?attr/materialButtonOutlinedStyle"
-                    app:backgroundTint="@color/toggle_background_selector"
-                    app:strokeColor="@color/chestnut"/>
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/providerCloudButton"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Cloud"
-                    style="?attr/materialButtonOutlinedStyle"
-                    app:backgroundTint="@color/toggle_background_selector"
-                    app:strokeColor="@color/chestnut"/>
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/providerOffButton"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Off"
-                    style="?attr/materialButtonOutlinedStyle"
-                    app:backgroundTint="@color/toggle_background_selector"
-                    app:strokeColor="@color/chestnut"/>
-            </com.google.android.material.button.MaterialButtonToggleGroup>
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="8dp"
-                android:gravity="center_vertical">
-                <TextView
-                    android:layout_width="0dp"
+                android:orientation="vertical"
+                android:background="@drawable/bg_settings_card"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/settingsRowModels"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Watermark Transcription:"
-                    android:textColor="?android:attr/textColorPrimary"
+                    android:gravity="start|center_vertical"
+                    android:minHeight="56dp"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:text="@string/settings_section_models"
+                    android:textColor="@color/xai_ink"
                     android:textSize="16sp"
-                    android:textStyle="bold" />
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/watermarkSttSwitch"
-                    android:layout_width="wrap_content"
+                    app:icon="@drawable/ic_cloud"
+                    app:iconGravity="start"
+                    app:iconPadding="16dp"
+                    app:iconSize="22dp"
+                    app:iconTint="@color/xai_ink"
+                    app:rippleColor="@color/xai_canvas_mid" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="54dp"
+                    android:background="@color/xai_hairline" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/settingsRowData"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:checked="false" />
+                    android:gravity="start|center_vertical"
+                    android:minHeight="56dp"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:text="@string/settings_section_data"
+                    android:textColor="@color/xai_ink"
+                    android:textSize="16sp"
+                    app:icon="@drawable/ic_fingerprint"
+                    app:iconGravity="start"
+                    app:iconPadding="16dp"
+                    app:iconSize="22dp"
+                    app:iconTint="@color/xai_ink"
+                    app:rippleColor="@color/xai_canvas_mid" />
             </LinearLayout>
+
+            <!-- STT disabled: Voice settings section
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="8dp"
+                android:layout_marginStart="4dp"
+                android:text="@string/settings_group_voice"
+                android:textColor="@color/xai_mute"
+                android:textSize="13sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_settings_card"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/settingsRowVoice"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="start|center_vertical"
+                    android:minHeight="56dp"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:text="@string/settings_section_voice"
+                    android:textColor="@color/xai_ink"
+                    android:textSize="16sp"
+                    app:icon="@drawable/ic_mic"
+                    app:iconGravity="start"
+                    app:iconPadding="16dp"
+                    app:iconSize="22dp"
+                    app:iconTint="@color/xai_ink"
+                    app:rippleColor="@color/xai_canvas_mid" />
+            </LinearLayout>
+            -->
+
+            <!-- Keep ID for SettingsFragment findViewById; STT feature commented out -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/settingsRowVoice"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone" />
+
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

@@ -97,6 +97,9 @@ class SharedPreferencesHelper(context: Context) {
         private const val KEY_BIOMETRIC_ENABLED = "biometric_enabled"
         private const val KEY_TRUST_SELF_SIGNED_LAN = "trust_self_signed_lan"
         private const val KEY_ALLOW_DESTRUCTIVE_TOOLS = "allow_destructive_tools"
+        private const val KEY_HAPTIC_BUTTONS = "haptic_buttons"
+        private const val KEY_HAPTIC_RESPONDING = "haptic_responding"
+        private const val KEY_PINNED_SESSION_IDS = "pinned_session_ids"
         private const val KEY_CONVERSATION_MODE_ENABLED = "conversation_mode_enabled"
         private const val LAN_API_KEY_ALIAS = "lan_api_key"
         private const val CHAT_DB_PASSPHRASE_ALIAS = "chat_db_passphrase"
@@ -286,6 +289,28 @@ class SharedPreferencesHelper(context: Context) {
 
     fun getAllowDestructiveTools(): Boolean = mainPrefs.getBoolean(KEY_ALLOW_DESTRUCTIVE_TOOLS, false)
     fun saveAllowDestructiveTools(enabled: Boolean) = mainPrefs.edit { putBoolean(KEY_ALLOW_DESTRUCTIVE_TOOLS, enabled) }
+
+    fun getHapticButtons(): Boolean = mainPrefs.getBoolean(KEY_HAPTIC_BUTTONS, true)
+    fun saveHapticButtons(enabled: Boolean) = mainPrefs.edit { putBoolean(KEY_HAPTIC_BUTTONS, enabled) }
+
+    fun getHapticResponding(): Boolean = mainPrefs.getBoolean(KEY_HAPTIC_RESPONDING, true)
+    fun saveHapticResponding(enabled: Boolean) = mainPrefs.edit { putBoolean(KEY_HAPTIC_RESPONDING, enabled) }
+
+    fun getPinnedSessionIds(): Set<Long> =
+        mainPrefs.getStringSet(KEY_PINNED_SESSION_IDS, emptySet())
+            ?.mapNotNull { it.toLongOrNull() }
+            ?.toSet()
+            ?: emptySet()
+
+    fun isSessionPinned(sessionId: Long): Boolean = sessionId in getPinnedSessionIds()
+
+    fun setSessionPinned(sessionId: Long, pinned: Boolean) {
+        val next = getPinnedSessionIds().toMutableSet()
+        if (pinned) next.add(sessionId) else next.remove(sessionId)
+        mainPrefs.edit {
+            putStringSet(KEY_PINNED_SESSION_IDS, next.map { it.toString() }.toSet())
+        }
+    }
 
     fun getAdvancedReasoningEnabled(): Boolean = mainPrefs.getBoolean("advanced_reasoning_enabled", false)
     fun saveAdvancedReasoningEnabled(enabled: Boolean) = mainPrefs.edit {

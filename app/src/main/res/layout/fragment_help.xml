@@ -16,7 +16,8 @@
         app:title="Help"
         app:titleTextColor="?android:attr/textColorPrimary"
         android:background="?attr/colorSurface"
-        app:navigationIcon="@drawable/is_backarrow" />
+        app:navigationIcon="@drawable/is_backarrow"
+        app:navigationIconTint="@color/xai_ink" />
 
     <ScrollView
         android:layout_width="match_parent"
@@ -28,8 +29,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:linksClickable="true"
-            android:textColorHighlight="?attr/colorPrimary"
-            android:textColorLink="?attr/colorPrimary"
+            android:textColorHighlight="@color/xai_link"
+            android:textColorLink="@color/xai_link"
             android:textColor="?android:attr/textColorPrimary"
             android:textIsSelectable="true"
             android:textSize="16sp"

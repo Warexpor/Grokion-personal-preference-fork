@@ -17,7 +17,8 @@
         app:title="Inference Parameters"
         app:titleTextColor="?android:attr/textColorPrimary"
         android:background="?attr/colorSurface"
-        app:navigationIcon="@drawable/is_backarrow" />
+        app:navigationIcon="@drawable/is_backarrow"
+        app:navigationIconTint="@color/xai_ink" />
 
     <ScrollView
         android:layout_width="match_parent"
@@ -44,7 +45,7 @@
                     android:textColor="?android:attr/textColorPrimary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
-                <com.google.android.material.materialswitch.MaterialSwitch
+                <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/tempSwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -56,7 +57,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:hint="e.g., 1.0"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                style="@style/Xai.TextInputLayout">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/tempEdit"
                     android:layout_width="match_parent"
@@ -79,7 +80,7 @@
                     android:textColor="?android:attr/textColorPrimary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
-                <com.google.android.material.materialswitch.MaterialSwitch
+                <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/topPSwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -91,7 +92,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:hint="e.g., 1.0"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                style="@style/Xai.TextInputLayout">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/topPEdit"
                     android:layout_width="match_parent"
@@ -114,7 +115,7 @@
                     android:textColor="?android:attr/textColorPrimary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
-                <com.google.android.material.materialswitch.MaterialSwitch
+                <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/topKSwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -126,7 +127,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:hint="e.g., 40"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                style="@style/Xai.TextInputLayout">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/topKEdit"
                     android:layout_width="match_parent"
@@ -149,7 +150,7 @@
                     android:textColor="?android:attr/textColorPrimary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
-                <com.google.android.material.materialswitch.MaterialSwitch
+                <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/minPSwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -161,7 +162,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:hint="e.g., 0.0"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                style="@style/Xai.TextInputLayout">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/minPEdit"
                     android:layout_width="match_parent"
@@ -184,7 +185,7 @@
                     android:textColor="?android:attr/textColorPrimary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
-                <com.google.android.material.materialswitch.MaterialSwitch
+                <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/repPenaltySwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -196,7 +197,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:hint="e.g., 1.0"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                style="@style/Xai.TextInputLayout">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/repPenaltyEdit"
                     android:layout_width="match_parent"
@@ -219,7 +220,7 @@
                     android:textColor="?android:attr/textColorPrimary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
-                <com.google.android.material.materialswitch.MaterialSwitch
+                <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/presPenaltySwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -231,7 +232,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:hint="e.g., 0.0"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                style="@style/Xai.TextInputLayout">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/presPenaltyEdit"
                     android:layout_width="match_parent"

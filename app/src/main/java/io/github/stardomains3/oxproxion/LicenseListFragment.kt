@@ -1,5 +1,7 @@
 package io.github.stardomains3.oxproxion
 
+import io.github.stardomains3.oxproxion.Motion.withGrokStackAnimations
+
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -47,6 +49,7 @@ class LicenseListFragment : Fragment() {
                         .use { OssLicensesParser.parseLicense(metadata, it).licenseContent }
 
                     parentFragmentManager.beginTransaction()
+                        .withGrokStackAnimations()
                         .hide(this)
                         .add(R.id.fragment_container, LicenseDetailFragment.newInstance(metadata.libraryName, licenseContent))
                         .addToBackStack(null)

@@ -1,5 +1,7 @@
 package io.github.stardomains3.oxproxion
 
+import io.github.stardomains3.oxproxion.Motion.withGrokStackAnimations
+
 import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -128,6 +130,7 @@ class PromptLibraryFragment : Fragment() {
 
         view.findViewById<FloatingActionButton>(R.id.fab_add_prompt).setOnClickListener {
             parentFragmentManager.beginTransaction()
+                .withGrokStackAnimations()
                 .replace(R.id.fragment_container, AddEditPromptFragment())
                 .addToBackStack(null)
                 .commit()
@@ -278,6 +281,7 @@ class PromptLibraryFragment : Fragment() {
             }
         }
         parentFragmentManager.beginTransaction()
+            .withGrokStackAnimations()
             .replace(R.id.fragment_container, fragment)
             .addToBackStack(null)
             .commit()

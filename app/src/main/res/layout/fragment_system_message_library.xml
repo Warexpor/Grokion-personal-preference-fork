@@ -17,6 +17,7 @@
         app:titleTextColor="?android:attr/textColorPrimary"
         android:background="?attr/colorSurface"
         app:navigationIcon="@drawable/is_backarrow"
+        app:navigationIconTint="@color/xai_ink"
         app:menu="@menu/system_message_library_menu" />
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -38,8 +39,8 @@
             android:layout_gravity="bottom|end"
             android:layout_margin="16dp"
             android:src="@drawable/ic_addmod"
-            app:backgroundTint="?attr/colorPrimary"
-            app:tint="?attr/colorOnPrimary"
+            app:backgroundTint="@color/xai_ink"
+            app:tint="@color/xai_canvas"
             android:contentDescription="@string/add_new_system_message"
             app:layout_behavior="com.google.android.material.behavior.HideBottomViewOnScrollBehavior"/>
 

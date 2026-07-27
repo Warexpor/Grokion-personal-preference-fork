@@ -9,7 +9,7 @@ import androidx.core.graphics.toColorInt
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.materialswitch.MaterialSwitch
+import androidx.appcompat.widget.SwitchCompat
 import com.google.android.material.textfield.TextInputLayout
 
 class InferenceParametersFragment : Fragment(R.layout.fragment_inference_parameters) {
@@ -116,7 +116,7 @@ class InferenceParametersFragment : Fragment(R.layout.fragment_inference_paramet
             R.id.repPenaltySwitch,
             R.id.presPenaltySwitch
         ).forEach { id ->
-            view.findViewById<MaterialSwitch>(id)?.styleSwitch()
+            view.findViewById<SwitchCompat>(id)?.styleSwitch()
         }
     }
 
@@ -130,7 +130,7 @@ class InferenceParametersFragment : Fragment(R.layout.fragment_inference_paramet
         onSwitchChanged: (Boolean) -> Unit,
         onValueChanged: (String) -> Unit
     ) {
-        val switch = view.findViewById<MaterialSwitch>(switchId)
+        val switch = view.findViewById<SwitchCompat>(switchId)
         val inputLayout = view.findViewById<TextInputLayout>(inputLayoutId)
         val edit = view.findViewById<EditText>(editId) // TextInputEditText extends EditText
 
@@ -152,5 +152,5 @@ class InferenceParametersFragment : Fragment(R.layout.fragment_inference_paramet
     }
 
     // Copy of your exact switch style helper
-    private fun MaterialSwitch.styleSwitch() = applyGrokionSwitchStyle()
+    private fun SwitchCompat.styleSwitch() = applyGrokionSwitchStyle()
 }

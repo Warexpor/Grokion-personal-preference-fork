@@ -12,7 +12,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.materialswitch.MaterialSwitch
+import androidx.appcompat.widget.SwitchCompat
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
 import androidx.core.view.isVisible
@@ -24,15 +24,15 @@ class PresetEditFragment : Fragment() {
     private lateinit var toolbar: MaterialToolbar
 
     private var editingPreset: Preset? = null
-    private lateinit var toolsSwitch: MaterialSwitch
+    private lateinit var toolsSwitch: SwitchCompat
 
-    private lateinit var webSearchSwitch: MaterialSwitch
+    private lateinit var webSearchSwitch: SwitchCompat
     private lateinit var titleInput: TextInputEditText
     private lateinit var modelAutoComplete: MaterialAutoCompleteTextView
     private lateinit var systemMessageAutoComplete: MaterialAutoCompleteTextView
-    private lateinit var streamingSwitch: MaterialSwitch
-    private lateinit var reasoningSwitch: MaterialSwitch
-    private lateinit var conversationSwitch: MaterialSwitch
+    private lateinit var streamingSwitch: SwitchCompat
+    private lateinit var reasoningSwitch: SwitchCompat
+    private lateinit var conversationSwitch: SwitchCompat
     private lateinit var saveBtn: MaterialButton
     private lateinit var cancelBtn: MaterialButton
 

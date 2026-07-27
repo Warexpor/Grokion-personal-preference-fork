@@ -72,3 +72,7 @@ CMakeLists.txt.user
 
 # Other common files to ignore
 .vscode/ # Visual Studio Code settings
+
+# Local APK extract / decompile dumps (not product source)
+references/
+tools/

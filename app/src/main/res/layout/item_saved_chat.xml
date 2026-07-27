@@ -1,11 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Grok history row: title + timestamp + overflow -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?android:attr/selectableItemBackground"
     android:orientation="horizontal"
-    android:padding="16dp">
+    android:gravity="center_vertical"
+    android:background="?android:attr/selectableItemBackground"
+    android:minHeight="64dp"
+    android:paddingStart="16dp"
+    android:paddingEnd="4dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp">
 
     <LinearLayout
         android:layout_width="0dp"
@@ -17,30 +23,30 @@
             android:id="@+id/savedChatTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Chat Title"
-            android:textColor="?android:attr/textColorPrimary"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:textColor="@color/xai_ink"
+            android:textSize="16sp"
+            android:maxLines="1"
+            android:ellipsize="end" />
 
         <TextView
             android:id="@+id/savedChatTimestamp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Oct 24, 2023"
-            android:textColor="?android:attr/textColorSecondary"
-            android:textSize="14sp" />
+            android:layout_marginTop="2dp"
+            android:textColor="@color/xai_mute"
+            android:textSize="13sp"
+            android:maxLines="1"
+            android:ellipsize="end" />
     </LinearLayout>
 
-    <ImageView
+    <ImageButton
         android:id="@+id/iconEditt"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:layout_marginStart="16dp"
-        android:background="@drawable/br_circle"
-        android:contentDescription="Edit chat"
-        android:foreground="?attr/selectableItemBackgroundBorderless"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/grok_history_more"
+        android:src="@drawable/ic_menudot"
         android:padding="8dp"
-        android:src="@drawable/ic_editnote"
-        app:tint="?android:attr/textColorSecondary" />
+        app:tint="@color/xai_mute" />
 
 </LinearLayout>

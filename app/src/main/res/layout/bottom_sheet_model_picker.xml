@@ -6,7 +6,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
     android:fitsSystemWindows="true"
-    android:background="?attr/colorSurface"
+    android:background="@color/xai_canvas"
     tools:context=".BotModelPickerFragment">
 
     <com.google.android.material.appbar.MaterialToolbar
@@ -14,8 +14,9 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         app:title="Your Models"
-        app:titleTextColor="?android:attr/textColorPrimary"
-        android:background="?attr/colorSurface"
+        app:titleTextColor="@color/xai_ink"
+        android:background="@color/xai_canvas"
+        app:navigationIconTint="@color/xai_ink"
         app:menu="@menu/bottom_sheet_model_picker_menu"
         app:navigationIcon="@drawable/is_backarrow" />
 

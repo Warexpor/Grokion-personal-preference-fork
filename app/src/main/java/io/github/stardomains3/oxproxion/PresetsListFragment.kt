@@ -1,5 +1,7 @@
 package io.github.stardomains3.oxproxion
 
+import io.github.stardomains3.oxproxion.Motion.withGrokStackAnimations
+
 
 import android.content.res.ColorStateList
 import android.graphics.PorterDuff
@@ -17,7 +19,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.materialswitch.MaterialSwitch
+import androidx.appcompat.widget.SwitchCompat
 
 
 class PresetsListFragment : Fragment() {
@@ -51,6 +53,7 @@ class PresetsListFragment : Fragment() {
             onItemEdit = { preset ->
                 val dialog = PresetEditFragment.newInstance(preset)
                 parentFragmentManager.beginTransaction()
+                    .withGrokStackAnimations()
                     .replace(R.id.fragment_container, dialog)
                     .addToBackStack(null)
                     .commit()
@@ -105,6 +108,7 @@ class PresetsListFragment : Fragment() {
         fab.setOnClickListener {
             val dialog = PresetEditFragment.newInstance(null)
             parentFragmentManager.beginTransaction()
+                .withGrokStackAnimations()
                 .replace(R.id.fragment_container, dialog)
                 .addToBackStack(null)
                 .commit()
@@ -118,7 +122,7 @@ class PresetsListFragment : Fragment() {
         adapter.update(repository.getAll())
     }
     private fun setupClearChatSwitch() {
-        val switch = view?.findViewById<MaterialSwitch>(R.id.switchClearChat)  // Updated type
+        val switch = view?.findViewById<SwitchCompat>(R.id.switchClearChat)  // Updated type
         switch?.apply {
             applyGrokionSwitchStyle()
             // Restore state from SharedPreferences
