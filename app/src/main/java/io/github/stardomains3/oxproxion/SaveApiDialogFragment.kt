@@ -42,10 +42,10 @@ class SaveApiDialogFragment : DialogFragment() {
                 val saved = sharedPreferencesHelper.saveApiKey("openrouter_api_key", apiKey)
                 if (saved) {
                     viewModel.refreshApiKey()
-                    Toast.makeText(requireContext(), "API Key saved.", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(requireContext(), "API Key saved.", AppToast.LENGTH_SHORT).show()
                     dismiss()
                 } else {
-                    Toast.makeText(requireContext(), "Failed to save API key.", Toast.LENGTH_LONG).show()
+                    AppToast.makeText(requireContext(), "Failed to save API key.", AppToast.LENGTH_LONG).show()
                 }
             } else {
                 editTextApiKey.error = "API Key cannot be empty"

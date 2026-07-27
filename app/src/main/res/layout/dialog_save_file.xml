@@ -4,14 +4,17 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="24dp">
+    android:padding="24dp"
+    android:background="@drawable/rounded_dialog_bg">
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="File Name"
+        app:boxStrokeColor="@color/xai_hairline"
+        app:hintTextColor="@color/xai_mute"
         app:endIconMode="clear_text"
-        style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+        app:boxBackgroundMode="outline">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/fileNameInput"
@@ -19,7 +22,8 @@
             android:layout_height="wrap_content"
             android:inputType="text"
             android:maxLines="1"
-            android:singleLine="true" />
+            android:singleLine="true"
+            android:textColor="@color/xai_ink" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
@@ -27,10 +31,12 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:hint="File Extension (No period)"
+        app:boxStrokeColor="@color/xai_hairline"
+        app:hintTextColor="@color/xai_mute"
         app:endIconMode="clear_text"
         app:helperText="e.g., js, kt, html, py, txt"
         app:helperTextEnabled="true"
-        style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+        app:boxBackgroundMode="outline">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/fileExtensionInput"
@@ -39,7 +45,7 @@
             android:inputType="text"
             android:maxLines="1"
             android:singleLine="true"
-            />
+            android:textColor="@color/xai_ink" />
     </com.google.android.material.textfield.TextInputLayout>
 
 </LinearLayout>

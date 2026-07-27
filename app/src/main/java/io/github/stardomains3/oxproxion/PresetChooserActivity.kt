@@ -11,7 +11,7 @@ import android.widget.CheckBox
 import android.widget.ListView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.graphics.toColorInt
+import androidx.core.content.ContextCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 
@@ -82,7 +82,7 @@ class PresetChooserActivity : AppCompatActivity() {
         val titleTextView = TextView(this).apply {
             text = "Choose Preset"
             textSize = 20f
-            setTextColor("#DADBDF".toColorInt())
+            setTextColor(ContextCompat.getColor(this@PresetChooserActivity, R.color.xai_ink))
             gravity = Gravity.CENTER
             setPadding(24, 16, 24, 16)
         }

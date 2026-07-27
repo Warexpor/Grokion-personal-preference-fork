@@ -1,9 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Grok APK 1:1: ic_vector_pencil_stroke.xml - edit pencil -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp"
     android:height="24dp"
-    android:viewportWidth="960"
-    android:viewportHeight="960">
-  <path
-      android:pathData="M200,760h57l391,-391 -57,-57 -391,391v57ZM120,840v-170l528,-527q12,-11 26.5,-17t30.5,-6q16,0 31,6t26,18l55,56q12,11 17.5,26t5.5,30q0,16 -5.5,30.5T817,313L290,840L120,840ZM760,256 L704,200 760,256ZM619,341 L591,312 648,369 619,341Z"
-      android:fillColor="#FFFFFF"/>
+    android:width="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M13.543 4.04269C15.3142 2.27158 18.1858 2.27158 19.957 4.04269C21.7282 5.8139 21.7282 8.68551 19.957 10.4568L11.2314 19.1833C10.4044 20.0103 9.31321 20.5207 8.14844 20.6267L2.89551 21.1042L3.37305 15.8513C3.47901 14.6865 3.99037 13.5953 4.81738 12.7683L13.543 4.04269ZM6.23145 14.1823C5.73523 14.6786 5.42881 15.3341 5.36523 16.0329L5.10449 18.8943L7.9668 18.6345C8.66566 18.5709 9.32018 18.2645 9.81641 17.7683L16.585 10.9987L13 7.41379L6.23145 14.1823ZM18.543 5.45676C17.5528 4.46669 15.9472 4.46669 14.957 5.45676L14.4141 5.99972L17.999 9.58468L18.543 9.04269C19.5331 8.0525 19.5331 6.44691 18.543 5.45676Z"
+        android:fillType="evenOdd"/>
 </vector>

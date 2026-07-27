@@ -38,7 +38,7 @@ class PromptAdapter(
 
         // Copy button - copy to clipboard and dismiss
         holder.copyButton.setOnClickListener { onCopyClick(prompt) }
-        holder.itemView.findViewById<androidx.cardview.widget.CardView>(R.id.card_area).setOnClickListener { onItemClick(prompt) }
+        holder.itemView.findViewById<View>(R.id.card_area).setOnClickListener { onItemClick(prompt) }
 
         // Menu button - show edit/delete menu
         holder.menuButton.setOnClickListener { onMenuClick(holder.menuButton, prompt) }

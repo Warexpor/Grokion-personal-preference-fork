@@ -107,6 +107,28 @@
             app:queryBackground="@android:color/transparent" />
 
         <ImageButton
+            android:id="@+id/historyImportButton"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_circle_soft"
+            android:contentDescription="@string/grok_history_import"
+            android:src="@drawable/ic_import"
+            android:padding="10dp"
+            app:tint="@color/xai_ink" />
+
+        <ImageButton
+            android:id="@+id/historyExportButton"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginStart="4dp"
+            android:background="@drawable/bg_circle_soft"
+            android:contentDescription="@string/grok_history_export"
+            android:src="@drawable/ic_export"
+            android:padding="10dp"
+            app:tint="@color/xai_ink" />
+
+        <ImageButton
             android:id="@+id/historySettingsButton"
             android:layout_width="44dp"
             android:layout_height="44dp"

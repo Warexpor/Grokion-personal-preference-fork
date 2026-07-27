@@ -1,6 +1,6 @@
 ﻿# Grokion ↔ Grok Android UI — 1:1 design contract
 
-**Status:** implementation source of truth for chat-shell visual parity  
+**Status:** Ask shell + secondary settings/library/dialog chrome — implementation source of truth  
 **Target product:** `ai.x.grok` **1.1.97-release.01** (local extract under `references/`)  
 **Secondary refs:** iOS conversation chrome teardown; Play screenshots for Ask / history / voice  
 **Scope:** Ask (chat) surface UI elements — not SuperGrok paywalls, Imagine feed, or LiveKit voice pipeline logic  
@@ -352,14 +352,14 @@ Use these exact user-visible phrases where the control exists:
 
 Legend: `Todo` | `Partial` | `Done` | `N/A` (product skip)
 
-Updated after 2026-07-27 Ask UI parity overhaul.
+Updated after 2026-07-28 secondary UI clearout (settings detail cards, libraries, dialogs, always-on autosave).
 
 ### 9.1 Foundations
 
 | ID | Element | Status |
 |----|---------|--------|
 | F1–F11, F14 | Semantic colors, links, errors, success, borders, sunset demotion | Done |
-| F12 | System/Roboto metrics (LH 1.55 etc.) | Done |
+| F12 | Inter body metrics (LH 1.55 etc.); Iceland history wordmark | Done |
 | F13 | Light / Dark / System | Done |
 
 ### 9.2 Shell chrome
@@ -376,23 +376,26 @@ Updated after 2026-07-27 Ask UI parity overhaul.
 | ID | Element | Status |
 |----|---------|--------|
 | T1–T4, T6–T10 | Bubble tail, LH, cursor, copy green, empty mark, stubs, reasoning | Done |
-| T5 | Action row (copy/share/edit/tts; thumbs/regen omit) | Done |
+| T5 | Action row (user tap-to-reveal; regenerate under assistant) | Done |
 
 ### 9.4 Composer
 
 | ID | Element | Status |
 |----|---------|--------|
 | C1–C6, C8 | Pill, hint, send states, stop morph, monochrome focus | Done |
-| C7 | Attach sheet (Camera/Gallery/Files + system/tools) | Done |
+| C7 | Attach sheet (Camera/Gallery/Files + system/tools; no Save chat) | Done |
 
 ### 9.5 Settings / secondary
 
 | ID | Element | Status |
 |----|---------|--------|
 | X1, X4, X5 | Appearance preview, mono switches, dialog scrim | Done |
-| X0 | Settings root IA (Appearance/Voice/Haptics/Models/Advanced/Data) | Done |
+| X0 | Settings root IA (Appearance/Haptics/Models/Advanced/Data; Voice N/A) | Done |
 | X2 | Settings text-size slider | N/A (in-chat ± remains) |
 | X3 | Haptics prefs | Done |
+| X6 | Settings detail cards + Advanced regroup (Libraries/Generation/Chrome) | Done |
+| X7 | Libraries / catalogs / dialogs canvas parity | Done |
+| X8 | Always-on autosave; History rename; Import/Export discoverable | Done |
 
 ### 9.6 Motion (2026-07-27 audit)
 
@@ -403,6 +406,7 @@ Updated after 2026-07-27 Ask UI parity overhaul.
 | M3 | Send↔Stop 200ms morph | Done |
 | M4 | Overflow menu fade + no layoutChanges fight | Done |
 | M5 | Bottom sheet theme (16dp top, 0.6 scrim) | Done |
+| M6 | SVG press burst + press scale (replaces Material ripple) | Done |
 
 See also [`SHELL.md`](SHELL.md) for remap/omit/gates.
 

@@ -113,7 +113,7 @@ class MainActivity : AppCompatActivity() {
                 vm.consumeSharedText(text)
                 val sharedPreferencesHelper = SharedPreferencesHelper(this)
                 val systemMessageTitle = sharedPreferencesHelper.getSelectedSystemMessage().title
-                Toast.makeText(this, systemMessageTitle, Toast.LENGTH_SHORT).show()
+                AppToast.makeText(this, systemMessageTitle, AppToast.LENGTH_SHORT).show()
             }
         }
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -222,8 +222,8 @@ class MainActivity : AppCompatActivity() {
                 val sharedPreferencesHelper = SharedPreferencesHelper(this)
                 vm.consumeSharedText(text)
                 val systemMessageTitle = sharedPreferencesHelper.getSelectedSystemMessage().title
-                Toast.makeText(this, systemMessageTitle, Toast.LENGTH_SHORT).show()
-                //Toast.makeText(this, "Text received", Toast.LENGTH_LONG).show()
+                AppToast.makeText(this, systemMessageTitle, AppToast.LENGTH_SHORT).show()
+                //AppToast.makeText(this, "Text received", AppToast.LENGTH_LONG).show()
                 //val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
                 //if (fragment is ChatFragment) {
                 //    fragment.setSharedText(text)
@@ -242,7 +242,7 @@ class MainActivity : AppCompatActivity() {
                   }
                   vm.consumeSharedTextautosend(text)
                   val systemMessageTitle = sharedPreferencesHelper.getSelectedSystemMessage().title
-                  Toast.makeText(this, "System: $systemMessageTitle", Toast.LENGTH_SHORT).show()
+                  AppToast.makeText(this, "System: $systemMessageTitle", AppToast.LENGTH_SHORT).show()
               }
           }*/
         val vm: ChatViewModel by viewModels()
@@ -259,7 +259,7 @@ class MainActivity : AppCompatActivity() {
                 vm.consumeSharedText(text)
                 val sharedPreferencesHelper = SharedPreferencesHelper(this)
                 val systemMessageTitle = sharedPreferencesHelper.getSelectedSystemMessage().title
-                Toast.makeText(this, systemMessageTitle, Toast.LENGTH_SHORT).show()
+                AppToast.makeText(this, systemMessageTitle, AppToast.LENGTH_SHORT).show()
             }
         }
         val isAssistLaunch = intent.action in listOf(Intent.ACTION_ASSIST)
@@ -292,7 +292,7 @@ class MainActivity : AppCompatActivity() {
             val preset = repository.findById(presetId)
 
             if (preset == null) {
-                Toast.makeText(this, "Preset not found (ID: $presetId)", Toast.LENGTH_LONG).show()
+                AppToast.makeText(this, "Preset not found (ID: $presetId)", AppToast.LENGTH_LONG).show()
                 return
             }
 
@@ -302,13 +302,13 @@ class MainActivity : AppCompatActivity() {
             // 2. Validation (Model and System Message still exist)
             val allModels = (vm.getBuiltInModels() + prefs.getCustomModels()).distinctBy { it.apiIdentifier.lowercase() }
             if (allModels.none { it.apiIdentifier.equals(preset.modelIdentifier, ignoreCase = true) }) {
-                Toast.makeText(this, "Preset not applied: Model \"${preset.modelIdentifier}\" no longer exists.", Toast.LENGTH_LONG).show()
+                AppToast.makeText(this, "Preset not applied: Model \"${preset.modelIdentifier}\" no longer exists.", AppToast.LENGTH_LONG).show()
                 return
             }
 
             val allMessages = listOf(prefs.getDefaultSystemMessage()) + prefs.getCustomSystemMessages()
             if (allMessages.none { it.title == preset.systemMessage.title && it.prompt == preset.systemMessage.prompt }) {
-                Toast.makeText(this, "Preset not applied: System message \"${preset.systemMessage.title}\" no longer exists.", Toast.LENGTH_LONG).show()
+                AppToast.makeText(this, "Preset not applied: System message \"${preset.systemMessage.title}\" no longer exists.", AppToast.LENGTH_LONG).show()
                 return
             }
 
@@ -361,13 +361,13 @@ class MainActivity : AppCompatActivity() {
             val prefs = SharedPreferencesHelper(this)
             val allModels = (vm.getBuiltInModels() + prefs.getCustomModels()).distinctBy { it.apiIdentifier.lowercase() }
             if (allModels.none { it.apiIdentifier.equals(preset.modelIdentifier, ignoreCase = true) }) {
-                Toast.makeText(this, "Preset not applied: Model \"${preset.modelIdentifier}\" no longer exists.", Toast.LENGTH_LONG).show()
+                AppToast.makeText(this, "Preset not applied: Model \"${preset.modelIdentifier}\" no longer exists.", AppToast.LENGTH_LONG).show()
                 return
             }
 
             val allMessages = listOf(prefs.getDefaultSystemMessage()) + prefs.getCustomSystemMessages()
             if (allMessages.none { it.title == preset.systemMessage.title && it.prompt == preset.systemMessage.prompt }) {
-                Toast.makeText(this, "Preset not applied: System message \"${preset.systemMessage.title}\" no longer exists.", Toast.LENGTH_LONG).show()
+                AppToast.makeText(this, "Preset not applied: System message \"${preset.systemMessage.title}\" no longer exists.", AppToast.LENGTH_LONG).show()
                 return
             }
             // --- END VALIDATION ---
@@ -379,7 +379,7 @@ class MainActivity : AppCompatActivity() {
                 ForegroundService.updateNotificationStatusSilently(displayName, "Preset Applied")
             }*/
             vm.signalPresetApplied()
-            //Toast.makeText(this, "Preset Applied: ${preset.title}", Toast.LENGTH_SHORT).show()
+            //AppToast.makeText(this, "Preset Applied: ${preset.title}", AppToast.LENGTH_SHORT).show()
 
             val sharedText = intent.getStringExtra("shared_text")
             if (sharedText != null) {

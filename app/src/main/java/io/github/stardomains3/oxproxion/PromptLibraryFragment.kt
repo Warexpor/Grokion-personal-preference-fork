@@ -24,7 +24,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import java.util.Collections
@@ -48,9 +48,9 @@ class PromptLibraryFragment : Fragment() {
                         requireContext().contentResolver.openOutputStream(uri)?.use { outputStream ->
                             outputStream.write(json.toByteArray())
                         }
-                        Toast.makeText(requireContext(), "Prompts exported successfully", Toast.LENGTH_SHORT).show()
+                        AppToast.makeText(requireContext(), "Prompts exported successfully", AppToast.LENGTH_SHORT).show()
                     } catch (e: Exception) {
-                        Toast.makeText(requireContext(), "Error exporting prompts", Toast.LENGTH_SHORT).show()
+                        AppToast.makeText(requireContext(), "Error exporting prompts", AppToast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -77,12 +77,12 @@ class PromptLibraryFragment : Fragment() {
                             }
                             sharedPreferencesHelper.saveCustomPrompts(currentPrompts)
                             loadPrompts()
-                            Toast.makeText(requireContext(), "Prompts imported successfully", Toast.LENGTH_SHORT).show()
+                            AppToast.makeText(requireContext(), "Prompts imported successfully", AppToast.LENGTH_SHORT).show()
                         } else {
                             throw Exception("Failed to read file content.")
                         }
                     } catch (e: Exception) {
-                        Toast.makeText(requireContext(), "Import failed. Check file format.", Toast.LENGTH_SHORT).show()
+                        AppToast.makeText(requireContext(), "Import failed. Check file format.", AppToast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -128,7 +128,7 @@ class PromptLibraryFragment : Fragment() {
         setupRecyclerView(view)
         loadPrompts()
 
-        view.findViewById<FloatingActionButton>(R.id.fab_add_prompt).setOnClickListener {
+        view.findViewById<MaterialButton>(R.id.fab_add_prompt).setOnClickListener {
             parentFragmentManager.beginTransaction()
                 .withGrokStackAnimations()
                 .replace(R.id.fragment_container, AddEditPromptFragment())
@@ -139,7 +139,7 @@ class PromptLibraryFragment : Fragment() {
 
     private fun exportPrompts() {
         if (sharedPreferencesHelper.getCustomPrompts().isEmpty()) {
-            Toast.makeText(requireContext(), "No prompts to export.", Toast.LENGTH_SHORT).show()
+            AppToast.makeText(requireContext(), "No prompts to export.", AppToast.LENGTH_SHORT).show()
             return
         }
         val intent = android.content.Intent(android.content.Intent.ACTION_CREATE_DOCUMENT).apply {
@@ -176,7 +176,7 @@ class PromptLibraryFragment : Fragment() {
                 val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val clip = ClipData.newPlainText("Prompt", prompt.prompt)
                 clipboard.setPrimaryClip(clip)
-                Toast.makeText(requireContext(), "Copied to clipboard: ${prompt.title}", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Copied to clipboard: ${prompt.title}", AppToast.LENGTH_SHORT).show()
 
                 // Disappear fragments back to ChatFragment
                 clearAllFragmentsAndGoToChat()

@@ -266,9 +266,9 @@ class PresetEditFragment : Fragment() {
         val repo = PresetRepository(requireContext())
         repo.upsert(preset)
 
-        android.widget.Toast.makeText(requireContext(),
+        AppToast.makeText(requireContext(),
             if (editingPreset == null) "Preset created" else "Preset saved",
-            android.widget.Toast.LENGTH_SHORT).show()
+            AppToast.LENGTH_SHORT).show()
         parentFragmentManager.popBackStack()
     }
 

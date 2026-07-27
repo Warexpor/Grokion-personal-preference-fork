@@ -126,7 +126,7 @@ class SaveLANDialogFragment : DialogFragment() {
                     editTextUrl.error = "Please enter a LAN endpoint URL"
                 }
                 !checkboxOmlx.isChecked && !checkboxOllama.isChecked && !checkboxLmStudio.isChecked && !checkboxLlamaCpp.isChecked && !checkboxMlxLm.isChecked && !checkboxHermesAgent.isChecked -> {
-                    Toast.makeText(requireContext(), "Please select a server type", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(requireContext(), "Please select a server type", AppToast.LENGTH_SHORT).show()
                 }
                 else -> {
                     val endpointError = LanEndpointValidator.validate(raw)
@@ -137,10 +137,10 @@ class SaveLANDialogFragment : DialogFragment() {
 
                     val keyOk = prefs.setLanApiKey(apiKey?.takeIf { it.isNotBlank() })
                     if (!keyOk) {
-                        Toast.makeText(
+                        AppToast.makeText(
                             requireContext(),
                             "Failed to save LAN API key (encryption error). Endpoint not saved.",
-                            Toast.LENGTH_LONG
+                            AppToast.LENGTH_LONG
                         ).show()
                         return@setOnClickListener
                     }
@@ -159,7 +159,7 @@ class SaveLANDialogFragment : DialogFragment() {
                     }
                     prefs.setLanProvider(provider)
 
-                    Toast.makeText(requireContext(), "LAN endpoint, provider, and API key saved", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(requireContext(), "LAN endpoint, provider, and API key saved", AppToast.LENGTH_SHORT).show()
                     dismiss()
                 }
             }

@@ -5,7 +5,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="12dp"
-    android:background="?attr/colorSurface"
+    android:background="@color/xai_canvas"
     android:layout_marginBottom="8dp">
 
     <LinearLayout

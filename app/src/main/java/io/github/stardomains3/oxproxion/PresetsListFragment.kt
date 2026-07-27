@@ -16,7 +16,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.appcompat.widget.SwitchCompat
@@ -35,7 +35,7 @@ class PresetsListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val toolbar = view.findViewById<MaterialToolbar>(R.id.toolbar)
         val recycler = view.findViewById<RecyclerView>(R.id.recyclerViewPresets)
-        val fab = view.findViewById<FloatingActionButton>(R.id.fabAddPreset)
+        val fab = view.findViewById<MaterialButton>(R.id.fabAddPreset)
         setupClearChatSwitch()
         toolbar.setNavigationOnClickListener {
             parentFragmentManager.popBackStack()
@@ -64,7 +64,7 @@ class PresetsListFragment : Fragment() {
                     .setPositiveButton("Delete") { _, _ ->
                         repository.deleteById(preset.id)
                         refresh()
-                        Toast.makeText(requireContext(), "Preset deleted", Toast.LENGTH_SHORT).show()
+                        AppToast.makeText(requireContext(), "Preset deleted", AppToast.LENGTH_SHORT).show()
                     }
                     .setNegativeButton("Cancel", null)
                     .show()
@@ -133,7 +133,7 @@ class PresetsListFragment : Fragment() {
             setOnCheckedChangeListener { _, isChecked ->
                 sharedPrefs.saveClearChatDefault2(isChecked)
                 // Optional: Toast feedback
-                // Toast.makeText(requireContext(), if (isChecked) "Will clear chat" else "Won't clear", Toast.LENGTH_SHORT).show()
+                // AppToast.makeText(requireContext(), if (isChecked) "Will clear chat" else "Won't clear", AppToast.LENGTH_SHORT).show()
             }
         }
     }
@@ -141,14 +141,14 @@ class PresetsListFragment : Fragment() {
         val allModels = (viewModel.getBuiltInModels() + SharedPreferencesHelper(requireContext()).getCustomModels()).distinctBy { it.apiIdentifier.lowercase() }
         val selectedModel = allModels.find { it.apiIdentifier.equals(preset.modelIdentifier, ignoreCase = true) }
         if (selectedModel == null) {
-            Toast.makeText(requireContext(), "Preset not applied: Model \"${preset.modelIdentifier}\" no longer exists.", Toast.LENGTH_LONG).show()
+            AppToast.makeText(requireContext(), "Preset not applied: Model \"${preset.modelIdentifier}\" no longer exists.", AppToast.LENGTH_LONG).show()
             return false
         }
 
         val allMessages = listOf(SharedPreferencesHelper(requireContext()).getDefaultSystemMessage()) + SharedPreferencesHelper(requireContext()).getCustomSystemMessages()
         val existsMessage = allMessages.any { it.title == preset.systemMessage.title && it.prompt == preset.systemMessage.prompt }
         if (!existsMessage) {
-            Toast.makeText(requireContext(), "Preset not applied: Saved system message not found.", Toast.LENGTH_LONG).show()
+            AppToast.makeText(requireContext(), "Preset not applied: Saved system message not found.", AppToast.LENGTH_LONG).show()
             return false
         }
 
@@ -162,7 +162,7 @@ class PresetsListFragment : Fragment() {
             ForegroundService.updateNotificationStatusSilently(displayName, "Preset Applied")
         }*/
 
-       // Toast.makeText(requireContext(), "Preset applied: ${preset.title}", Toast.LENGTH_SHORT).show()
+       // AppToast.makeText(requireContext(), "Preset applied: ${preset.title}", AppToast.LENGTH_SHORT).show()
         return true
     }
 }

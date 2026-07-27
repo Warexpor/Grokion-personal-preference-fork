@@ -326,6 +326,11 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     val isExtendedDockEnabled: LiveData<Boolean> = _isExtendedDockEnabled
     private val _isPresetsExtendedEnabled = MutableLiveData<Boolean>()
     val isPresetsExtendedEnabled: LiveData<Boolean> = _isPresetsExtendedEnabled
+    /** True when an alternate message tree is stashed for this chat (edit/resend fork). */
+    private val _hasChatFork = MutableLiveData(false)
+    val hasChatFork: LiveData<Boolean> = _hasChatFork
+    private var forkIndex: Int = -1
+    private var stashedForkTail: List<FlexibleMessage> = emptyList()
     private var networkJob: Job? = null
     /** Index of the in-flight assistant placeholder / streaming bubble in `_chatMessages`. */
     private var streamingAssistantIndex: Int = -1
@@ -630,6 +635,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             }
             // Set currentSessionId to the final ID (new or existing; sessionId is always non-null here)
             this@ChatViewModel.currentSessionId = sessionId
+            persistForkToPrefs()
         }
     }
 
@@ -729,6 +735,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                         }
                     }*/
                 }
+                loadForkFromPrefs(sessionId)
             } finally {
                 _isChatLoading.postValue(false)
             }
@@ -845,10 +852,10 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         if (activeModelIsLan()) {
             val lanEndpoint = sharedPreferencesHelper.getLanEndpoint()
             if (lanEndpoint == null) {
-                Toast.makeText(
+                AppToast.makeText(
                     getApplication<Application>().applicationContext,
                     "Please configure LAN endpoint in settings",
-                    Toast.LENGTH_SHORT
+                    AppToast.LENGTH_SHORT
                 ).show()
                 return
             }
@@ -1147,10 +1154,10 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         if (activeModelIsLan()) {
             val lanEndpoint = sharedPreferencesHelper.getLanEndpoint()
             if (lanEndpoint == null) {
-                Toast.makeText(
+                AppToast.makeText(
                     getApplication<Application>().applicationContext,
                     "Please configure LAN endpoint in settings",
-                    Toast.LENGTH_SHORT
+                    AppToast.LENGTH_SHORT
                 ).show()
                 _isAwaitingResponse.value = false
                 return
@@ -1840,10 +1847,10 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         /*  Log.d("ToolCalls", "Received ${toolCalls.size} tool calls; deduplicated to ${uniqueToolCalls.size}")
         withContext(Dispatchers.Main) {
             val toolNames = uniqueToolCalls.map { it.function.name }.distinct().joinToString(", ")
-            Toast.makeText(
+            AppToast.makeText(
                 getApplication<Application>().applicationContext,
                 "Handling ${uniqueToolCalls.size} tool calls: $toolNames",
-                Toast.LENGTH_SHORT
+                AppToast.LENGTH_SHORT
             ).show()
         }*/
         val toolResults = mutableListOf<FlexibleMessage>()
@@ -3382,10 +3389,10 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                         }
                         "length" -> {
                             withContext(Dispatchers.Main) {
-                                Toast.makeText(
+                                AppToast.makeText(
                                     getApplication<Application>().applicationContext,
                                     "Response was truncated due to max_tokens limit.",
-                                    Toast.LENGTH_SHORT
+                                    AppToast.LENGTH_SHORT
                                 ).show()
                             }
                         }
@@ -3444,7 +3451,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                             accumulatedResponse
                         }
                         sharedPreferencesHelper.saveLastAiResponseForChannel(2, truncatedResponse)
-                        ForegroundService.updateNotificationStatus(displayName, "Response Received.")
+                        ForegroundService.updateNotificationStatus(displayName, "Your answer is ready.")
                     }
                 }
             } catch (e: Throwable) {
@@ -3454,7 +3461,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                         val apiIdentifier = activeChatModel.value ?: "Unknown Model"
                         val displayName = getModelDisplayName(apiIdentifier)
                         sharedPreferencesHelper.saveLastAiResponseForChannel(2, "Error!")
-                        ForegroundService.updateNotificationStatus(displayName, "Error!")
+                        // answer-only: skip error system notifications
                     }
                 }
             }
@@ -3724,10 +3731,10 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
                         "length" -> {
                             withContext(Dispatchers.Main) {
-                                Toast.makeText(
+                                AppToast.makeText(
                                     getApplication<Application>().applicationContext,
                                     "Response was truncated due to max_tokens limit.",
-                                    Toast.LENGTH_SHORT
+                                    AppToast.LENGTH_SHORT
                                 ).show()
                             }
                         }
@@ -3811,7 +3818,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                             accumulatedResponse
                         }
                         sharedPreferencesHelper.saveLastAiResponseForChannel(2, truncatedResponse)
-                        ForegroundService.updateNotificationStatus(displayName, "Response Received.")
+                        ForegroundService.updateNotificationStatus(displayName, "Your answer is ready.")
                     }
                 }
             } catch (e: Throwable) {
@@ -3821,7 +3828,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                         val apiIdentifier = activeChatModel.value ?: "Unknown Model"
                         val displayName = getModelDisplayName(apiIdentifier)
                         sharedPreferencesHelper.saveLastAiResponseForChannel(2, "Error!")
-                        ForegroundService.updateNotificationStatus(displayName, "Error!")
+                        // answer-only: skip error system notifications
                     }
                 }
             }
@@ -3907,7 +3914,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                             2,
                             lanError
                         )
-                        ForegroundService.updateNotificationStatus(displayName, "Error!")
+                        // answer-only: skip error system notifications
                     }
 
                     throw Exception(lanError)
@@ -3943,10 +3950,10 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
                         "length" -> {
 
-                                Toast.makeText(
+                                AppToast.makeText(
                                     getApplication<Application>().applicationContext,
                                     "Response was truncated due to max_tokens limit.",
-                                    Toast.LENGTH_LONG
+                                    AppToast.LENGTH_LONG
                                 ).show()
 
                         }
@@ -4109,7 +4116,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                             2,
                             openRouterError
                         )//#ttsnoti
-                        ForegroundService.updateNotificationStatus(displayName, "Error!")
+                        // answer-only: skip error system notifications
                     }
                     throw Exception(openRouterError)  // Now throws friendly message
                 }
@@ -4146,10 +4153,10 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                         "length" -> {
                             // Show Toast for truncation
 
-                                Toast.makeText(
+                                AppToast.makeText(
                                     getApplication<Application>().applicationContext,
                                     "Response was truncated due to max_tokens limit.",
-                                    Toast.LENGTH_LONG
+                                    AppToast.LENGTH_LONG
                                 ).show()
 
                             // Still proceed to display the response
@@ -4268,7 +4275,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     finalContent
                 }
                 sharedPreferencesHelper.saveLastAiResponseForChannel(2, truncatedResponse)
-                ForegroundService.updateNotificationStatus(displayName, "Response Received.")
+                ForegroundService.updateNotificationStatus(displayName, "Your answer is ready.")
             }
         }
     }
@@ -4290,7 +4297,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             val apiIdentifier = activeChatModel.value ?: "Unknown Model"
             val displayName = getModelDisplayName(apiIdentifier)
             sharedPreferencesHelper.saveLastAiResponseForChannel(2, detailedMsg)//#ttsnoti
-            ForegroundService.updateNotificationStatus(displayName, "Error!")
+            // answer-only: skip error system notifications
         }
     }
 
@@ -4367,20 +4374,95 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         _chatMessages.value = emptyList()
         pendingUserImageUri = null
         currentSessionId = null
+        clearForkMemory()
     }
-    fun truncateHistory(startIndex: Int) {
+
+    /**
+     * Stash messages from [startIndex] as the alternate branch, then truncate.
+     * One fork per chat: restoring swaps the active tail with the stash.
+     */
+    fun stashAndTruncateFrom(startIndex: Int) {
         val current = _chatMessages.value?.toMutableList() ?: return
-        if (startIndex >= 0 && startIndex < current.size) {
-            current.subList(startIndex, current.size).clear()
-            _chatMessages.value = current
+        if (startIndex < 0 || startIndex >= current.size) return
+        val discarded = current.subList(startIndex, current.size)
+            .filterNot { isAssistantPlaceholder(it) }
+            .map { it.copy() }
+        if (discarded.isNotEmpty()) {
+            forkIndex = startIndex
+            stashedForkTail = discarded
+            _hasChatFork.value = true
+            persistForkToPrefs()
+        }
+        current.subList(startIndex, current.size).clear()
+        _chatMessages.value = current
+    }
+
+    fun truncateHistory(startIndex: Int) {
+        stashAndTruncateFrom(startIndex)
+    }
+
+    fun deleteMessageAt(index: Int) {
+        stashAndTruncateFrom(index)
+    }
+
+    /** Swap the active post-fork tail with the stashed alternate tree. */
+    fun restoreChatFork() {
+        if (_hasChatFork.value != true || forkIndex < 0 || stashedForkTail.isEmpty()) return
+        val current = _chatMessages.value?.toMutableList() ?: return
+        val safeIndex = forkIndex.coerceIn(0, current.size)
+        val prefix = current.take(safeIndex)
+        val activeTail = current.drop(safeIndex)
+            .filterNot { isAssistantPlaceholder(it) }
+            .map { it.copy() }
+        val restoredTail = stashedForkTail.map { it.copy() }
+        stashedForkTail = activeTail
+        forkIndex = safeIndex
+        _chatMessages.value = prefix + restoredTail
+        _hasChatFork.value = stashedForkTail.isNotEmpty()
+        persistForkToPrefs()
+        autoSaveChat()
+    }
+
+    private fun clearForkMemory() {
+        forkIndex = -1
+        stashedForkTail = emptyList()
+        _hasChatFork.value = false
+    }
+
+    private fun persistForkToPrefs() {
+        val sessionId = currentSessionId ?: return
+        if (stashedForkTail.isEmpty() || forkIndex < 0) {
+            sharedPreferencesHelper.clearChatFork(sessionId)
+            return
+        }
+        try {
+            val encoded = json.encodeToString(
+                kotlinx.serialization.builtins.ListSerializer(FlexibleMessage.serializer()),
+                stashedForkTail
+            )
+            sharedPreferencesHelper.saveChatFork(sessionId, forkIndex, encoded)
+        } catch (_: Exception) {
+            // ponytail: fork persist best-effort
         }
     }
-    // NEW: Delete message at index and all after (like truncate, but starts at index)
-    fun deleteMessageAt(index: Int) {
-        val current = _chatMessages.value?.toMutableList() ?: return
-        if (index >= 0 && index < current.size) {
-            current.subList(index, current.size).clear()
-            _chatMessages.value = current
+
+    private fun loadForkFromPrefs(sessionId: Long) {
+        clearForkMemory()
+        val idx = sharedPreferencesHelper.getChatForkIndex(sessionId)
+        val raw = sharedPreferencesHelper.getChatForkMessagesJson(sessionId) ?: return
+        if (idx < 0 || raw.isBlank()) return
+        try {
+            val decoded = json.decodeFromString(
+                kotlinx.serialization.builtins.ListSerializer(FlexibleMessage.serializer()),
+                raw
+            )
+            if (decoded.isNotEmpty()) {
+                forkIndex = idx
+                stashedForkTail = decoded
+                _hasChatFork.postValue(true)
+            }
+        } catch (_: Exception) {
+            sharedPreferencesHelper.clearChatFork(sessionId)
         }
     }
 
@@ -5560,11 +5642,11 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     downloadedUris.add(uri.toString())  // NEW: Collect Uri string
 
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(getApplication<Application>().applicationContext, "Image downloaded: $filename", Toast.LENGTH_SHORT).show()
+                        AppToast.makeText(getApplication<Application>().applicationContext, "Image downloaded: $filename", AppToast.LENGTH_SHORT).show()
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(getApplication<Application>().applicationContext, "Failed to download image: ${e.message}", Toast.LENGTH_SHORT).show()
+                        AppToast.makeText(getApplication<Application>().applicationContext, "Failed to download image: ${e.message}", AppToast.LENGTH_SHORT).show()
                     }
                 }
             }

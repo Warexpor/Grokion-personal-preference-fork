@@ -20,10 +20,20 @@
         <item name="colorOnTertiaryContainer">@color/xai_ink</item>
         <item name="android:textColorPrimary">@color/xai_ink</item>
         <item name="android:textColorSecondary">@color/xai_mute</item>
-        <item name="android:textColorHighlight">@color/xai_selected</item>
+        <item name="android:textColorHighlight">@color/xai_text_highlight</item>
         <item name="colorControlActivated">@color/xai_ink</item>
         <item name="colorControlNormal">@color/xai_mute</item>
         <item name="android:colorControlNormal">@color/xai_mute</item>
+        <!-- Kill Material ripple; SVG burst via selectable backgrounds -->
+        <item name="colorControlHighlight">@android:color/transparent</item>
+        <item name="android:colorControlHighlight">@android:color/transparent</item>
+        <item name="android:selectableItemBackground">@drawable/bg_press_svg</item>
+        <item name="selectableItemBackground">@drawable/bg_press_svg</item>
+        <item name="android:selectableItemBackgroundBorderless">@drawable/bg_press_svg_borderless</item>
+        <item name="selectableItemBackgroundBorderless">@drawable/bg_press_svg_borderless</item>
+        <item name="materialButtonStyle">@style/Widget.Grokion.Button</item>
+        <item name="materialIconButtonStyle">@style/Widget.Grokion.IconButton</item>
+        <item name="borderlessButtonStyle">@style/Widget.Grokion.Button.Text</item>
         <item name="colorOutline">@color/xai_canvas_mid</item>
         <item name="colorOutlineVariant">@color/xai_hairline</item>
         <item name="colorSurfaceVariant">@color/xai_canvas_soft</item>
@@ -45,6 +55,30 @@
         <item name="materialAlertDialogTheme">@style/CustomMaterialAlertDialogTheme</item>
         <item name="android:fontFamily">@font/inter_regular</item>
         <item name="fontFamily">@font/inter_regular</item>
+    </style>
+
+    <style name="Widget.Grokion.Button" parent="Widget.Material3.Button">
+        <item name="rippleColor">@color/press_ripple_none</item>
+        <item name="android:stateListAnimator">@animator/press_scale</item>
+        <item name="android:foreground">@drawable/bg_press_svg</item>
+    </style>
+
+    <style name="Widget.Grokion.Button.Text" parent="Widget.Material3.Button.TextButton">
+        <item name="rippleColor">@color/press_ripple_none</item>
+        <item name="android:stateListAnimator">@animator/press_scale</item>
+        <item name="android:foreground">@drawable/bg_press_svg</item>
+    </style>
+
+    <style name="Widget.Grokion.IconButton" parent="Widget.Material3.Button.IconButton">
+        <item name="rippleColor">@color/press_ripple_none</item>
+        <item name="android:stateListAnimator">@animator/press_scale</item>
+        <item name="android:foreground">@drawable/bg_press_svg_borderless</item>
+    </style>
+
+    <style name="Widget.Grokion.IconButton.Filled" parent="Widget.Material3.Button.IconButton.Filled">
+        <item name="rippleColor">@color/press_ripple_none</item>
+        <item name="android:stateListAnimator">@animator/press_scale</item>
+        <item name="android:foreground">@drawable/bg_press_svg_borderless</item>
     </style>
 
     <style name="Widget.App.CheckBox" parent="Widget.Material3.CompoundButton.CheckBox">

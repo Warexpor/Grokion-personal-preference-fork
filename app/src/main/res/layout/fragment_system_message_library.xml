@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:fitsSystemWindows="true"
-    android:background="?attr/colorSurface"
+    android:background="@color/xai_canvas"
     tools:context=".SystemMessageLibraryFragment">
 
     <com.google.android.material.appbar.MaterialToolbar
@@ -14,35 +14,28 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         app:title="System Message"
-        app:titleTextColor="?android:attr/textColorPrimary"
-        android:background="?attr/colorSurface"
+        app:titleTextColor="@color/xai_ink"
+        android:background="@color/xai_canvas"
         app:navigationIcon="@drawable/is_backarrow"
         app:navigationIconTint="@color/xai_ink"
         app:menu="@menu/system_message_library_menu" />
 
-    <androidx.coordinatorlayout.widget.CoordinatorLayout
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/system_message_recycler_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@color/xai_canvas"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        tools:listitem="@layout/list_item_system_message"
+        android:scrollbars="vertical" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/system_message_recycler_view"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            tools:listitem="@layout/list_item_system_message"
-            android:scrollbars="vertical"/>
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/fab_add_system_message"
+        style="@style/Widget.Grokion.Button.Text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add"
+        android:contentDescription="@string/add_new_system_message" />
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fab_add_system_message"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|end"
-            android:layout_margin="16dp"
-            android:src="@drawable/ic_addmod"
-            app:backgroundTint="@color/xai_ink"
-            app:tint="@color/xai_canvas"
-            android:contentDescription="@string/add_new_system_message"
-            app:layout_behavior="com.google.android.material.behavior.HideBottomViewOnScrollBehavior"/>
-
-    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 </LinearLayout>

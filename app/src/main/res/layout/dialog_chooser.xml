@@ -10,9 +10,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Clear existing chat before sending"
+        android:textColor="@color/xai_ink"
         android:checked="false"
-        style="@style/Widget.App.CheckBox"
-        />
+        style="@style/Widget.App.CheckBox" />
     <ListView
         android:id="@+id/systemMessageListView"
         android:layout_width="match_parent"

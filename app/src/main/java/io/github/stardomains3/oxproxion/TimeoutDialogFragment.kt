@@ -46,7 +46,7 @@ class TimeoutDialogFragment : DialogFragment() {
             val minutes = txt.toIntOrNull()
             if (minutes != null && minutes in MIN_MINUTES..MAX_MINUTES) {
                 prefs.saveTimeoutMinutes(minutes)
-                Toast.makeText(requireContext(), "Timeout saved ($minutes min)", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Timeout saved ($minutes min)", AppToast.LENGTH_SHORT).show()
                 dismiss()
             } else {
                 editText.error = "Enter a whole number between $MIN_MINUTES and $MAX_MINUTES"

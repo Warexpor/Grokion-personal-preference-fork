@@ -55,13 +55,13 @@ class LicenseListFragment : Fragment() {
                         .addToBackStack(null)
                         .commit()
                 } catch (e: Exception) {
-                    Toast.makeText(requireContext(), "License text unavailable", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(requireContext(), "License text unavailable", AppToast.LENGTH_SHORT).show()
                 }
             }
 
         } catch (e: Exception) {
             Log.e("Licenses", "Raw files missing - normal first build", e)
-            Toast.makeText(requireContext(), "Rebuild app to load licenses", Toast.LENGTH_LONG).show()
+            AppToast.makeText(requireContext(), "Rebuild app to load licenses", AppToast.LENGTH_LONG).show()
             recyclerView.adapter = LicenseAdapter(emptyList()) {}
         }
     }

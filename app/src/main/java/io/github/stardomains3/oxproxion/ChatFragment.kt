@@ -193,7 +193,6 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
     private lateinit var scrollToTopButton: MaterialButton
     private lateinit var scrollToBottomButton: MaterialButton
     private lateinit var convoButton: MaterialButton
-    private lateinit var saveChatButton: MaterialButton
     private lateinit var newChatButton: MaterialButton
     private lateinit var openSavedChatsButton: MaterialButton
     private lateinit var copyChatButton: MaterialButton
@@ -254,22 +253,33 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
     /** When true during SSE, keep the viewport glued to the growing bottom of the reply. */
     private var stickToBottomDuringStream = false
     private var followStreamPending = false
+    /** True while we apply a programmatic follow scroll — ignore stick arm/disarm from it. */
+    private var isProgrammaticStreamFollow = false
     private val followStreamRunnable = Runnable {
         followStreamPending = false
         if (!stickToBottomDuringStream) return@Runnable
         if (viewModel.isAwaitingResponse.value != true) return@Runnable
         val last = chatAdapter.itemCount - 1
         if (last < 0) return@Runnable
-        // Nudge only — avoid scrollToPosition every token (camera thrash / lag).
-        val vh = chatRecyclerView.findViewHolderForAdapterPosition(last)
-        if (vh != null) {
-            val excess = vh.itemView.bottom -
-                (chatRecyclerView.height - chatRecyclerView.paddingBottom)
-            if (excess > 4) {
-                chatRecyclerView.scrollBy(0, excess)
+        val vh = chatRecyclerView.findViewHolderForAdapterPosition(last) ?: run {
+            isProgrammaticStreamFollow = true
+            try {
+                layoutManager.scrollToPosition(last)
+            } finally {
+                chatRecyclerView.post { isProgrammaticStreamFollow = false }
             }
-        } else {
-            layoutManager.scrollToPosition(last)
+            return@Runnable
+        }
+        val excess = vh.itemView.bottom -
+            (chatRecyclerView.height - chatRecyclerView.paddingBottom)
+        // Larger threshold + single scrollBy avoids micro-jitter thrash while text grows.
+        if (excess > 24) {
+            isProgrammaticStreamFollow = true
+            try {
+                chatRecyclerView.scrollBy(0, excess)
+            } finally {
+                chatRecyclerView.post { isProgrammaticStreamFollow = false }
+            }
         }
     }
     private var mediaRecorder: MediaRecorder? = null
@@ -306,7 +316,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
             if (isGranted) {
                 startSpeechRecognition()
             } else {
-                Toast.makeText(requireContext(), "Microphone permission needed for voice input", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Microphone permission needed for voice input", AppToast.LENGTH_SHORT).show()
             }
             */
         }
@@ -314,17 +324,17 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
             if (isGranted) {
                 launchCamera()
             } else {
-                Toast.makeText(requireContext(), "Camera permission needed to take photo", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Camera permission needed to take photo", AppToast.LENGTH_SHORT).show()
             }
         }
         localNetworkPermissionLauncher = registerForActivityResult(
             ActivityResultContracts.RequestPermission()
         ) { isGranted: Boolean ->
             if (isGranted) {
-                Toast.makeText(requireContext(), "Local Network access granted", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Local Network access granted", AppToast.LENGTH_SHORT).show()
                 // Optional: Auto-trigger send or model connection if you interrupted it
             } else {
-                Toast.makeText(requireContext(), "Local Network permission is required to talk to local LLMs", Toast.LENGTH_LONG).show()
+                AppToast.makeText(requireContext(), "Local Network permission is required to talk to local LLMs", AppToast.LENGTH_LONG).show()
                 // Optional: Revert model selection to a cloud model
             }
         }
@@ -332,7 +342,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
             ActivityResultContracts.RequestPermission()
         ) { isGranted: Boolean ->
             if (!isGranted) {
-                Toast.makeText(requireContext(), "Location permission is required for this tool", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Location permission is required for this tool", AppToast.LENGTH_SHORT).show()
             }
         }
 
@@ -360,12 +370,12 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                     val rawBytes = requireContext().contentResolver.openInputStream(imageUri)?.use { stream ->
                         stream.readBytes()
                     } ?: run {
-                        Toast.makeText(requireContext(), "Failed to read image", Toast.LENGTH_SHORT).show()
+                        AppToast.makeText(requireContext(), "Failed to read image", AppToast.LENGTH_SHORT).show()
                         return@registerForActivityResult
                     }
 
                     if (rawBytes.size > 12_000_000) {
-                        Toast.makeText(requireContext(), "Image too large (max 12MB)", Toast.LENGTH_SHORT).show()
+                        AppToast.makeText(requireContext(), "Image too large (max 12MB)", AppToast.LENGTH_SHORT).show()
                         requireContext().contentResolver.delete(imageUri, null, null)
                         return@registerForActivityResult
                     }
@@ -374,7 +384,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                     selectedImageMime = "image/jpeg"
                     previewImageView.setImageURI(imageUri)  // Use Uri for preview (EXIF auto)
                     attachmentPreviewContainer.visibility = View.VISIBLE
-                    Toast.makeText(requireContext(), "Photo saved to gallery", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(requireContext(), "Photo saved to gallery", AppToast.LENGTH_SHORT).show()
 
                     // NEW: Set pending as string for FlexibleMessage (MediaStore Uri already persistent)
                     viewModel.setPendingUserImageUri(imageUri.toString())
@@ -382,12 +392,12 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                     // Notify for gallery refresh
                     requireContext().contentResolver.notifyChange(imageUri, null)
                 } catch (e: Exception) {
-                    Toast.makeText(requireContext(), "Failed to process photo", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(requireContext(), "Failed to process photo", AppToast.LENGTH_SHORT).show()
                     requireContext().contentResolver.delete(imageUri, null, null)
                 }
             } else {
                 // Cancel or error
-                Toast.makeText(requireContext(), if (result.resultCode == Activity.RESULT_CANCELED) "Capture canceled" else "Capture failed", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), if (result.resultCode == Activity.RESULT_CANCELED) "Capture canceled" else "Capture failed", AppToast.LENGTH_SHORT).show()
                 imageUri?.let { uri ->
                     requireContext().contentResolver.delete(uri, null, null)  // Clean up placeholder
                 }
@@ -406,7 +416,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                 // Save via your helper
                 sharedPreferencesHelper.saveSafFolderUri(uri.toString())
 
-                Toast.makeText(requireContext(), "Folder access granted! You can now use file tools.", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Folder access granted! You can now use file tools.", AppToast.LENGTH_SHORT).show()
             }
         }
         audioPicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
@@ -419,7 +429,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                     requireContext().contentResolver.openInputStream(u)?.use { stream ->
                         val bytes = stream.readBytes()
                         if (bytes.size > 12_000_000) {
-                            Toast.makeText(requireContext(), "Image too large (max 12MB)", Toast.LENGTH_SHORT).show()
+                            AppToast.makeText(requireContext(), "Image too large (max 12MB)", AppToast.LENGTH_SHORT).show()
                             return@use
                         }
                         val mime = requireContext().contentResolver.getType(u)
@@ -428,7 +438,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                                 // Valid MIME type - proceed
                             }
                             else -> {
-                                Toast.makeText(requireContext(), "Unsupported image format", Toast.LENGTH_SHORT).show()
+                                AppToast.makeText(requireContext(), "Unsupported image format", AppToast.LENGTH_SHORT).show()
                                 return@use
                             }
                         }
@@ -446,7 +456,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                             viewModel.setPendingUserImageUri(u.toString())
 
                         } catch (e: SecurityException) {
-                            Toast.makeText(requireContext(), "Image access limited; tap won't open full file", Toast.LENGTH_SHORT).show()
+                            AppToast.makeText(requireContext(), "Image access limited; tap won't open full file", AppToast.LENGTH_SHORT).show()
                             // Fallback: No Uri set, use base64 display only
                         }
                     }
@@ -468,7 +478,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                 }
                 // Optional: Single toast after all (but since async, use a counter or LiveData)
 
-                //  Toast.makeText(requireContext(), "${uris.size} files processed", Toast.LENGTH_SHORT).show()
+                //  AppToast.makeText(requireContext(), "${uris.size} files processed", AppToast.LENGTH_SHORT).show()
             }
         }
         // --- Initialize Views from fragment_chat.xml ---
@@ -494,7 +504,6 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
         fontSizeControlsContainer = view.findViewById(R.id.fontSizeControlsContainer)
         originalSendIcon = sendChatButton.icon
         resetChatButton = view.findViewById(R.id.resetChatButton)
-        saveChatButton = view.findViewById(R.id.saveChatButton)
         newChatButton = view.findViewById(R.id.newChatButton)
         openSavedChatsButton = view.findViewById(R.id.openSavedChatsButton)
         copyChatButton = view.findViewById(R.id.copyChatButton)
@@ -504,6 +513,18 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
         printButton =   view.findViewById(R.id.printButton)
         buttonsRow2 = view.findViewById(R.id.buttonsRow2)
         chatInputContainer = view.findViewById(R.id.chatInputContainer)
+        val restoreForkButton = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.restoreForkButton)
+        restoreForkButton.setOnClickListener {
+            viewModel.restoreChatFork()
+            chatRecyclerView.post {
+                if (chatAdapter.itemCount > 0) {
+                    layoutManager.scrollToPosition(chatAdapter.itemCount - 1)
+                }
+            }
+        }
+        viewModel.hasChatFork.observe(viewLifecycleOwner) { hasFork ->
+            restoreForkButton.visibility = if (hasFork == true) View.VISIBLE else View.GONE
+        }
         expandedButtonContainer = view.findViewById(R.id.expandedButtonContainer)
         leftButtonContainer = view.findViewById(R.id.leftButtonContainer)
         rightButtonContainer = view.findViewById(R.id.rightButtonContainer)
@@ -601,7 +622,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                                         } else {
                                             "❌ Save failed"
                                         }
-                                        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                                        AppToast.makeText(context, message, AppToast.LENGTH_LONG).show()
                                     }
                                 }
                             }
@@ -613,14 +634,14 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                     @Deprecated("Deprecated in Java")
                     override fun onError(utteranceId: String?) {
                         if (utteranceId?.startsWith("TTS_SAVE_") == true) {
-                            Toast.makeText(requireContext(), "❌ TTS synthesis error", Toast.LENGTH_SHORT).show()
+                            AppToast.makeText(requireContext(), "❌ TTS synthesis error", AppToast.LENGTH_SHORT).show()
                         }
                         else {
                             requireActivity().runOnUiThread {
-                                Toast.makeText(
+                                AppToast.makeText(
                                     requireContext(),
                                     "TTS error: Check TTS settings or engine",
-                                    Toast.LENGTH_SHORT
+                                    AppToast.LENGTH_SHORT
                                 ).show()
                                 onSpeechFinished()
                             }
@@ -629,7 +650,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                 })
                 ttsAvailable = true
             } else {
-                Toast.makeText(requireContext(), "TTS failed", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "TTS failed", AppToast.LENGTH_SHORT).show()
                 ttsAvailable = false
             }
         }
@@ -776,7 +797,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                     // Only toggle if it's currently OFF to avoid redundant toasts
                     if (viewModel.isStreamingEnabled.value == false) {
                         viewModel.toggleStreaming()
-                        Toast.makeText(requireContext(), "Streaming enabled: Required for music generation", Toast.LENGTH_SHORT).show()
+                        AppToast.makeText(requireContext(), "Streaming enabled: Required for music generation", AppToast.LENGTH_SHORT).show()
                     }
                 }
 
@@ -807,14 +828,14 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                     selectedImageBytes = null
                     selectedImageMime = null
                     attachmentPreviewContainer.visibility = View.GONE
-                    Toast.makeText(requireContext(), "Image removed: selected model doesn't support images.", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(requireContext(), "Image removed: selected model doesn't support images.", AppToast.LENGTH_SHORT).show()
                 }
                 // Clear staged audio if model doesn't support transcription
                 if (selectedAudioBytes != null && !viewModel.isTranscriptionModel(model)) {
                     selectedAudioBytes = null
                     selectedAudioFormat = null
                     attachmentPreviewContainer.visibility = View.GONE
-                    Toast.makeText(requireContext(), "Audio removed: selected model doesn't support transcription.", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(requireContext(), "Audio removed: selected model doesn't support transcription.", AppToast.LENGTH_SHORT).show()
                 }
             }
 
@@ -862,7 +883,6 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
             */
             if(hasMessages){
                 resetChatButton.icon.alpha = 255
-                saveChatButton.icon.alpha = 255
                 emptyStateContainer.visibility = View.GONE
                 resetChatButton.isVisible = true
                 val lastMessage = messages.last()
@@ -881,9 +901,8 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                             backcopyButton.visibility = View.VISIBLE
                             isShare = false
                         }
-                        if (stickToBottomDuringStream) {
-                            followStreamBottom()
-                        }
+                        // Stick follow is driven only by onStreamVisualUpdate — not here —
+                        // to avoid a second scroll race with Choreographer frames.
                     } else {
                         lastContentLength = currentLen
                     }
@@ -892,7 +911,6 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
             else
             {
                 resetChatButton.icon.alpha = 102
-                saveChatButton.icon.alpha = 102
                 emptyStateContainer.visibility = View.VISIBLE
                 centerWatermarkIcon.visibility = View.VISIBLE
                 emptyStateContainer.alpha = 1f
@@ -905,7 +923,6 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                     scrollToBottomButton.visibility = if (canScrollDown) View.VISIBLE else View.INVISIBLE
                 }
             }
-            saveChatButton.isEnabled = hasMessages
             resetChatButton.isEnabled = hasMessages
            // pdfChatButton.isVisible = hasMessages
             //copyChatButton.isVisible = hasMessages
@@ -939,10 +956,8 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
             }
             if (!isAwaiting) {// && sharedPreferencesHelper.getStreamingPreference()) {
                 chatAdapter.finalizeStreaming()
-                // Auto-save: save chat with LLM-generated title when streaming completes
-                if (sharedPreferencesHelper.getAutoSaveChats()) {
-                    viewModel.autoSaveChat()
-                }
+                // Autosave always on: persist with LLM title when streaming completes
+                viewModel.autoSaveChat()
             }
             sendChatButton.isEnabled = true
             val materialButton = sendChatButton
@@ -1022,7 +1037,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                 viewModel.resetWebSearchAutoOff()
                 if (viewModel.isWebSearchEnabled.value == true) {
                     viewModel.toggleWebSearch()  // Turn it off
-                    Toast.makeText(requireContext(), "Web search auto-disabled (one-time use)", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(requireContext(), "Web search auto-disabled (one-time use)", AppToast.LENGTH_SHORT).show()
                 }
             }*/
             if (!isAwaiting //&& viewModel.shouldAutoOffWebSearch()
@@ -1033,7 +1048,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                 sharedPreferencesHelper.saveWebSearchEnabled(false)
                 //   viewModel.resetWebSearchAutoOff()
                 // viewModel.toggleWebSearch() // Turn it off
-                Toast.makeText(requireContext(), "Web search auto-disabled (one-time use)", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Web search auto-disabled (one-time use)", AppToast.LENGTH_SHORT).show()
             }
            /* if (isAwaiting) {
                 if (areAnimationsEnabled(requireContext())) {
@@ -1078,7 +1093,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
         // --- Credits Observer ---
         viewModel.creditsResult.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let { resultMessage ->
-                Toast.makeText(requireContext(), resultMessage, Toast.LENGTH_LONG).show()
+                AppToast.makeText(requireContext(), resultMessage, AppToast.LENGTH_LONG).show()
             }
         }
 
@@ -1169,7 +1184,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
         }
         viewModel.toastUiEvent.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let { message ->
-                Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
+                AppToast.makeText(requireContext(), message, AppToast.LENGTH_LONG).show()
             }
         }
         viewModel.toolUiEvent.observe(viewLifecycleOwner) { event ->
@@ -1244,7 +1259,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                         .show()
                 } else {
                     // 3. App not found: Just show the Toast
-                    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(requireContext(), message, AppToast.LENGTH_SHORT).show()
                 }
             }
         }*/
@@ -1513,6 +1528,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
     }
 
     private fun updateStickToBottomFromScroll() {
+        if (isProgrammaticStreamFollow) return
         if (viewModel.isAwaitingResponse.value != true) return
         // Hysteresis: arm only when truly at bottom; disarm once user scrolls up a bit.
         val atBottom = !chatRecyclerView.canScrollVertically(1)
@@ -1523,7 +1539,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
             val range = chatRecyclerView.computeVerticalScrollRange() -
                 chatRecyclerView.computeVerticalScrollExtent()
             val distanceFromBottom = (range - offset).coerceAtLeast(0)
-            if (distanceFromBottom > 80) {
+            if (distanceFromBottom > 120) {
                 stickToBottomDuringStream = false
             }
         }
@@ -1541,10 +1557,9 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
             { text, position -> synthesizeToWavFile(text, position) },
             ttsAvailable,
             onEditMessage = { position, text ->
-                // Existing edit confirmation dialog (unchanged from previous)
                 MaterialAlertDialogBuilder(requireContext())
                     .setTitle("Edit this message?")
-                    .setMessage("This will load the message into the prompt box for editing and remove it along with all following messages (AI responses and later prompts) from the chat history. This action cannot be undone.\n\nProceed?")
+                    .setMessage("This loads the message into the prompt box and continues from here. The previous messages after this point are kept as an alternate branch you can restore anytime.\n\nProceed?")
                     .setNegativeButton("Cancel") { dialog, _ ->
                         dialog.dismiss()
                     }
@@ -1553,43 +1568,28 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                         selectedImageMime = null
                         attachmentPreviewContainer.visibility = View.GONE
                         viewModel.setPendingUserImageUri(null)
-                        viewModel.truncateHistory(position)
+                        viewModel.stashAndTruncateFrom(position)
                         chatEditText.setText(text)
                         chatEditText.setSelection(text.length)
                         hideMenu()
-                    //    chatEditText.requestFocus()
                         chatEditText.showKeyboard()
+                        viewModel.autoSaveChat()
                     }
                     .setCancelable(true)
                     .show()
             },
-            // <-- NEW: Add this entire callback
             onRedoMessage = { position, originalContent ->
-                // Show confirmation dialog for redo
                 MaterialAlertDialogBuilder(requireContext())
                     .setTitle("Resend this message?")
-                    .setMessage("This will remove all following messages from the chat, then resend the prompt automatically to generate a new response. This action cannot be undone.\n\nProceed?")
+                    .setMessage("This regenerates from this prompt. Messages after it are kept as an alternate branch you can restore anytime.\n\nProceed?")
                     .setNegativeButton("Cancel") { dialog, _ ->
-                        dialog.dismiss()  // Do nothing
+                        dialog.dismiss()
                     }
                     .setPositiveButton("Resend") { _, _ ->
-                        // NEW: Truncate only AFTER position (keep original user message)
-                        viewModel.truncateHistory(position + 1)
-
-                        // NEW: Get system message (as before)
+                        viewModel.stashAndTruncateFrom(position + 1)
                         val systemMessage = sharedPreferencesHelper.getSelectedSystemMessage().prompt
-
-                        // NEW: Use specialized resend (keeps original UI, sends content)
                         viewModel.resendExistingPrompt(position, systemMessage)
-
-                       /* if (ForegroundService.isRunningForeground && sharedPreferencesHelper.getNotiPreference()) {
-                            val apiIdentifier = viewModel.activeChatModel.value ?: "Unknown Model"
-                            val displayName = viewModel.getModelDisplayName(apiIdentifier)
-                            ForegroundService.updateNotificationStatusSilently(displayName, "Prompt resent. Awaiting Response.")
-                        }*/
-                        // UI polish: Hide menu, scroll to bottom (after resend starts)
                         hideMenu()
-                        // Scroll to the kept user message + new thinking
                         chatRecyclerView.post {
                             if (chatAdapter.itemCount > 0) {
                                 layoutManager.scrollToPosition(chatAdapter.itemCount - 1)
@@ -1600,31 +1600,21 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                     .show()
             },
             onDeleteMessage = { position ->
-                // NEW: Confirmation dialog (similar to edit/redo)
                 MaterialAlertDialogBuilder(requireContext())
                     .setTitle("Delete this message?")
-                    .setMessage("This will remove the message and all following responses from the chat. This action cannot be undone.\n\nProceed?")
+                    .setMessage("This removes the message and everything after it. The removed tree is kept as an alternate branch you can restore anytime.\n\nProceed?")
                     .setNegativeButton("Cancel") { dialog, _ ->
                         dialog.dismiss()
                     }
                     .setPositiveButton("Delete") { _, _ ->
-                        // Call ViewModel to delete (removes message + after)
                         viewModel.deleteMessageAt(position)
-
-                        // UI polish: Hide menu (if open), optional scroll to bottom
                         hideMenu()
                         chatRecyclerView.post {
                             if (chatAdapter.itemCount > 0) {
                                 layoutManager.scrollToPosition(chatAdapter.itemCount - 1)
                             }
                         }
-
-                        // Optional: Notification update
-                        /*if (ForegroundService.isRunningForeground && sharedPreferencesHelper.getNotiPreference()) {
-                            val apiIdentifier = viewModel.activeChatModel.value ?: "Unknown Model"
-                            val displayName = viewModel.getModelDisplayName(apiIdentifier)
-                            ForegroundService.updateNotificationStatusSilently(displayName, "Message deleted.")
-                        }*/
+                        viewModel.autoSaveChat()
                     }
                     .setCancelable(true)
                     .show()
@@ -1685,6 +1675,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
         }
         chatRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                if (isProgrammaticStreamFollow) return
                 if (viewModel.isAwaitingResponse.value == true) {
                     if (newState == RecyclerView.SCROLL_STATE_DRAGGING ||
                         newState == RecyclerView.SCROLL_STATE_IDLE
@@ -1774,7 +1765,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
             previewImageView.setImageBitmap(null)
             currentTempImageFile?.delete()
             currentTempImageFile = null
-            Toast.makeText(requireContext(), "Attachment removed", Toast.LENGTH_SHORT).show()
+            AppToast.makeText(requireContext(), "Attachment removed", AppToast.LENGTH_SHORT).show()
         }
         webSearchButton.setOnClickListener {
             //  hideMenu()
@@ -1790,7 +1781,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
             if (!hasFolderPermission()) {
                 val folderPath = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "oxproxion")
                 if (!folderPath.exists()) folderPath.mkdirs()
-                android.widget.Toast.makeText(requireContext(), "Please select the Download/grokion folder first.", android.widget.Toast.LENGTH_LONG).show()
+                AppToast.makeText(requireContext(), "Please select the Download/grokion folder first.", AppToast.LENGTH_LONG).show()
                 folderPickerLauncher.launch(null)
             } else {
                 val folderPath = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "oxproxion")
@@ -1819,7 +1810,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
         toolsButton.setOnClickListener {
             if (!hasFolderPermission()) {
                 WorkspacePaths.ensureWorkspaceExists()
-                android.widget.Toast.makeText(requireContext(), "Please select the Download/grokion folder first.", android.widget.Toast.LENGTH_LONG).show()
+                AppToast.makeText(requireContext(), "Please select the Download/grokion folder first.", AppToast.LENGTH_LONG).show()
                 folderPickerLauncher.launch(null)
             } else {
                 WorkspacePaths.ensureWorkspaceExists()
@@ -1841,14 +1832,14 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                     // LAN model: Check endpoint instead of API key
                     val lanEndpoint = viewModel.getLanEndpoint()
                     if (lanEndpoint.isNullOrBlank()) {
-                        Toast.makeText(requireContext(), "LAN endpoint is not configured.", Toast.LENGTH_SHORT)
+                        AppToast.makeText(requireContext(), "LAN endpoint is not configured.", AppToast.LENGTH_SHORT)
                             .show()
                         return@setOnClickListener
                     }
                 } else {
                     // Non-LAN model: Check API key
                     if (viewModel.activeChatApiKey.isBlank()) {
-                        Toast.makeText(requireContext(), "API Key is not set.", Toast.LENGTH_SHORT)
+                        AppToast.makeText(requireContext(), "API Key is not set.", AppToast.LENGTH_SHORT)
                             .show()
                         return@setOnClickListener
                     }
@@ -1972,10 +1963,10 @@ $cleanContent
                     model.contains("image", ignoreCase = true)
 
             if (!isGoogleImageModel) {
-                Toast.makeText(
+                AppToast.makeText(
                     requireContext(),
                     "Image generation parameters only supported for Google image models",
-                    Toast.LENGTH_SHORT
+                    AppToast.LENGTH_SHORT
                 ).show()
                 return@setOnClickListener
             }
@@ -1990,7 +1981,7 @@ $cleanContent
                 .setSingleChoiceItems(aspectRatios, selectedIndex) { _, which ->
                     val selectedRatio = aspectRatios[which]
                     sharedPreferencesHelper.saveGeminiAspectRatio(selectedRatio)
-                  //  Toast.makeText(requireContext(), "Aspect ratio set to $selectedRatio", Toast.LENGTH_SHORT).show()
+                  //  AppToast.makeText(requireContext(), "Aspect ratio set to $selectedRatio", AppToast.LENGTH_SHORT).show()
                 }
                 .setPositiveButton("OK") { _, _ -> /* Dialog dismisses */ }
                 .setNegativeButton("Cancel", null)
@@ -2006,16 +1997,16 @@ $cleanContent
                     val historyHasWebp = viewModel.hasWebpInHistory()
                     val hasImagesInCurrentChat =  viewModel.hasImagesInChat()
                     if (!newModelSupportsWebp && (isStagedImageWebp || historyHasWebp)) {
-                        Toast.makeText(
+                        AppToast.makeText(
                             requireContext(),
                             "Cannot switch: Model does not support WebP image in chat.",
-                            Toast.LENGTH_LONG
+                            AppToast.LENGTH_LONG
                         ).show()
                     } else if (hasImagesInCurrentChat && !viewModel.isVisionModel(modelString)) {
-                        Toast.makeText(
+                        AppToast.makeText(
                             requireContext(),
                             "Cannot switch: Model does not support images and current chat has images.",
-                            Toast.LENGTH_LONG
+                            AppToast.LENGTH_LONG
                         ).show()
                     }
                     else
@@ -2074,7 +2065,7 @@ $cleanContent
 
             MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Start New Chat?")
-                .setMessage("Are you sure you want to clear the current conversation? This action cannot be undone.")
+                .setMessage("Clear the composer and start fresh? Your conversation stays in History.")
                 .setNegativeButton("Cancel") { dialog, which ->
                     dialog.dismiss()
                 }
@@ -2173,22 +2164,6 @@ $cleanContent
         btnDoneFont.setOnClickListener {
             fontSizeControlsContainer.visibility = View.GONE
         }
-        saveChatButton.setOnClickListener { anchor ->
-            val popup = android.widget.PopupMenu(requireContext(), anchor)
-            popup.menu.add(0, 1, 0, "Save chat")
-            popup.setOnMenuItemClickListener { item ->
-                when (item.itemId) {
-                    1 -> {
-                        if (!viewModel.chatMessages.value.isNullOrEmpty()) {
-                            showSaveChatDialogWithResultApi()
-                        }
-                        true
-                    }
-                    else -> false
-                }
-            }
-            popup.show()
-        }
         newChatButton.setOnClickListener {
             resetChatButton.performClick()
         }
@@ -2221,7 +2196,7 @@ $cleanContent
             val messages = viewModel.chatMessages.value ?: emptyList()
 
             if (messages.isEmpty()) {
-                Toast.makeText(requireContext(), "No chat history to export", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "No chat history to export", AppToast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
@@ -2292,7 +2267,7 @@ $cleanContent
                             }
                             .show()
                     } else {
-                        Toast.makeText(requireContext(), "PDF Failed", Toast.LENGTH_SHORT).show()
+                        AppToast.makeText(requireContext(), "PDF Failed", AppToast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -2316,10 +2291,10 @@ $cleanContent
                 val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val clip = ClipData.newPlainText("Chat History (Markdown)", chatText)
                 clipboard.setPrimaryClip(clip)
-                Toast.makeText(requireContext(), "Chat copied as Markdown!", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Chat copied as Markdown!", AppToast.LENGTH_SHORT).show()
                 true  // Consume the long press
             } else {
-                Toast.makeText(requireContext(), "Nothing to Copy", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Nothing to Copy", AppToast.LENGTH_SHORT).show()
                 true
             }
         }
@@ -2330,9 +2305,9 @@ $cleanContent
                 val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val clip = ClipData.newPlainText("Chat History", chatText)
                 clipboard.setPrimaryClip(clip)
-                Toast.makeText(requireContext(), "Chat Copied!", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Chat Copied!", AppToast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(requireContext(), "Nothing to Copy", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Nothing to Copy", AppToast.LENGTH_SHORT).show()
             }
         }
         backButton.setOnLongClickListener {
@@ -2388,7 +2363,7 @@ $cleanContent
                 if (chatHtml.isNotBlank()) {
                     printChatHtml(chatHtml)
                 } else {
-                    Toast.makeText(requireContext(), "Nothing to print", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(requireContext(), "Nothing to print", AppToast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -2407,7 +2382,7 @@ $cleanContent
                 viewModel.saveMarkdownToDownloads(chatText)
                 // No need for local Toast - ViewModel handles UI event via _toolUiEvent
             } else {
-                Toast.makeText(requireContext(), "Nothing to save", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Nothing to save", AppToast.LENGTH_SHORT).show()
             }
         }
         saveEpubButton.setOnClickListener {
@@ -2420,7 +2395,7 @@ $cleanContent
                     // Call the new ViewModel function
                     viewModel.saveEpubToDownloads(innerHtml)
                 } else {
-                    Toast.makeText(requireContext(), "Nothing to save", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(requireContext(), "Nothing to save", AppToast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -2430,7 +2405,7 @@ $cleanContent
             if (chatText.isNotBlank()) {
                 viewModel.saveTxtToDownloads(chatText)
             } else {
-                Toast.makeText(requireContext(), "Nothing to save", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Nothing to save", AppToast.LENGTH_SHORT).show()
             }
             true  // Required for onLongClickListener
         }
@@ -2442,7 +2417,7 @@ $cleanContent
                     viewModel.saveHtmlToDownloads(innerHtml)
                     // VM handles success Toast via _toolUiEvent
                 } else {
-                    Toast.makeText(requireContext(), "Nothing to save", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(requireContext(), "Nothing to save", AppToast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -2455,9 +2430,9 @@ $cleanContent
         menuButton.setOnLongClickListener {
             val inputText = chatEditText.text.toString().trim()
             if (inputText.isBlank()) {
-                Toast.makeText(requireContext(), "No text to correct", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "No text to correct", AppToast.LENGTH_SHORT).show()
             } else if (viewModel.activeChatApiKey.isBlank()) {
-                Toast.makeText(requireContext(), "API Key is not set.", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "API Key is not set.", AppToast.LENGTH_SHORT).show()
             } else {
                 menuButton.isSelected = true
                 menuButton.setIconResource(R.drawable.ic_magic)
@@ -2468,11 +2443,11 @@ $cleanContent
                         chatEditText.setText(corrected)
                         chatEditText.setSelection(corrected.length)
                     } else {
-                        Toast.makeText(
+                        AppToast.makeText(
 
                             requireContext(),
                             "Correction failed",
-                            Toast.LENGTH_SHORT
+                            AppToast.LENGTH_SHORT
                         ).show()
                     }
                     menuButton.setIconResource(R.drawable.ic_menudot)
@@ -2551,7 +2526,7 @@ $cleanContent
                 startActivity(intent)
             } catch (e: Exception) {
                 // Handle case where a web browser is not available
-                Toast.makeText(requireContext(), "Could not open browser.", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Could not open browser.", AppToast.LENGTH_SHORT).show()
             }
             true // Consume the long click
         }
@@ -2563,7 +2538,7 @@ $cleanContent
 
             if (isLyria && isStreamEnabled) {
                 // Prevent turning off streaming for Lyria
-                Toast.makeText(requireContext(), "Streaming is required for Lyria music models.", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Streaming is required for Lyria music models.", AppToast.LENGTH_SHORT).show()
             } else {
                 // Normal toggle for other models or if turning it ON for Lyria
                 viewModel.toggleStreaming()
@@ -2667,7 +2642,7 @@ $cleanContent
             SharedPreferencesHelper(requireContext()).saveSelectedSystemMessage(defaultMessage)
             systemMessageButton.isSelected = false
             updateChatEditTextHint()
-            // Toast.makeText(requireContext(), "System message reset to default", Toast.LENGTH_SHORT).show()
+            // AppToast.makeText(requireContext(), "System message reset to default", AppToast.LENGTH_SHORT).show()
             true
         }
 
@@ -2724,10 +2699,10 @@ $cleanContent
                     chatEditText.text.replace(start, end, text.toString())
                 } else {
                     // Clipboard item is not text (e.g., image, URI, etc.)
-                    Toast.makeText(requireContext(), "Clipboard does not contain text", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(requireContext(), "Clipboard does not contain text", AppToast.LENGTH_SHORT).show()
                 }
             } else {
-                Toast.makeText(requireContext(), "Nothing to paste", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Nothing to paste", AppToast.LENGTH_SHORT).show()
             }
         }
 
@@ -2745,10 +2720,10 @@ $cleanContent
                     sendChatButton.performClick()
                 } else {
                     // Clipboard item is not text (e.g., image, URI, etc.)
-                    Toast.makeText(requireContext(), "Clipboard does not contain text", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(requireContext(), "Clipboard does not contain text", AppToast.LENGTH_SHORT).show()
                 }
             } else {
-                Toast.makeText(requireContext(), "Nothing to paste", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Nothing to paste", AppToast.LENGTH_SHORT).show()
             }
             true
         }
@@ -2870,7 +2845,7 @@ $cleanContent
 
 
                 if (formatFromMime !in supportedFormats && extension !in supportedFormats) {
-                    Toast.makeText(requireContext(), "Unsupported audio format", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(requireContext(), "Unsupported audio format", AppToast.LENGTH_SHORT).show()
                     return@launch
                 }
 
@@ -2881,7 +2856,7 @@ $cleanContent
                 }
 
                 if (bytes == null || bytes.size > 25_000_000) {
-                    Toast.makeText(requireContext(), "Audio too large (max 25MB)", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(requireContext(), "Audio too large (max 25MB)", AppToast.LENGTH_SHORT).show()
                     return@launch
                 }
 
@@ -2891,9 +2866,9 @@ $cleanContent
                 // Show audio attachment indicator
                 previewImageView.setImageResource(android.R.drawable.ic_media_play) // or use a custom ic_audio
                 attachmentPreviewContainer.visibility = View.VISIBLE
-                Toast.makeText(requireContext(), "Audio attached", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Audio attached", AppToast.LENGTH_SHORT).show()
             } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Failed to read audio: ${e.message}", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Failed to read audio: ${e.message}", AppToast.LENGTH_SHORT).show()
             }
         }
     }
@@ -2903,7 +2878,7 @@ $cleanContent
         val context = requireContext()
 
         if (safeText.length < text.length) {
-            Toast.makeText(context, "Text truncated for TTS (too long)", Toast.LENGTH_SHORT).show()
+            AppToast.makeText(context, "Text truncated for TTS (too long)", AppToast.LENGTH_SHORT).show()
         }
 
         try {
@@ -2925,15 +2900,15 @@ $cleanContent
 
             when (result) {
                 TextToSpeech.SUCCESS -> {
-                    Toast.makeText(context, "Audio generating...", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(context, "Audio generating...", AppToast.LENGTH_SHORT).show()
                 }
                 else -> {
-                    Toast.makeText(context, "❌ TTS wav failed (code: $result)", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(context, "❌ TTS wav failed (code: $result)", AppToast.LENGTH_SHORT).show()
                 }
             }
 
         } catch (e: Exception) {
-            Toast.makeText(context, "Error queuing TTS: ${e.message}", Toast.LENGTH_SHORT).show()
+            AppToast.makeText(context, "Error queuing TTS: ${e.message}", AppToast.LENGTH_SHORT).show()
         }
     }
 
@@ -2955,7 +2930,7 @@ $cleanContent
                 updateIconDirectlyOrNotify(position, R.drawable.ic_stop_circle)
                 val safeText = text.take(3900)
                 if (safeText.length < text.length) {
-                    Toast.makeText(requireContext(), "Text truncated for TTS (too long)", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(requireContext(), "Text truncated for TTS (too long)", AppToast.LENGTH_SHORT).show()
                 }
                 textToSpeech.speak(safeText, TextToSpeech.QUEUE_FLUSH, null, "tts_utterance")
             }
@@ -2966,7 +2941,7 @@ $cleanContent
             updateIconDirectlyOrNotify(position, R.drawable.ic_stop_circle)
             val safeText = text.take(3900)
             if (safeText.length < text.length) {
-                Toast.makeText(requireContext(), "Text truncated for TTS (too long)", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Text truncated for TTS (too long)", AppToast.LENGTH_SHORT).show()
             }
             textToSpeech.speak(safeText, TextToSpeech.QUEUE_FLUSH, null, "tts_utterance")
         }
@@ -3033,7 +3008,7 @@ $cleanContent
                 if (fileName.isNotEmpty() && extension.isNotEmpty()) {
                     viewModel.saveFileWithName(fileName, extension, content)
                 } else {
-                    Toast.makeText(context, "Please enter both file name and extension", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(context, "Please enter both file name and extension", AppToast.LENGTH_SHORT).show()
                 }
             }
             .setNegativeButton("Cancel", null)
@@ -3173,7 +3148,7 @@ $cleanContent
             dialog.dismiss()
             val model = viewModel.activeChatModel.value
             if (model == null || !viewModel.isVisionModel(model)) {
-                Toast.makeText(requireContext(), "Image selection not supported for the current model.", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Image selection not supported for the current model.", AppToast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             val allowedMimeTypes: Array<String> = when {
@@ -3209,14 +3184,6 @@ $cleanContent
                 .addToBackStack(null)
                 .commit()
         }
-        sheet.findViewById<View>(R.id.attachSaveChat).setOnClickListener {
-            dialog.dismiss()
-            if (!viewModel.chatMessages.value.isNullOrEmpty()) {
-                showSaveChatDialogWithResultApi()
-            } else {
-                Toast.makeText(requireContext(), "Nothing to save", Toast.LENGTH_SHORT).show()
-            }
-        }
         sheet.findViewById<View>(R.id.attachMore).setOnClickListener {
             dialog.dismiss()
             showMenu()
@@ -3251,7 +3218,7 @@ $cleanContent
             val height = chatRecyclerView.height
             chatRecyclerView.smoothScrollBy(0, -height)
             updateScrollButtonsVisibility()
-            //Toast.makeText(requireContext(), "Scrolled up one screen", Toast.LENGTH_SHORT).show()
+            //AppToast.makeText(requireContext(), "Scrolled up one screen", AppToast.LENGTH_SHORT).show()
         }
     }
 
@@ -3271,31 +3238,6 @@ $cleanContent
             scrollToTopButton.visibility = if (canScrollUp) View.VISIBLE else View.INVISIBLE
             scrollToBottomButton.visibility = if (canScrollDown) View.VISIBLE else View.INVISIBLE
         }
-    }
-    private fun showSaveChatDialogWithResultApi() {
-        val dialog = SaveChatDialogFragment()
-        childFragmentManager.setFragmentResultListener(SaveChatDialogFragment.REQUEST_KEY, viewLifecycleOwner) { key, bundle ->
-            if (key == SaveChatDialogFragment.REQUEST_KEY) {
-                val title = bundle.getString(SaveChatDialogFragment.BUNDLE_KEY_TITLE)
-                if (!title.isNullOrBlank()) {
-                    // UPDATED: Extract saveAsNew and pass to ViewModel
-                    val saveAsNew = bundle.getBoolean("save_as_new", false)
-                    viewModel.saveCurrentChat(title, saveAsNew)
-
-                    // Optional: Feedback
-                   // val sessionId = bundle.getLong("session_id", -1L)  // Still available for toasts if needed
-                    if (saveAsNew) {
-                        // e.g., Toast.makeText(context, "Chat saved as new!", Toast.LENGTH_SHORT).show()
-                    } else {
-                        // e.g., Toast.makeText(context, "Chat updated!", Toast.LENGTH_SHORT).show()
-                    }
-                    // buttonsContainer.visibility = View.GONE
-                    // modelNameTextView.isVisible = false
-                }
-            }
-        }
-
-        dialog.show(childFragmentManager, SaveChatDialogFragment.TAG)
     }
 
     private fun formatModelName(modelString: String): String {
@@ -3325,7 +3267,7 @@ $cleanContent
                 return@setOnClickListener
             }
             if (model == null || !viewModel.isVisionModel(model)) {
-                Toast.makeText(requireContext(), "Image/PDF selection not supported for the current model.", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Image/PDF selection not supported for the current model.", AppToast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
@@ -3376,7 +3318,7 @@ $cleanContent
                 return@setOnLongClickListener true
             }
             if (model == null || !viewModel.isVisionModel(model)) {
-                Toast.makeText(requireContext(), "Image selection not supported for the current model.", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Image selection not supported for the current model.", AppToast.LENGTH_SHORT).show()
                 return@setOnLongClickListener false
             }
 
@@ -3402,7 +3344,7 @@ $cleanContent
         try {
             speechLauncher.launch(intent)
         } catch (e: Exception) {
-            Toast.makeText(requireContext(), "Speech recognition not supported", Toast.LENGTH_SHORT).show()
+            AppToast.makeText(requireContext(), "Speech recognition not supported", AppToast.LENGTH_SHORT).show()
         }
         */
     }
@@ -3425,12 +3367,12 @@ $cleanContent
     }
     private fun updateModelSourceIndicator() {
         val isLan = viewModel.activeModelIsLan()
-        val iconRes = if (isLan) R.drawable.ic_lan2 else R.drawable.ic_cloudnew2
         val description = if (isLan) "LAN Model" else "Cloud Model"
-        val endChevron = ContextCompat.getDrawable(requireContext(), R.drawable.ic_expand_more)
-        val startIcon = ContextCompat.getDrawable(requireContext(), iconRes)
+        val endChevron = ContextCompat.getDrawable(requireContext(), R.drawable.ic_expand_more)?.mutate()
+        endChevron?.setBounds(0, 0, endChevron.intrinsicWidth, endChevron.intrinsicHeight)
+        // No leading source glyph — Grok chip is text + chevron only
         modelNameTextView.setCompoundDrawablesRelativeWithIntrinsicBounds(
-            startIcon,
+            null,
             null,
             endChevron,
             null
@@ -3648,12 +3590,12 @@ $cleanContent
             if (cameraIntent.resolveActivity(requireContext().packageManager) != null) {
                 cameraLauncher.launch(cameraIntent)
             } else {
-                Toast.makeText(requireContext(), "No camera app available", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "No camera app available", AppToast.LENGTH_SHORT).show()
                 requireContext().contentResolver.delete(imageUri, null, null)
                 currentCameraUri = null  // NEW: Clean up
             }
         } ?: run {
-            Toast.makeText(requireContext(), "Could not create image entry", Toast.LENGTH_SHORT).show()
+            AppToast.makeText(requireContext(), "Could not create image entry", AppToast.LENGTH_SHORT).show()
         }
     }
     fun startSpeechRecognitionSafely() {
@@ -3680,7 +3622,7 @@ $cleanContent
                     // Direct access fallback (rare)
                     val inputStream = requireContext().contentResolver.openInputStream(pdfUri)
                         ?: run {
-                            Toast.makeText(requireContext(), "No read access to PDF.", Toast.LENGTH_SHORT).show()
+                            AppToast.makeText(requireContext(), "No read access to PDF.", AppToast.LENGTH_SHORT).show()
                             return@launch
                         }
 
@@ -3699,7 +3641,7 @@ $cleanContent
                 }
 
                 if (parcelFd == null) {
-                    Toast.makeText(requireContext(), "Failed to access PDF.", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(requireContext(), "Failed to access PDF.", AppToast.LENGTH_SHORT).show()
                     return@launch
                 }
 
@@ -3709,7 +3651,7 @@ $cleanContent
 
                 when {
                     pageCount == 0 -> {
-                        Toast.makeText(requireContext(), "PDF has no pages.", Toast.LENGTH_SHORT).show()
+                        AppToast.makeText(requireContext(), "PDF has no pages.", AppToast.LENGTH_SHORT).show()
                         pdfRenderer.close()  // Close if no pages
                         return@launch
                     }
@@ -3726,7 +3668,7 @@ $cleanContent
                 }
             } catch (e: Exception) {
                 val errorMsg = "Failed to process PDF: ${e.message}"
-                Toast.makeText(requireContext(), errorMsg, Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), errorMsg, AppToast.LENGTH_SHORT).show()
             } finally {
                 try {
                     parcelFd?.close()
@@ -3760,7 +3702,7 @@ $cleanContent
         val bytes = byteArrayOutputStream.toByteArray()
 
         if (bytes.size > 12_000_000) {
-            Toast.makeText(requireContext(), "PDF page too large (max 12MB). Try a different page.", Toast.LENGTH_SHORT).show()
+            AppToast.makeText(requireContext(), "PDF page too large (max 12MB). Try a different page.", AppToast.LENGTH_SHORT).show()
             bitmap.recycle()
             return
         }
@@ -3791,7 +3733,7 @@ $cleanContent
         previewImageView.setImageBitmap(previewBmp)
         attachmentPreviewContainer.visibility = View.VISIBLE
 
-        Toast.makeText(requireContext(), "$description converted to image", Toast.LENGTH_SHORT).show()
+        AppToast.makeText(requireContext(), "$description converted to image", AppToast.LENGTH_SHORT).show()
 
         // Recycle originals
         bitmap.recycle()
@@ -3867,7 +3809,7 @@ $cleanContent
                 }
 
                 if (!isAllowed) {
-                    Toast.makeText(requireContext(), "Unsupported file: $fileName ($mimeType). Please select text/code files.", Toast.LENGTH_LONG).show()
+                    AppToast.makeText(requireContext(), "Unsupported file: $fileName ($mimeType). Please select text/code files.", AppToast.LENGTH_LONG).show()
                     return@launch
                 }
 
@@ -3891,12 +3833,12 @@ $cleanContent
 
                 // Size validation (your existing checks)
                 if (fileSize > MAX_SINGLE_FILE_SIZE) {
-                    Toast.makeText(requireContext(), "File too large: $fileName (max ${MAX_SINGLE_FILE_SIZE / 1024 / 1024}MB per file)", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(requireContext(), "File too large: $fileName (max ${MAX_SINGLE_FILE_SIZE / 1024 / 1024}MB per file)", AppToast.LENGTH_SHORT).show()
                     return@launch
                 }
 
                 if (currentTotalSize + fileSize > MAX_FILE_SIZE) {
-                    Toast.makeText(requireContext(), "Total attachments exceed limit: $fileName would make ${(currentTotalSize + fileSize) / 1024 / 1024}MB (max ${MAX_FILE_SIZE / 1024 / 1024}MB total)", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(requireContext(), "Total attachments exceed limit: $fileName would make ${(currentTotalSize + fileSize) / 1024 / 1024}MB (max ${MAX_FILE_SIZE / 1024 / 1024}MB total)", AppToast.LENGTH_SHORT).show()
                     return@launch
                 }
 
@@ -3905,10 +3847,10 @@ $cleanContent
 
                 // Update UI (your existing)
                 updateAttachmentButton()
-                Toast.makeText(requireContext(), "File attached: $fileName", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "File attached: $fileName", AppToast.LENGTH_SHORT).show()
 
             } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Failed to read file: ${e.message}", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Failed to read file: ${e.message}", AppToast.LENGTH_SHORT).show()
             }
         }
     }
@@ -4274,10 +4216,10 @@ $cleanContent
             if (bitmap != null) {
                 viewModel.saveBitmapToDownloads(bitmap, format)
             } else {
-                Toast.makeText(requireContext(), "Failed to capture view", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Failed to capture view", AppToast.LENGTH_SHORT).show()
             }
         } else {
-            Toast.makeText(requireContext(), "Item not visible; cannot capture", Toast.LENGTH_SHORT).show()
+            AppToast.makeText(requireContext(), "Item not visible; cannot capture", AppToast.LENGTH_SHORT).show()
         }
     }
     fun copyLatestMessage() {
@@ -4285,7 +4227,7 @@ $cleanContent
             if (text.isNotBlank()) {
                 val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 clipboard.setPrimaryClip(ClipData.newPlainText("Copied", text))
-                Toast.makeText(requireContext(), "Copied", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Copied", AppToast.LENGTH_SHORT).show()
             }
         }
     }
@@ -4436,9 +4378,9 @@ $cleanContent
             isRecording = true
             speechButton.setIconResource(R.drawable.ic_stop_circle) // Red mic or recording indicator
             speechButton.isSelected = true
-            Toast.makeText(requireContext(), "Recording...", Toast.LENGTH_SHORT).show()
+            AppToast.makeText(requireContext(), "Recording...", AppToast.LENGTH_SHORT).show()
         } catch (e: Exception) {
-            Toast.makeText(requireContext(), "Recording failed: ${e.message}", Toast.LENGTH_SHORT).show()
+            AppToast.makeText(requireContext(), "Recording failed: ${e.message}", AppToast.LENGTH_SHORT).show()
             voiceRecordFile?.delete()
             voiceRecordFile = null
         }
@@ -4463,7 +4405,7 @@ $cleanContent
                 if (file.exists() && file.length() > 0) {
                     processVoiceRecording(file)
                 } else {
-                    Toast.makeText(requireContext(), "Recording was empty", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(requireContext(), "Recording was empty", AppToast.LENGTH_SHORT).show()
                     file.delete()
                 }
             }
@@ -4487,7 +4429,7 @@ $cleanContent
                 }
 
                 if(!fromWater) {
-                    Toast.makeText(requireContext(), "Transcribing...", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(requireContext(), "Transcribing...", AppToast.LENGTH_SHORT).show()
                 }
                 val transcribedText = viewModel.transcribeAudioForInput(
                     audioBytes = audioBytes,
@@ -4502,12 +4444,12 @@ $cleanContent
                         clipboard.setPrimaryClip(clip)}
                     chatEditText.setText(transcribedText)
                     chatEditText.setSelection(transcribedText.length)
-                    // Toast.makeText(requireContext(), "Transcription complete", Toast.LENGTH_SHORT).show()
+                    // AppToast.makeText(requireContext(), "Transcription complete", AppToast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(requireContext(), "Transcription failed", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(requireContext(), "Transcription failed", AppToast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Error: ${e.message}", AppToast.LENGTH_SHORT).show()
             } finally {
                 file.delete()
                 voiceRecordFile = null

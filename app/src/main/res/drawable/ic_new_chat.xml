@@ -1,10 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Grok APK 1:1: ic_vector_grok_create.xml - square+pencil new chat -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp"
-    android:height="24dp"
-    android:viewportWidth="960"
-    android:viewportHeight="960">
-    <!-- Material "edit_square" / compose new — not trash -->
+    android:height="26dp"
+    android:width="26dp"
+    android:viewportWidth="26"
+    android:viewportHeight="26">
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M200,840q-33,0 -56.5,-23.5T120,760v-560q0,-33 23.5,-56.5T200,120h280v80H200v560h560v-280h80v280q0,33 -23.5,56.5T760,840H200Zm480,-440v-120h-120v-80h120v-120h80v120h120v80h-120v120h-80ZM360,600v-170l370,-370 170,170 -370,370H360Zm40,-40h85l255,-255 -42,-43 -43,-42 -255,255v85Zm298,-298l-43,-42 43,42 42,43 -42,-43Z"/>
+        android:pathData="M10.833,4.333H8.558C7.652,4.333 7.199,4.333 6.825,4.423C5.636,4.708 4.708,5.636 4.423,6.825C4.333,7.199 4.333,7.652 4.333,8.558V17.442C4.333,18.348 4.333,18.801 4.423,19.175C4.708,20.364 5.636,21.292 6.825,21.577C7.199,21.667 7.652,21.667 8.558,21.667H17.442C18.348,21.667 18.801,21.667 19.175,21.577C20.364,21.292 21.292,20.364 21.577,19.175C21.667,18.801 21.667,18.348 21.667,17.442V15.167"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="2.1667"
+        android:strokeLineCap="square"/>
+    <path
+        android:pathData="M21.601,5.351L20.649,4.399C20.014,3.764 18.986,3.764 18.351,4.399L10.226,12.524C9.921,12.829 9.75,13.242 9.75,13.673V16.25H12.327C12.758,16.25 13.171,16.079 13.476,15.774L21.601,7.649C22.236,7.014 22.236,5.986 21.601,5.351Z"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="2.1667"
+        android:strokeLineCap="square"/>
 </vector>

@@ -55,7 +55,7 @@ class OpenRouterModelsAdapter(
             try {
                 holder.itemView.context.startActivity(intent)
             } catch (e: Exception) {
-                Toast.makeText(holder.itemView.context, "Could not open browser.", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(holder.itemView.context, "Could not open browser.", AppToast.LENGTH_SHORT).show()
             }
         }
         holder.itemView.setOnLongClickListener {
@@ -64,7 +64,7 @@ class OpenRouterModelsAdapter(
             try {
                 holder.itemView.context.startActivity(intent)
             } catch (e: Exception) {
-                Toast.makeText(holder.itemView.context, "Could not open browser.", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(holder.itemView.context, "Could not open browser.", AppToast.LENGTH_SHORT).show()
             }
             true
         }

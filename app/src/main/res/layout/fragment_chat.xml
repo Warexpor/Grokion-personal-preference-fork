@@ -130,22 +130,6 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <!-- Kept for ChatFragment IDs / share chrome anchors; not shown in top bar -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/saveChatButton"
-                style="@style/Widget.Material3.Button.IconButton"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:visibility="gone"
-                android:contentDescription="Save chat"
-                app:icon="@drawable/ic_menudot"
-                app:iconSize="24dp"
-                app:iconTint="@color/xai_ink"
-                app:backgroundTint="@android:color/transparent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent" />
-
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/backButton"
                 style="@style/Widget.Material3.Button.IconButton"
@@ -817,6 +801,25 @@
             android:paddingBottom="8dp"
             android:background="@drawable/bg_composer_panel"
             android:gravity="center_vertical">
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/restoreForkButton"
+                style="@style/Widget.Grokion.Button.Text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
+                android:layout_marginBottom="4dp"
+                android:visibility="gone"
+                android:text="Restore previous messages"
+                android:textColor="@color/xai_ink"
+                android:textSize="14sp"
+                app:icon="@drawable/ic_redo"
+                app:iconGravity="start"
+                app:iconPadding="8dp"
+                app:iconSize="18dp"
+                app:iconTint="@color/xai_ink"
+                app:rippleColor="@color/press_ripple_none" />
+
 
             <LinearLayout
                 android:id="@+id/centerInputWrapper"

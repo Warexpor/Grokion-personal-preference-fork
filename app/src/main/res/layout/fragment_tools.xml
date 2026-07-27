@@ -4,17 +4,16 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="?attr/colorSurface"
-    android:fitsSystemWindows="true"
-    android:padding="16dp">
+    android:background="@color/xai_canvas"
+    android:fitsSystemWindows="true">
 
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         app:title="Manage Tools"
-        app:titleTextColor="?android:attr/textColorPrimary"
-        android:background="?attr/colorSurface"
+        app:titleTextColor="@color/xai_ink"
+        android:background="@color/xai_canvas"
         app:navigationIcon="@drawable/is_backarrow"
         app:navigationIconTint="@color/xai_ink" />
 
@@ -27,8 +26,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp" />
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="16dp" />
 
     </ScrollView>
 

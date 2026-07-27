@@ -4,85 +4,80 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="8dp"
-    android:background="?attr/selectableItemBackground">
+    android:background="?android:attr/selectableItemBackground">
 
-    <androidx.cardview.widget.CardView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardBackgroundColor="?attr/colorSurfaceVariant"
-        app:cardCornerRadius="8dp"
-        app:cardElevation="0dp">
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="4dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp">
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <TextView
-                    android:id="@+id/system_message_title"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentStart="true"
-                    android:layout_toStartOf="@+id/expand_icon"
-                    android:text="Title"
-
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackgroundBorderless" />
-
-                <ImageView
-                    android:id="@+id/expand_icon"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:layout_centerVertical="true"
-                    android:layout_toStartOf="@+id/menu_button"
-                    android:layout_marginEnd="8dp"
-                    android:src="@drawable/ic_arrow_downward"
-                    android:rotation="0"
-                    android:padding="8dp"
-                    android:background="@drawable/br_circle"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="Expand/collapse"
-
-                    app:tint="?android:attr/textColorSecondary" />
-
-                <ImageView
-                    android:id="@+id/menu_button"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:src="@drawable/ic_editnote"
-                    android:padding="8dp"
-                    android:background="@drawable/br_circle"
-                    android:foreground="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="Edit"
-
-                    app:tint="?android:attr/textColorSecondary" />
-            </RelativeLayout>
+            android:layout_height="wrap_content">
 
             <TextView
-                android:id="@+id/system_message_prompt"
-                android:layout_width="match_parent"
+                android:id="@+id/system_message_title"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="System Message"
+                android:layout_alignParentStart="true"
+                android:layout_toStartOf="@+id/expand_icon"
+                android:text="Title"
+                android:textColor="@color/xai_ink"
+                android:textSize="16sp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackgroundBorderless" />
 
-                android:textColor="?android:attr/textColorSecondary"
-                android:textSize="14sp"
-                android:visibility="gone" />
+            <ImageView
+                android:id="@+id/expand_icon"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_centerVertical="true"
+                android:layout_toStartOf="@+id/menu_button"
+                android:layout_marginEnd="4dp"
+                android:src="@drawable/ic_arrow_downward"
+                android:rotation="0"
+                android:padding="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="Expand/collapse"
+                app:tint="@color/xai_mute" />
 
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
+            <ImageView
+                android:id="@+id/menu_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:src="@drawable/ic_editnote"
+                android:padding="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Edit"
+                app:tint="@color/xai_mute" />
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/system_message_prompt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="System Message"
+            android:textColor="@color/xai_mute"
+            android:textSize="14sp"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/xai_hairline" />
+
 </LinearLayout>

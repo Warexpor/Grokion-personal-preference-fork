@@ -7,25 +7,22 @@
     android:fitsSystemWindows="true"
     android:background="@color/xai_canvas">
 
-    <!-- Toolbar -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        app:titleTextColor="@android:color/white"
-        android:background="@color/xai_canvas_card"
+        app:titleTextColor="@color/xai_ink"
+        android:background="@color/xai_canvas"
         app:navigationIcon="@drawable/is_backarrow"
         app:navigationIconTint="@color/xai_ink"
         app:menu="@menu/menu_edit_message" />
 
-    <!-- Main Content -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- We only need one input field here -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"

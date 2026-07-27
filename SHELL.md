@@ -15,14 +15,16 @@ Reference: `ai.x.grok` 1.1.97 (`references/grok_decompiled`), [`DESIGN.md`](DESI
 | Ask | `ChatFragment` | Top: menu · model chip · new chat · more; composer pill; empty mark |
 | History drawer | `SavedChatsFragment` embedded | ~84% width; Search; Pinned; Conversations; Settings gear |
 | Settings root | `SettingsFragment` | Section list → push sub-screens |
-| Appearance | `SettingsSectionFragment` (appearance) | Theme + preview |
-| Voice | section | STT provider / model / watermark |
+| Appearance | `SettingsDetailFragment` (appearance) | Theme + preview |
 | Haptics | section | Button + responding toggles |
 | Models & API | section | LAN, keys, credits, trust TLS |
-| Advanced | section | Tools, prompts, presets, inference, chrome toggles |
-| Data & Privacy | section | Biometrics, notifications, help, licenses |
+| Advanced | section | Libraries / Generation / Chat chrome (power tools bar) |
+| Data & Privacy | section | Biometrics, notifications, import/export, help, licenses |
 | Model picker | `BotModelPickerFragment` | Primary model entry (chip) |
 | Attach sheet | bottom sheet from `+` | Camera / Gallery / Files (+ system message / tools) |
+| Libraries / catalogs | Advanced children | Tools, prompts, presets, system messages, OR/LAN catalogs — canvas chrome |
+
+Voice settings entry is disabled (STT removed). Conversations always autosave to History.
 
 ---
 
@@ -38,9 +40,7 @@ Reference: `ai.x.grok` 1.1.97 (`references/grok_decompiled`), [`DESIGN.md`](DESI
 ### Voice
 | Pref / UI | Destination |
 |-----------|-------------|
-| `voiceInputProviderToggle` | Voice |
-| `voiceInputModelEdit` | Voice |
-| `watermarkSttSwitch` | Voice |
+| (disabled) | STT removed from product |
 
 ### Haptics
 | Pref / UI | Destination |
@@ -72,7 +72,8 @@ Reference: `ai.x.grok` 1.1.97 (`references/grok_decompiled`), [`DESIGN.md`](DESI
 | Advanced Reasoning | Advanced + long-press |
 | `openRouterTransformsSwitch` | Advanced |
 | `autoDisableWebSearchSwitch` | Advanced |
-| `extendedDockSwitch`, `extendedTopBarSwitch`, `expandableInputSwitch` | Advanced |
+| `extendedDockSwitch` / `extendedTopBarSwitch` | Advanced → **Show power tools bar** (single switch drives both) |
+| `expandableInputSwitch` | Advanced |
 | `scrollButtonsSwitch`, `scrollProgressSwitch`, `volumeScrollSwitch` | Advanced |
 | `presetsExtendedSwitch`, `animateBarOnErrorSwitch`, `showCitationsSwitch` | Advanced |
 
@@ -80,11 +81,12 @@ Reference: `ai.x.grok` 1.1.97 (`references/grok_decompiled`), [`DESIGN.md`](DESI
 | Pref / UI | Destination |
 |-----------|-------------|
 | `biometricsSwitch` | Data & Privacy |
-| `autoSaveChatsSwitch` | Data & Privacy |
+| Autosave (always on; no toggle) | Data & Privacy (behavior only) |
 | `notificationsSwitch`, copy/open/dismiss | Data & Privacy |
 | `allowDestructiveToolsSwitch` | Data & Privacy |
 | `keepScreenOnSwitch` | Data & Privacy |
 | Help, licenses | Data & Privacy |
+| History import/export buttons | Data & Privacy (+ History bottom bar) |
 
 ---
 
@@ -100,8 +102,8 @@ SuperGrok, Sign out, Delete Account, Kids Mode, Connectors, Skills marketplace, 
 2. Streaming reply + action row  
 3. History open (search + list + settings gear)  
 4. Settings root  
-5. Appearance sub-screen  
+5. Appearance / Advanced / Data sub-screens (card IA)  
 6. Model picker sheet  
 7. Composer attach sheet  
 
-Plus: LAN/local select → stream → stop → new chat → pin/search → theme change.
+Plus: LAN/local select → stream → stop → new chat → pin/search → theme change → History import/export.

@@ -22,7 +22,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.launch
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
@@ -55,9 +55,9 @@ class SystemMessageLibraryFragment : Fragment() {
                         requireContext().contentResolver.openOutputStream(uri)?.use { outputStream ->
                             outputStream.write(json.toByteArray())
                         }
-                        Toast.makeText(requireContext(), "System Messages exported successfully", Toast.LENGTH_SHORT).show()
+                        AppToast.makeText(requireContext(), "System Messages exported successfully", AppToast.LENGTH_SHORT).show()
                     } catch (e: Exception) {
-                        Toast.makeText(requireContext(), "Error exporting System Messages", Toast.LENGTH_SHORT).show()
+                        AppToast.makeText(requireContext(), "Error exporting System Messages", AppToast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -92,16 +92,16 @@ class SystemMessageLibraryFragment : Fragment() {
                             }
                             sharedPreferencesHelper.saveCustomSystemMessages(currentMessages)
                             loadSystemMessages()
-                            Toast.makeText(requireContext(), "System Messages imported successfully", Toast.LENGTH_SHORT).show()
+                            AppToast.makeText(requireContext(), "System Messages imported successfully", AppToast.LENGTH_SHORT).show()
                         } else {
                             throw Exception("Failed to read file content.")
                         }
                     } catch (e: SerializationException) {
                         // Log.e("Import", "Import failed due to JSON format", e)
-                        Toast.makeText(requireContext(), "Import failed. Check file format.", Toast.LENGTH_SHORT).show()
+                        AppToast.makeText(requireContext(), "Import failed. Check file format.", AppToast.LENGTH_SHORT).show()
                     } catch (e: Exception) {
                         //Log.e("Import", "Import failed", e)
-                        Toast.makeText(requireContext(), "Import failed.", Toast.LENGTH_SHORT).show()
+                        AppToast.makeText(requireContext(), "Import failed.", AppToast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -139,7 +139,7 @@ class SystemMessageLibraryFragment : Fragment() {
                 }
             })
         } else {
-            Toast.makeText(requireContext(), "Search not available", Toast.LENGTH_SHORT).show()
+            AppToast.makeText(requireContext(), "Search not available", AppToast.LENGTH_SHORT).show()
         }
         toolbar.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
@@ -158,7 +158,7 @@ class SystemMessageLibraryFragment : Fragment() {
         setupRecyclerView(view)
         loadSystemMessages()
 
-        view.findViewById<FloatingActionButton>(R.id.fab_add_system_message).setOnClickListener {
+        view.findViewById<MaterialButton>(R.id.fab_add_system_message).setOnClickListener {
             parentFragmentManager.beginTransaction()
                 .withGrokStackAnimations()
                 .replace(R.id.fragment_container, AddEditSystemMessageFragment())
@@ -170,7 +170,7 @@ class SystemMessageLibraryFragment : Fragment() {
 
     private fun exportSystemMessages() {
         if (sharedPreferencesHelper.getCustomSystemMessages().isEmpty()) {
-            Toast.makeText(requireContext(), "No system messages to export.", Toast.LENGTH_SHORT).show()
+            AppToast.makeText(requireContext(), "No system messages to export.", AppToast.LENGTH_SHORT).show()
             return
         }
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
@@ -295,7 +295,7 @@ class SystemMessageLibraryFragment : Fragment() {
         deleteItem.setOnClickListener {
             popupWindow.dismiss()
             if (systemMessage.isDefault) {
-                Toast.makeText(context, "Default system message cannot be deleted", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(context, "Default system message cannot be deleted", AppToast.LENGTH_SHORT).show()
             } else {
                 showDeleteConfirmationDialog(systemMessage)
             }
@@ -355,7 +355,7 @@ class SystemMessageLibraryFragment : Fragment() {
                 }
                 R.id.delete_model -> {
                     if (systemMessage.isDefault) {
-                        Toast.makeText(context, "Default system message cannot be deleted", Toast.LENGTH_SHORT).show()
+                        AppToast.makeText(context, "Default system message cannot be deleted", AppToast.LENGTH_SHORT).show()
                     } else {
                         showDeleteConfirmationDialog(systemMessage)
                     }

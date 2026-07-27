@@ -19,7 +19,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Set LAN Endpoint"
-            android:textColor="@color/xai_body"
+            android:textColor="@color/xai_ink"
             android:textAppearance="?attr/textAppearanceHeadline6"
             android:layout_marginBottom="16dp" />
 
@@ -56,7 +56,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Select Provider:"
-            android:textColor="@color/xai_body"
+            android:textColor="@color/xai_ink"
             android:textSize="14sp"
             android:layout_marginTop="16dp"
             android:layout_marginBottom="8dp" />
@@ -126,7 +126,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="LAN API Key (optional)"
-            android:textColor="@color/xai_body"
+            android:textColor="@color/xai_ink"
             android:textSize="14sp"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp" />
@@ -160,18 +160,18 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/button_cancel_lan"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
+                style="@style/Widget.Grokion.Button.Text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/xai_body"
+                android:textColor="@color/xai_ink"
                 android:text="Cancel" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/button_save_lan"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
+                style="@style/Widget.Grokion.Button.Text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/xai_body"
+                android:textColor="@color/xai_ink"
                 android:layout_marginStart="8dp"
                 android:text="Save" />
         </LinearLayout>

@@ -6,13 +6,11 @@ import android.app.Activity
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
-import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.ImageButton
-import android.widget.PopupMenu
 import android.widget.PopupWindow
 import android.widget.TextView
 import android.widget.Toast
@@ -63,9 +61,9 @@ class SavedChatsFragment : Fragment() {
                         requireContext().contentResolver.openOutputStream(uri)?.use { outputStream ->
                             outputStream.write(json.toByteArray())
                         }
-                        Toast.makeText(requireContext(), "Chats exported successfully", Toast.LENGTH_SHORT).show()
+                        AppToast.makeText(requireContext(), "Chats exported successfully", AppToast.LENGTH_SHORT).show()
                     } catch (_: Exception) {
-                        Toast.makeText(requireContext(), "Error exporting chats", Toast.LENGTH_SHORT).show()
+                        AppToast.makeText(requireContext(), "Error exporting chats", AppToast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -84,16 +82,16 @@ class SavedChatsFragment : Fragment() {
                             savedChatsViewModel.importChatsFromJson(json) { importResult ->
                                 when (importResult) {
                                     is ChatImportResult.Success ->
-                                        Toast.makeText(requireContext(), "Chats imported successfully", Toast.LENGTH_SHORT).show()
+                                        AppToast.makeText(requireContext(), "Chats imported successfully", AppToast.LENGTH_SHORT).show()
                                     is ChatImportResult.Error ->
-                                        Toast.makeText(requireContext(), importResult.message, Toast.LENGTH_LONG).show()
+                                        AppToast.makeText(requireContext(), importResult.message, AppToast.LENGTH_LONG).show()
                                 }
                             }
                         } else {
                             throw Exception("Failed to read file content.")
                         }
                     } catch (_: Exception) {
-                        Toast.makeText(requireContext(), "Import failed. Check file format.", Toast.LENGTH_SHORT).show()
+                        AppToast.makeText(requireContext(), "Import failed. Check file format.", AppToast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -126,10 +124,9 @@ class SavedChatsFragment : Fragment() {
         }
 
         settingsButton.setOnClickListener { openSettings() }
-        settingsButton.setOnLongClickListener {
-            showLibraryMenu(settingsButton)
-            true
-        }
+
+        view.findViewById<ImageButton>(R.id.historyImportButton).setOnClickListener { importChats() }
+        view.findViewById<ImageButton>(R.id.historyExportButton).setOnClickListener { exportChats() }
 
         view.findViewById<ImageButton>(R.id.historyNewChatButton).setOnClickListener {
             if (isEmbedded) {
@@ -174,27 +171,6 @@ class SavedChatsFragment : Fragment() {
         savedChatsViewModel.allSessions.observe(viewLifecycleOwner) { sessions ->
             allSessions = sessions ?: emptyList()
             filterSessions(searchView.query?.toString().orEmpty())
-        }
-    }
-
-    private fun showLibraryMenu(anchor: View) {
-        PopupMenu(requireContext(), anchor, Gravity.END).apply {
-            menu.add(0, 1, 0, R.string.grok_history_import)
-            menu.add(0, 2, 1, R.string.grok_history_export)
-            setOnMenuItemClickListener { item ->
-                when (item.itemId) {
-                    1 -> {
-                        importChats()
-                        true
-                    }
-                    2 -> {
-                        exportChats()
-                        true
-                    }
-                    else -> false
-                }
-            }
-            show()
         }
     }
 
@@ -283,7 +259,7 @@ class SavedChatsFragment : Fragment() {
 
     private fun exportChats() {
         if (allSessions.isEmpty()) {
-            Toast.makeText(requireContext(), "No chats to export.", Toast.LENGTH_SHORT).show()
+            AppToast.makeText(requireContext(), "No chats to export.", AppToast.LENGTH_SHORT).show()
             return
         }
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {

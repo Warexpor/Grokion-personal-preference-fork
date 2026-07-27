@@ -34,10 +34,10 @@ class LanModelsFragment : Fragment() {
             viewModel.startLanModelsFetch()
         } else {
             // Permission denied. Explain to the user.
-            Toast.makeText(
+            AppToast.makeText(
                 requireContext(),
                 "Local Network permission is required to fetch models from your LAN server.",
-                Toast.LENGTH_LONG
+                AppToast.LENGTH_LONG
             ).show()
         }
     }
@@ -124,14 +124,14 @@ class LanModelsFragment : Fragment() {
                     "hermes_agent" -> "No Hermes Agent models found.\nMake sure Hermes Agent server is running and has models loaded."
                     else -> "No models found."
                 }
-                Toast.makeText(requireContext(), emptyMessage, Toast.LENGTH_LONG).show()
+                AppToast.makeText(requireContext(), emptyMessage, AppToast.LENGTH_LONG).show()
             }
         }
 
         // OBSERVE ERRORS
         viewModel.toolUiEvent.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let {
-                Toast.makeText(requireContext(), it, Toast.LENGTH_LONG).show()
+                AppToast.makeText(requireContext(), it, AppToast.LENGTH_LONG).show()
             }
         }
 
@@ -162,11 +162,11 @@ class LanModelsFragment : Fragment() {
 
     private fun addModel(model: LlmModel) {
         if (viewModel.modelExists(model.apiIdentifier)) {
-            Toast.makeText(context, "Model with this API Identifier already exists.", Toast.LENGTH_SHORT).show()
+            AppToast.makeText(context, "Model with this API Identifier already exists.", AppToast.LENGTH_SHORT).show()
         } else {
             viewModel.addCustomModel(model)
             val provider = viewModel.getCurrentLanProvider()
-            Toast.makeText(context, "LAN Model added: ${model.displayName}", Toast.LENGTH_SHORT).show()
+            AppToast.makeText(context, "LAN Model added: ${model.displayName}", AppToast.LENGTH_SHORT).show()
         }
     }
     private fun loadModel(model: LlmModel) {
@@ -175,16 +175,16 @@ class LanModelsFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                Toast.makeText(context, "Loading model, please wait...", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(context, "Loading model, please wait...", AppToast.LENGTH_SHORT).show()
                 val success = viewModel.loadLlamaCppModel(model)
                 if (success) {
-                    Toast.makeText(context, "Loaded model: ${model.apiIdentifier}", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(context, "Loaded model: ${model.apiIdentifier}", AppToast.LENGTH_SHORT).show()
 
                 } else {
-                    Toast.makeText(context, "Server returned unsuccessful load", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(context, "Server returned unsuccessful load", AppToast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(context, "Failed to load: ${e.message}", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(context, "Failed to load: ${e.message}", AppToast.LENGTH_SHORT).show()
             } finally {
                 kotlinx.coroutines.delay(1600.milliseconds)
                 // Hide spinner and fetch updated list
@@ -202,13 +202,13 @@ class LanModelsFragment : Fragment() {
             try {
                 val success = viewModel.unloadLlamaCppModel(model)
                 if (success) {
-                    Toast.makeText(context, "Unloaded model: ${model.apiIdentifier}", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(context, "Unloaded model: ${model.apiIdentifier}", AppToast.LENGTH_SHORT).show()
 
                 } else {
-                    Toast.makeText(context, "Server returned unsuccessful unload", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(context, "Server returned unsuccessful unload", AppToast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(context, "Failed to unload: ${e.message}", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(context, "Failed to unload: ${e.message}", AppToast.LENGTH_SHORT).show()
             } finally {
                 kotlinx.coroutines.delay(1600.milliseconds)
                 // Hide spinner and fetch updated list

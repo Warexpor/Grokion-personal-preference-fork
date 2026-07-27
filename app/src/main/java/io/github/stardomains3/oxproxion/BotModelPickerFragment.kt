@@ -15,7 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.button.MaterialButton
 
 class BotModelPickerFragment : Fragment() {
 
@@ -62,7 +62,7 @@ class BotModelPickerFragment : Fragment() {
         // Initialize Views
         val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerViewModels)
         val toolbar = view.findViewById<MaterialToolbar>(R.id.toolbar)
-        val fabAddModel = view.findViewById<FloatingActionButton>(R.id.fabAddModel)
+        val fabAddModel = view.findViewById<MaterialButton>(R.id.fabAddModel)
         sortBar = view.findViewById(R.id.sortBar)
         filterBar = view.findViewById(R.id.filterBar)
         costFilterBar = view.findViewById(R.id.costFilterBar)
@@ -301,7 +301,7 @@ class BotModelPickerFragment : Fragment() {
 
     private fun addModel(model: LlmModel) {
         if (models.any { it.apiIdentifier.equals(model.apiIdentifier, ignoreCase = true) }) {
-            Toast.makeText(context, "Model exists.", Toast.LENGTH_SHORT).show()
+            AppToast.makeText(context, "Model exists.", AppToast.LENGTH_SHORT).show()
         } else {
             models.add(model)
             saveCustomModels()

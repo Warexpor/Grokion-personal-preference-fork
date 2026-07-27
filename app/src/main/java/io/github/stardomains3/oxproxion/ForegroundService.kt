@@ -156,7 +156,7 @@ class ForegroundService : Service(), TextToSpeech.OnInitListener {
 
         createNotificationChannels()
 
-        val notification = buildNotification("Connectivity Service", "Ensures reliable messaging connectivity", FOREGROUND_CHANNEL_ID)
+        val notification = buildNotification("Grokion", "Running", FOREGROUND_CHANNEL_ID)
 
         val foregroundServiceType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING
@@ -176,20 +176,25 @@ class ForegroundService : Service(), TextToSpeech.OnInitListener {
     private fun createNotificationChannels() {
         val notificationManager = getSystemService(NotificationManager::class.java)
 
+        // Sticky FGS chrome only — keep silent/min so it never competes with answer alerts
         val foregroundChannel = NotificationChannel(
             FOREGROUND_CHANNEL_ID,
             "Connectivity Service Channel",
-            NotificationManager.IMPORTANCE_HIGH
+            NotificationManager.IMPORTANCE_MIN
         ).apply {
-            description = "Notification for the running foreground service"
+            description = "Silent persistent service notification"
+            setShowBadge(false)
+            enableVibration(false)
+            setSound(null, null)
         }
 
+        // Answer-ready alerts only
         val serviceChannel = NotificationChannel(
             CHANNEL_ID,
-            "Main Updates Channel",
+            "Answers",
             NotificationManager.IMPORTANCE_DEFAULT
         ).apply {
-            description = "Channel for main notification updates"
+            description = "Notifies when your answer is ready"
         }
 
         notificationManager.createNotificationChannels(listOf(foregroundChannel, serviceChannel))
@@ -337,11 +342,14 @@ class ForegroundService : Service(), TextToSpeech.OnInitListener {
 
         if (channelId == FOREGROUND_CHANNEL_ID) {
             builder.setOngoing(true)
+                .setSilent(true)
+                .setOnlyAlertOnce(true)
                 .setCategory(NotificationCompat.CATEGORY_SERVICE)
         } else {
             builder.setOngoing(false)
                 .setDeleteIntent(dismissPendingIntent)
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                .setAutoCancel(true)
 
             if (!isTtsActive) {
                 builder.addAction(android.R.drawable.ic_media_play, "Speak", togglePendingIntent)

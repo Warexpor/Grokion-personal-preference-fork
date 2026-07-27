@@ -43,7 +43,7 @@
                 android:layout_weight="1"
                 android:text="Alphabetical"
                 app:backgroundTint="@color/toggle_background_selector"
-                app:strokeColor="@color/chestnut"
+                app:strokeColor="@color/xai_hairline"
                 style="?attr/materialButtonOutlinedStyle" />
 
             <com.google.android.material.button.MaterialButton
@@ -53,7 +53,7 @@
                 android:layout_weight="1"
                 android:text="Newest"
                 app:backgroundTint="@color/toggle_background_selector"
-                app:strokeColor="@color/chestnut"
+                app:strokeColor="@color/xai_hairline"
                 style="?attr/materialButtonOutlinedStyle" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
@@ -75,7 +75,7 @@
                 android:layout_weight="1"
                 android:text="All"
                 app:backgroundTint="@color/toggle_background_selector"
-                app:strokeColor="@color/chestnut"
+                app:strokeColor="@color/xai_hairline"
                 style="?attr/materialButtonOutlinedStyle" />
 
             <com.google.android.material.button.MaterialButton
@@ -85,7 +85,7 @@
                 android:layout_weight="1"
                 android:text="Vision"
                 app:backgroundTint="@color/toggle_background_selector"
-                app:strokeColor="@color/chestnut"
+                app:strokeColor="@color/xai_hairline"
                 style="?attr/materialButtonOutlinedStyle" />
 
             <com.google.android.material.button.MaterialButton
@@ -95,7 +95,7 @@
                 android:layout_weight="1"
                 android:text="Image Gen"
                 app:backgroundTint="@color/toggle_background_selector"
-                app:strokeColor="@color/chestnut"
+                app:strokeColor="@color/xai_hairline"
                 style="?attr/materialButtonOutlinedStyle" />
 
             <com.google.android.material.button.MaterialButton
@@ -105,7 +105,7 @@
                 android:layout_weight="1"
                 android:text="Transc."
                 app:backgroundTint="@color/toggle_background_selector"
-                app:strokeColor="@color/chestnut"
+                app:strokeColor="@color/xai_hairline"
                 style="?attr/materialButtonOutlinedStyle" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
@@ -127,7 +127,7 @@
                 android:layout_weight="1"
                 android:text="All"
                 app:backgroundTint="@color/toggle_background_selector"
-                app:strokeColor="@color/chestnut"
+                app:strokeColor="@color/xai_hairline"
                 style="?attr/materialButtonOutlinedStyle" />
 
             <com.google.android.material.button.MaterialButton
@@ -137,7 +137,7 @@
                 android:layout_weight="1"
                 android:text="Free"
                 app:backgroundTint="@color/toggle_background_selector"
-                app:strokeColor="@color/chestnut"
+                app:strokeColor="@color/xai_hairline"
                 style="?attr/materialButtonOutlinedStyle" />
 
             <com.google.android.material.button.MaterialButton
@@ -147,7 +147,7 @@
                 android:layout_weight="1"
                 android:text="Paid"
                 app:backgroundTint="@color/toggle_background_selector"
-                app:strokeColor="@color/chestnut"
+                app:strokeColor="@color/xai_hairline"
                 style="?attr/materialButtonOutlinedStyle" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
@@ -169,7 +169,7 @@
                 android:layout_weight="1"
                 android:text="All"
                 app:backgroundTint="@color/toggle_background_selector"
-                app:strokeColor="@color/chestnut"
+                app:strokeColor="@color/xai_hairline"
                 style="?attr/materialButtonOutlinedStyle" />
 
             <com.google.android.material.button.MaterialButton
@@ -179,7 +179,7 @@
                 android:layout_weight="1"
                 android:text="LAN"
                 app:backgroundTint="@color/toggle_background_selector"
-                app:strokeColor="@color/chestnut"
+                app:strokeColor="@color/xai_hairline"
                 style="?attr/materialButtonOutlinedStyle" />
 
             <com.google.android.material.button.MaterialButton
@@ -189,35 +189,27 @@
                 android:layout_weight="1"
                 android:text="Cloud"
                 app:backgroundTint="@color/toggle_background_selector"
-                app:strokeColor="@color/chestnut"
+                app:strokeColor="@color/xai_hairline"
                 style="?attr/materialButtonOutlinedStyle" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- CoordinatorLayout for RecyclerView and FAB -->
-    <androidx.coordinatorlayout.widget.CoordinatorLayout
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewModels"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:cacheColorHint="@android:color/transparent"
+        android:background="@color/xai_canvas"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        android:scrollbars="vertical"/>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerViewModels"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:cacheColorHint="@android:color/transparent"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            android:scrollbars="vertical"/>
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fabAddModel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|end"
-            android:layout_margin="16dp"
-            android:contentDescription="Add Model"
-            android:src="@drawable/ic_addmod"
-            app:backgroundTint="@color/chestnut"
-            app:layout_behavior="com.google.android.material.behavior.HideBottomViewOnScrollBehavior" />
-
-    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/fabAddModel"
+        style="@style/Widget.Grokion.Button.Text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add"
+        android:contentDescription="Add Model" />
 
 </LinearLayout>

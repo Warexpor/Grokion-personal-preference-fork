@@ -118,6 +118,7 @@
                 android:text="AI message here"
                 android:textColor="@color/xai_body"
                 android:textColorLink="@color/xai_link"
+                android:textColorHighlight="@color/xai_text_highlight"
                 android:textIsSelectable="true"
                 android:textSize="16sp"
                 android:lineSpacingMultiplier="1.55"

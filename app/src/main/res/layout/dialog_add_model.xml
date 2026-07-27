@@ -1,92 +1,97 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="16dp"
-    android:background="?attr/colorSurface">
+    android:fillViewport="true">
 
-    <com.google.android.material.textfield.TextInputLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Model Name"
-        app:boxStrokeColor="?attr/colorPrimary"
-        app:hintTextColor="?attr/colorPrimary"
-        android:textColorHint="?android:attr/textColorSecondary">
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:background="@drawable/rounded_dialog_bg">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/editModelName"
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="?android:attr/textColorPrimary"
-            />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:hint="Model Name"
+            app:boxStrokeColor="@color/xai_hairline"
+            app:hintTextColor="@color/xai_mute"
+            app:boxBackgroundMode="outline">
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="API Identifier"
-        android:layout_marginTop="8dp"
-        app:boxStrokeColor="?attr/colorPrimary"
-        app:hintTextColor="?attr/colorPrimary"
-        android:textColorHint="?android:attr/textColorSecondary">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editModelName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/xai_ink"
+                android:singleLine="true" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/editApiIdentifier"
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="?android:attr/textColorPrimary"
-            />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:hint="API Identifier"
+            android:layout_marginTop="8dp"
+            app:boxStrokeColor="@color/xai_hairline"
+            app:hintTextColor="@color/xai_mute"
+            app:boxBackgroundMode="outline">
 
-    <androidx.appcompat.widget.SwitchCompat
-        android:id="@+id/switchVisionCapable"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Vision Capable"
-        android:textColor="?android:attr/textColorPrimary"
-        android:visibility="visible"
-        />
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editApiIdentifier"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/xai_ink"
+                android:singleLine="true" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-    <androidx.appcompat.widget.SwitchCompat
-        android:id="@+id/switchReasoningCapable"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Reasoning Capable"
-        android:textColor="?android:attr/textColorPrimary"
-        android:visibility="visible"
-        />
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/switchVisionCapable"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Vision Capable"
+            android:textColor="@color/xai_ink" />
 
-    <androidx.appcompat.widget.SwitchCompat
-        android:id="@+id/switchLanModel"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="LAN Model"
-        android:textColor="?android:attr/textColorPrimary" />
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/switchReasoningCapable"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Reasoning Capable"
+            android:textColor="@color/xai_ink" />
 
-    <androidx.appcompat.widget.SwitchCompat
-        android:id="@+id/switchImageGen"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Image Generation"
-        android:textColor="?android:attr/textColorPrimary" />
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/switchLanModel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="LAN Model"
+            android:textColor="@color/xai_ink" />
 
-    <androidx.appcompat.widget.SwitchCompat
-        android:id="@+id/switchTranscription"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Transcription"
-        android:textColor="?android:attr/textColorPrimary" />
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/switchImageGen"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Image Generation"
+            android:textColor="@color/xai_ink" />
 
-    <androidx.appcompat.widget.SwitchCompat
-        android:id="@+id/switchIsFree"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Is Free Model"
-        android:textColor="?android:attr/textColorPrimary" />
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/switchTranscription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Transcription"
+            android:textColor="@color/xai_ink" />
 
-</LinearLayout>
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/switchIsFree"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Is Free Model"
+            android:textColor="@color/xai_ink" />
+
+    </LinearLayout>
+</ScrollView>

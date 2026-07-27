@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
+    android:background="?android:attr/selectableItemBackground"
     android:clickable="true"
     android:focusable="true"
     android:orientation="vertical">
@@ -13,7 +13,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="16dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="4dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
         android:gravity="center_vertical">
 
         <TextView
@@ -22,35 +25,34 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Preset Title"
-            android:textColor="?android:attr/textColorPrimary"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:textColor="@color/xai_ink"
+            android:textSize="16sp"
+            android:maxLines="1"
+            android:ellipsize="end" />
 
-        <!-- Expand chevron -->
         <ImageView
             android:id="@+id/iconExpand"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:layout_marginEnd="8dp"
-            android:background="@drawable/br_circle"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="4dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Expand/collapse"
             android:padding="8dp"
             android:rotation="0"
             android:src="@drawable/ic_arrow_downward"
-            app:tint="?android:attr/textColorSecondary" />
+            app:tint="@color/xai_mute" />
 
         <ImageView
             android:id="@+id/iconEditPreset"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:background="@drawable/br_circle"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Edit preset"
             android:padding="8dp"
             android:src="@drawable/ic_editnote"
-            app:tint="?android:attr/textColorSecondary" />
+            app:tint="@color/xai_mute" />
     </LinearLayout>
 
-    <!-- Collapsible container for preview details -->
     <LinearLayout
         android:id="@+id/containerPresetSubtitle"
         android:layout_width="match_parent"
@@ -67,14 +69,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Model • System Message • Flags"
-            android:textColor="?android:attr/textColorSecondary"
+            android:textColor="@color/xai_mute"
             android:textSize="14sp" />
     </LinearLayout>
 
-    <!-- Divider: Using colorOutline or colorOnSurface with low alpha for a clean look -->
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="?attr/colorOutlineVariant" />
+        android:background="@color/xai_hairline" />
 
 </LinearLayout>

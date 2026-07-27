@@ -23,10 +23,10 @@ object BiometricGateHelper {
             BiometricManager.BIOMETRIC_SUCCESS -> showPrompt(activity, onUnlocked)
             else -> {
                 prefs.saveBiometricEnabled(false)
-                Toast.makeText(
+                AppToast.makeText(
                     activity,
                     "Biometrics unavailable—proceeding without lock.",
-                    Toast.LENGTH_LONG
+                    AppToast.LENGTH_LONG
                 ).show()
                 onUnlocked()
             }
@@ -43,12 +43,12 @@ object BiometricGateHelper {
             executor,
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    Toast.makeText(activity, "Authentication error", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(activity, "Authentication error", AppToast.LENGTH_SHORT).show()
                     activity.finish()
                 }
 
                 override fun onAuthenticationFailed() {
-                    Toast.makeText(activity, "Authentication failed", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(activity, "Authentication failed", AppToast.LENGTH_SHORT).show()
                     activity.finish()
                 }
 

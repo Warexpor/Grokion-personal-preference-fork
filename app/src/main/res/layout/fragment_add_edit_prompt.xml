@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:fitsSystemWindows="true"
-    android:background="?attr/colorSurface"
+    android:background="@color/xai_canvas"
     tools:context=".AddEditPromptFragment">
 
     <com.google.android.material.appbar.MaterialToolbar
@@ -14,8 +14,8 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         app:title="Add/Edit Prompt"
-        app:titleTextColor="?android:attr/textColorPrimary"
-        android:background="?attr/colorSurface"
+        app:titleTextColor="@color/xai_ink"
+        android:background="@color/xai_canvas"
         app:navigationIcon="@drawable/is_backarrow"
         app:navigationIconTint="@color/xai_ink"
         app:menu="@menu/add_edit_prompt_menu" />
@@ -36,8 +36,8 @@
                 android:id="@+id/edit_text_prompt_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="?android:attr/textColorPrimary"
-                android:textColorHint="?android:attr/textColorSecondary" />
+                android:textColor="@color/xai_ink"
+                android:textColorHint="@color/xai_mute" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -53,8 +53,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="top"
-                android:textColor="?android:attr/textColorPrimary"
-                android:textColorHint="?android:attr/textColorSecondary" />
+                android:textColor="@color/xai_ink"
+                android:textColorHint="@color/xai_mute" />
         </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
 </LinearLayout>

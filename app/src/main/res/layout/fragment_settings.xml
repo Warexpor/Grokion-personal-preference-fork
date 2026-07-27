@@ -53,7 +53,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/settingsRowAppearance"
-                    style="@style/Widget.Material3.Button.TextButton"
+                    style="@style/Widget.Grokion.Button.Text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="start|center_vertical"
@@ -68,7 +68,7 @@
                     app:iconPadding="16dp"
                     app:iconSize="22dp"
                     app:iconTint="@color/xai_ink"
-                    app:rippleColor="@color/xai_canvas_mid" />
+                    app:rippleColor="@color/press_ripple_none" />
 
                 <View
                     android:layout_width="match_parent"
@@ -78,7 +78,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/settingsRowHaptics"
-                    style="@style/Widget.Material3.Button.TextButton"
+                    style="@style/Widget.Grokion.Button.Text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="start|center_vertical"
@@ -93,7 +93,7 @@
                     app:iconPadding="16dp"
                     app:iconSize="22dp"
                     app:iconTint="@color/xai_ink"
-                    app:rippleColor="@color/xai_canvas_mid" />
+                    app:rippleColor="@color/press_ripple_none" />
 
                 <View
                     android:layout_width="match_parent"
@@ -103,7 +103,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/settingsRowAdvanced"
-                    style="@style/Widget.Material3.Button.TextButton"
+                    style="@style/Widget.Grokion.Button.Text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="start|center_vertical"
@@ -118,7 +118,7 @@
                     app:iconPadding="16dp"
                     app:iconSize="22dp"
                     app:iconTint="@color/xai_ink"
-                    app:rippleColor="@color/xai_canvas_mid" />
+                    app:rippleColor="@color/press_ripple_none" />
             </LinearLayout>
 
             <TextView
@@ -141,7 +141,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/settingsRowModels"
-                    style="@style/Widget.Material3.Button.TextButton"
+                    style="@style/Widget.Grokion.Button.Text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="start|center_vertical"
@@ -156,7 +156,7 @@
                     app:iconPadding="16dp"
                     app:iconSize="22dp"
                     app:iconTint="@color/xai_ink"
-                    app:rippleColor="@color/xai_canvas_mid" />
+                    app:rippleColor="@color/press_ripple_none" />
 
                 <View
                     android:layout_width="match_parent"
@@ -166,7 +166,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/settingsRowData"
-                    style="@style/Widget.Material3.Button.TextButton"
+                    style="@style/Widget.Grokion.Button.Text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="start|center_vertical"
@@ -181,7 +181,7 @@
                     app:iconPadding="16dp"
                     app:iconSize="22dp"
                     app:iconTint="@color/xai_ink"
-                    app:rippleColor="@color/xai_canvas_mid" />
+                    app:rippleColor="@color/press_ripple_none" />
             </LinearLayout>
 
             <!-- STT disabled: Voice settings section
@@ -205,7 +205,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/settingsRowVoice"
-                    style="@style/Widget.Material3.Button.TextButton"
+                    style="@style/Widget.Grokion.Button.Text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="start|center_vertical"
@@ -220,7 +220,7 @@
                     app:iconPadding="16dp"
                     app:iconSize="22dp"
                     app:iconTint="@color/xai_ink"
-                    app:rippleColor="@color/xai_canvas_mid" />
+                    app:rippleColor="@color/press_ripple_none" />
             </LinearLayout>
             -->
 

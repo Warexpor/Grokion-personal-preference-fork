@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:fitsSystemWindows="true"
-    android:background="?attr/colorSurface"
+    android:background="@color/xai_canvas"
     tools:context=".PresetEditFragment">
 
     <com.google.android.material.appbar.MaterialToolbar
@@ -14,8 +14,8 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         app:title="Edit Preset"
-        app:titleTextColor="?android:attr/textColorPrimary"
-        android:background="?attr/colorSurface"
+        app:titleTextColor="@color/xai_ink"
+        android:background="@color/xai_canvas"
         app:navigationIcon="@drawable/is_backarrow"
         app:navigationIconTint="@color/xai_ink"
         app:menu="@menu/add_edit_preset_menu" />
@@ -37,15 +37,13 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="24dp"
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                app:boxStrokeColor="?attr/colorPrimary"
-                app:hintTextColor="?attr/colorPrimary"
                 android:hint="Title">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/editPresetTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textColor="?android:attr/textColorPrimary"
+                    android:textColor="@color/xai_ink"
                     android:textSize="16sp"
                     android:inputType="textCapWords" />
             </com.google.android.material.textfield.TextInputLayout>
@@ -55,8 +53,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="24dp"
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                app:boxStrokeColor="?attr/colorPrimary"
-                app:hintTextColor="?attr/colorPrimary"
                 app:endIconMode="dropdown_menu"
                 android:hint="Model">
 
@@ -64,8 +60,8 @@
                     android:id="@+id/autoCompleteModel"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textColorHint="?android:attr/textColorSecondary"
+                    android:textColor="@color/xai_ink"
+                    android:textColorHint="@color/xai_mute"
                     android:textSize="16sp"
                     android:focusable="true"
                     android:clickable="true"
@@ -78,8 +74,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="24dp"
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                app:boxStrokeColor="?attr/colorPrimary"
-                app:hintTextColor="?attr/colorPrimary"
                 app:endIconMode="dropdown_menu"
                 android:hint="System Message">
 
@@ -88,8 +82,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="top"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textColorHint="?android:attr/textColorSecondary"
+                    android:textColor="@color/xai_ink"
+                    android:textColorHint="@color/xai_mute"
                     android:textSize="16sp"
                     android:focusable="true"
                     android:clickable="true"
@@ -103,7 +97,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
                 android:text="Streaming"
-                android:textColor="?android:attr/textColorPrimary"
+                android:textColor="@color/xai_ink"
                 android:textSize="16sp" />
 
             <androidx.appcompat.widget.SwitchCompat
@@ -112,7 +106,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
                 android:text="Reasoning"
-                android:textColor="?android:attr/textColorPrimary"
+                android:textColor="@color/xai_ink"
                 android:textSize="16sp" />
 
             <androidx.appcompat.widget.SwitchCompat
@@ -121,7 +115,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
                 android:text="Conversation Mode"
-                android:textColor="?android:attr/textColorPrimary"
+                android:textColor="@color/xai_ink"
                 android:textSize="16sp" />
 
             <androidx.appcompat.widget.SwitchCompat
@@ -130,7 +124,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="32dp"
                 android:text="Web Search"
-                android:textColor="?android:attr/textColorPrimary"
+                android:textColor="@color/xai_ink"
                 android:textSize="16sp" />
 
             <androidx.appcompat.widget.SwitchCompat
@@ -138,7 +132,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="32dp"
-                android:textColor="?android:attr/textColorPrimary"
+                android:textColor="@color/xai_ink"
                 android:textSize="16sp"
                 android:text="Tools" />
 
@@ -150,22 +144,18 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/buttonCancel"
-                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    style="@style/Widget.Grokion.Button.Text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="12dp"
-                    android:text="Cancel"
-                    app:backgroundTint="?attr/colorOutline"
-                    app:strokeColor="?attr/colorOutline"
-                    android:textColor="?attr/colorOnSurface" />
+                    android:text="Cancel" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/buttonSave"
+                    style="@style/Widget.Grokion.Button.Text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Save"
-                    app:backgroundTint="?attr/colorPrimary"
-                    android:textColor="?attr/colorOnPrimary" />
+                    android:text="Save" />
 
             </LinearLayout>
 

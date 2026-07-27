@@ -49,7 +49,7 @@ class HelpFragment : Fragment(R.layout.fragment_help) {
                 val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                 requireContext().contentResolver.takePersistableUriPermission(uri, takeFlags)
                 SharedPreferencesHelper(requireContext()).saveSafFolderUri(uri.toString())
-                Toast.makeText(requireContext(), "Folder updated! Tools should now work.", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Folder updated! Tools should now work.", AppToast.LENGTH_SHORT).show()
             }
         }
     }
@@ -73,6 +73,7 @@ class HelpFragment : Fragment(R.layout.fragment_help) {
             "ic_rechat" to R.drawable.ic_rechat,
             "ic_tune" to R.drawable.ic_tune,
             "ic_schats" to R.drawable.ic_schats,
+            "ic_new_chat" to R.drawable.ic_new_chat,
             "ic_savechat" to R.drawable.ic_savechat,
             "ic_copi" to R.drawable.ic_copi,
             "ic_markdown" to R.drawable.ic_markdown,
@@ -195,8 +196,8 @@ class HelpFragment : Fragment(R.layout.fragment_help) {
             ## ✨ Core Features
 
             *   **Multi-Model Support**: Easily switch between different LLM models.
-            *   **Save & Load Chats**: Save sessions and continue conversations later.
-            *   **Import & Export**: Manage your chat histories.
+            *   **History & Autosave**: Conversations save automatically to History as you chat.
+            *   **Import & Export**: Back up or restore chat history from History (Import/Export) or Settings → Data & Privacy.
             *   **Streaming Responses**: Choose between real-time streaming or full responses.
             *   **Chat with Images**: Use models that support vision.
             *   **Generate Images**: Use models that support it.
@@ -206,6 +207,12 @@ class HelpFragment : Fragment(R.layout.fragment_help) {
             ---
 
             ## 📱 Main Chat Interface
+
+            ### Top Bar (Grok Ask shell)
+            *   **Model chip** {{ic_tune}} : Tap the **model name** at the top to open model selection and switch models.
+            *   **Menu** {{ic_menudot}} : Opens the overflow menu (copy chat, export formats, reasoning, web search, stream, tools, presets, settings, and more).
+            *   **History** {{ic_schats}} : Opens the **History** drawer with your saved conversations. Search, pin, rename, or delete from the overflow on each row.
+            *   **New chat** {{ic_new_chat}} : Starts a fresh conversation. Your current chat stays in History. Long-press to skip the confirmation dialog.
 
             ### Interacting with Messages
             *   **Copy AI Response**: Tap the **robot icon** to copy the AI's message. Long Press to copy Markdown RAW.
@@ -229,17 +236,11 @@ class HelpFragment : Fragment(R.layout.fragment_help) {
             *   **Image Button** {{ic_imgup}} : Enabled for vision models. Click icon to attach a single image or take picture up to 12MB in size. Long-click goes straight to camera. Also, PDF pages. Select a PDF, then select a page to send(if single page, no page selection appears.) Uses on-device native Android tools to convert to data for the vision model. Select additional pages in following rounds of the chat. Note: if the page has a white background the conversion may make that transparent, but this shouldn't be an issue with the vision model; It just may look different in the image preview you see.
             *   **Palette Button** {{ic_palette}} : If using Nano-Banana, tap to set aspect ratio of returned generated image.
             
-            ### Other Buttons
-            *   **Clear Chat**(button on bottom left) {{ic_rechat}} : Starts a new chat with the current model. Long-press to start a new chat without a warning alert.
-            *   **System Message Button** {{ic_tune}} : Opens your library of system messages. If you currently are on a non-default System Message you can long-press and it will auto switch to your default.
-            *   **Saved Chats** {{ic_schats}} : Opens a list of your saved conversations.
-            *   **Save Chat** {{ic_savechat}} : Saves the chat. Only text chats can be saved. You can name it yourself or let an AI generate a title(google/gemma-4-26b-a4b-it is used and the entire chat is sent to it for this function.)
-            
             ---
-
+            
             ##  Menu
 
-            Tap the **menu button** {{ic_menudot}} (the one on the lower left with nine dots) to show or hide the main menu. The menu will also hide if you tap outside of it.
+            Tap the **menu button** {{ic_menudot}} in the top bar to open the overflow menu.
             If your prompt is filled with spelling/grammar errors you can long-press the menu button to send the prompt to model "google/gemma-4-26b-a4b-it" to fix it and it will automatically correct the prompt in the prompt box.
 
             ### Contextual Buttons (Enabled during a chat)
@@ -266,7 +267,7 @@ class HelpFragment : Fragment(R.layout.fragment_help) {
             *   **Copy/Back to App Button** {{backcopy}} : Copies last response and returns to the previous app.  Appears when notification clicked or text shared to Preset target. Long-press: copies response, clears chat and returns to the previous app.
            
             ### Settings Screen
-            *   **Extended Dock** {{ic_extend}} : Toggles extended dock on or off. If on, an extra row is added to the bottom dock.
+            *   **Power tools bar**: Shows the extended dock accessories and top tool strip together.
             *   **Scroll Progress Indicator** : It gives you an indication where you are in the chat.
             *   **Scroll Buttons on screen** {{ic_scrollers}} : If toggled on, shows up and down buttons to scroll on the chat screen. Tap them to go to top or bottom of chat respectively. Long-press them to scroll one screen's length in respective direction.
             *   **Volume Keys Scroll to Top/Bottom** : On the main chat screen, if this setting is enabled, single click of volume button up/down takes you one page up/down respectively. Long-click of volume button up/down takes you to chat very top/bottom respectively. If no messages are present it will work as a normal volume key.  
@@ -311,10 +312,14 @@ class HelpFragment : Fragment(R.layout.fragment_help) {
             *   **Add to Your List**: Tap any model to add it to your "Your Models" screen.
             *   **Refresh**: The list will refresh when opened.
             
-            ### "Saved Chats" Screen
-            *   **Import/Export**: Use the menu bar icons to manage your saved chats.
-            *   **Manage**: Tap the edit button on a chat to **Rename** or **Delete** it.
-            *   **Search**: Tap to search through the saved chats.
+            ### "History" Screen
+            *   **Open**: Tap **History** {{ic_schats}} in the top bar (or the history drawer when embedded in chat).
+            *   **Import/Export**: Use **Import** and **Export** in the History bottom bar, or **Settings → Data & Privacy**.
+            *   **Rename**: Use the overflow menu on a conversation to rename its title.
+            *   **Pin / Delete**: Pin important chats or delete from the row overflow menu.
+            *   **Search**: Use the search field in the History bottom bar.
+            *   **Autosave**: Conversations are saved automatically while you chat. Rename titles from History overflow.
+            *   **Images**: Attached or generated images may not persist when you reopen a saved conversation.
 
             ### "System Message" Screen
             *   **Defaults**: Comes with "Default", "Spelling and Grammar corrector", and "Summarizer".
@@ -339,7 +344,7 @@ class HelpFragment : Fragment(R.layout.fragment_help) {
              *   Image generation models are denoted by a palette icon at the left of the model list item. The palette icon appears at the top of the main chat when you have a image generation model selected.
              *   Images are downloaded to your Downloads folder.
              *   Tap on the generated image in the chat to open it in your default image viewer.
-             *   The generated images are not stored when you save the chat.
+             *   The generated images are not stored when conversations are saved to History.
              *   The generated images are not passed back in the chat. If you want the model to edit one you need to attach it manually.
             
             ---
@@ -361,7 +366,7 @@ class HelpFragment : Fragment(R.layout.fragment_help) {
             
              *   You can enable it and make additional reasoing settings here. Long-press on reasoning button to make its screen appear.
              *   Enable reasoning traces in response, max reasoning tokens, and effort can be set here.
-             *   Reasoning traces are not passed in the chat(they display only). Nor are they included in the whole chat pdf(but they will be in a singular response pdf). They are not saved when you save a chat.
+             *   Reasoning traces are not passed in the chat(they display only). Nor are they included in the whole chat pdf(but they will be in a singular response pdf). They are not saved in History.
              *   When enabled the Reasoning button will have a bright orange outline.
              
             ---
@@ -379,8 +384,8 @@ class HelpFragment : Fragment(R.layout.fragment_help) {
             *   Pasting in to the prompt box strips any unnecessary rich text formatting automatically.
             *   Costs are incurred with using OpenRouter models. Familiarize yourself with model costs at [https://openrouter.ai/models/](https://openrouter.ai/models/)
             *   Markdown content is well-supported in AI response chat messages.
-            *   If you want to save your saved chats and/or System Messages, be sure to export them before you uninstall the app, otherwise they will be gone for good.
-            *   Imports are programmed to not overwrite: System Messages skip duplicates by title, while Saved Chats add new entries even when titles match, leaving all existing items intact.
+            *   If you want to keep your chat history and/or System Messages, export them before you uninstall the app, otherwise they will be gone for good.
+            *   Imports are programmed to not overwrite: System Messages skip duplicates by title, while History imports add new entries even when titles match, leaving all existing items intact.
             *   This open-source app is provided 'as-is' without any warranty, express or implied. Use at your own discretion.
             *   OpenRouter allows Presets which allow you to manage your LLM configurations—models, provider routing, and other features. You can use Presets in Grokion by just manually adding them in your model list. [https://openrouter.ai/docs/features/presets/](https://openrouter.ai/docs/features/presets/)
             *   The app is a target for multiple text shares: "Prompt"(set the prompt to the shared text), "System Message Chooser"(set the prompt to the shared text and sets the System Message as chosen in the popup), "Auto Send"(Auto sends the prompt to current model with current settings), and "Presets"(Allows the user to apply a chosen preset and options for the shared text.) You can also press the volume up or down buttons on this screen to stop/send the recording for transcription.

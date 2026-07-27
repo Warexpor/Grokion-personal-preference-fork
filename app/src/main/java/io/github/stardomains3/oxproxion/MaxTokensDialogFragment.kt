@@ -43,7 +43,7 @@ class MaxTokensDialogFragment : DialogFragment() {
             val maxTokensInt = maxTokensStr.toIntOrNull()
             if (maxTokensStr.isNotBlank() && maxTokensInt != null && maxTokensInt in 1..999999) {
                 sharedPreferencesHelper.saveMaxTokens(maxTokensStr)
-                Toast.makeText(requireContext(), "Max tokens saved.", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Max tokens saved.", AppToast.LENGTH_SHORT).show()
                 dismiss()
             } else {
                 editTextMaxTokens.error = "Please enter a number between 1 and 999,999"

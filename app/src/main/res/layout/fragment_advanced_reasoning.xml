@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="?attr/colorSurface"
+    android:background="@color/xai_canvas"
     android:fitsSystemWindows="true"
     tools:context=".AdvancedReasoningFragment">
 
@@ -14,8 +14,8 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         app:title="Advanced Reasoning"
-        app:titleTextColor="?android:attr/textColorPrimary"
-        android:background="?attr/colorSurface"
+        app:titleTextColor="@color/xai_ink"
+        android:background="@color/xai_canvas"
         app:navigationIcon="@drawable/is_backarrow"
         app:navigationIconTint="@color/xai_ink" />
 
@@ -29,24 +29,22 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Explanation TextView -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:text="Note: You can set Effort OR Max Reasoning Tokens, not both. Setting Max Reasoning Tokens disables Effort. To use Effort, make sure Max Reasoning Tokens has no value."
-                android:textColor="?android:attr/textColorSecondary"
+                android:textColor="@color/xai_mute"
                 android:textSize="14sp"
                 android:layout_marginBottom="16dp"
                 android:gravity="center" />
 
-            <!-- Effort Selector -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:text="Effort Level:"
-                android:textColor="?attr/colorPrimary"
+                android:textColor="@color/xai_ink"
                 android:textSize="18sp"
                 android:layout_marginBottom="16dp" />
 
@@ -70,6 +68,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="Minimal"
+                        app:strokeColor="@color/xai_hairline"
                         style="?attr/materialButtonOutlinedStyle" />
 
                     <com.google.android.material.button.MaterialButton
@@ -78,6 +77,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="Low"
+                        app:strokeColor="@color/xai_hairline"
                         style="?attr/materialButtonOutlinedStyle" />
 
                     <com.google.android.material.button.MaterialButton
@@ -86,6 +86,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="Medium"
+                        app:strokeColor="@color/xai_hairline"
                         style="?attr/materialButtonOutlinedStyle" />
 
                     <com.google.android.material.button.MaterialButton
@@ -94,12 +95,12 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="High"
+                        app:strokeColor="@color/xai_hairline"
                         style="?attr/materialButtonOutlinedStyle" />
 
                 </com.google.android.material.button.MaterialButtonToggleGroup>
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <!-- Include Toggle -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -113,9 +114,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="Include in Response:"
-                    android:textColor="?attr/colorPrimary"
-                    android:textSize="16sp"
-                    />
+                    android:textColor="@color/xai_ink"
+                    android:textSize="16sp" />
 
                 <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/includeSwitch"
@@ -124,13 +124,12 @@
 
             </LinearLayout>
 
-            <!-- Max Tokens Input -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:text="Max Reasoning Tokens:"
-                android:textColor="?attr/colorPrimary"
+                android:textColor="@color/xai_ink"
                 android:textSize="16sp"
                 android:layout_marginBottom="16dp" />
 
@@ -138,8 +137,7 @@
                 android:layout_width="200dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                app:boxStrokeColor="?attr/colorPrimary"
-                app:hintTextColor="?attr/colorPrimary"
+                style="@style/Xai.TextInputLayout"
                 app:boxCornerRadiusBottomEnd="8dp"
                 app:boxCornerRadiusBottomStart="8dp"
                 app:boxCornerRadiusTopEnd="8dp"
@@ -151,8 +149,7 @@
                     android:layout_height="wrap_content"
                     android:hint="Optional"
                     android:inputType="number"
-                    android:textColor="?android:attr/textColorPrimary"
-                    />
+                    android:textColor="@color/xai_ink" />
 
             </com.google.android.material.textfield.TextInputLayout>
 

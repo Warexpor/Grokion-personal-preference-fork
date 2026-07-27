@@ -117,7 +117,11 @@ class ChatAdapter(
                     if (text != "working..." && text.isNotBlank()) {
                         streamReveal.setTarget(text)
                     }
-                    notifyItemChanged(messages.size - 1, "STREAMING")
+                    // Holder already painting via Choreographer — skip notify. Rebind+markwon
+                    // every token races stick-to-bottom scrollBy and flashes the UI.
+                    if (streamRevealBoundHolder == null || text == "working..." || text.isBlank()) {
+                        notifyItemChanged(messages.size - 1, "STREAMING")
+                    }
                 }
             }
         }
@@ -586,7 +590,7 @@ class ChatAdapter(
                             }
                             itemView.context.startActivity(intent)
                         } catch (e: Exception) {
-                            Toast.makeText(itemView.context, "Could not open image", Toast.LENGTH_SHORT).show()
+                            AppToast.makeText(itemView.context, "Could not open image", AppToast.LENGTH_SHORT).show()
                         }
                     }
                 } catch (e: Exception) {
@@ -613,7 +617,7 @@ class ChatAdapter(
                 val clipboard = itemView.context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val clip = ClipData.newPlainText("Copied Markdown", rawUserContent)
                 clipboard.setPrimaryClip(clip)
-                Toast.makeText(itemView.context, "Raw Markdown copied to clipboard", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(itemView.context, "Raw Markdown copied to clipboard", AppToast.LENGTH_SHORT).show()
                 true
             }
             editButton.setOnClickListener {
@@ -760,9 +764,9 @@ class ChatAdapter(
         fun bindTextOnly(message: FlexibleMessage) {
             attachStreamRevealHolder(this)
             val text = getMessageText(message.content)
-            bindReasoning(message, streaming = true)
 
             if (text == "working..." || text.isBlank()) {
+                bindReasoning(message, streaming = true)
                 if (text == "working...") {
                     streamReveal.reset()
                     messageTextView.text = " "
@@ -780,12 +784,17 @@ class ChatAdapter(
                 return
             }
 
+            // Live stream: only push target. Choreographer frames paint — sync rebind here
+            // fights stick-to-bottom and causes flash.
+            pulseAnimator?.cancel()
+            pulseAnimator = null
+            messageContainer.alpha = 1f
             streamReveal.setTarget(text)
-            val displayed = streamReveal.displayed().ifEmpty {
-                text.take(1.coerceAtMost(text.length))
+            if (streamReveal.displayed().isEmpty()) {
+                bindReasoning(message, streaming = true)
+                val seed = text.take(1.coerceAtMost(text.length))
+                renderStreamFrame(seed, fadeFrom = seed.length)
             }
-            // Already-painted prefix: no re-fade; Choreographer frames pass real fadeFrom.
-            renderStreamFrame(displayed, fadeFrom = displayed.length)
         }
 
         fun bind(message: FlexibleMessage, position: Int, isSpeaking: Boolean, currentPosition: Int) {
@@ -899,7 +908,7 @@ class ChatAdapter(
                             }
                             itemView.context.startActivity(intent)
                         } catch (e: Exception) {
-                            Toast.makeText(itemView.context, "Could not open image", Toast.LENGTH_SHORT).show()
+                            AppToast.makeText(itemView.context, "Could not open image", AppToast.LENGTH_SHORT).show()
                         }
                     }
                 } catch (e: Exception) {
@@ -964,7 +973,7 @@ class ChatAdapter(
                 val clipboard = itemView.context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val clip = ClipData.newPlainText("Copied Markdown", fullRawMarkdown)
                 clipboard.setPrimaryClip(clip)
-                Toast.makeText(itemView.context, "Raw Markdown copied to clipboard", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(itemView.context, "Raw Markdown copied to clipboard", AppToast.LENGTH_SHORT).show()
                 true
             }
 
@@ -985,7 +994,7 @@ class ChatAdapter(
                     putExtra(Intent.EXTRA_SUBJECT, "AI Assistant Raw Markdown")
                 }
                 itemView.context.startActivity(Intent.createChooser(shareIntent, "Share raw markdown via"))
-                Toast.makeText(itemView.context, "Sharing raw markdown", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(itemView.context, "Sharing raw markdown", AppToast.LENGTH_SHORT).show()
                 true
             }
 
@@ -1002,7 +1011,7 @@ class ChatAdapter(
                     ForegroundService.stopTtsSpeaking()
                     onSpeakText(textToSpeak, position)
                 } else {
-                    Toast.makeText(itemView.context, "No text to speak", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(itemView.context, "No text to speak", AppToast.LENGTH_SHORT).show()
                 }
             }
 
@@ -1012,7 +1021,7 @@ class ChatAdapter(
                     ForegroundService.stopTtsSpeaking()
                     onSynthesizeToWavFile(textToSpeak, position)
                 } else {
-                    Toast.makeText(itemView.context, "No text to save", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(itemView.context, "No text to save", AppToast.LENGTH_SHORT).show()
                 }
                 true
             }
@@ -1064,7 +1073,7 @@ class ChatAdapter(
                             .show()
                     } else {
                         // Keep the failure toast as it provides immediate error feedback
-                        Toast.makeText(itemView.context, "Failed to save PDF", Toast.LENGTH_SHORT).show()
+                        AppToast.makeText(itemView.context, "Failed to save PDF", AppToast.LENGTH_SHORT).show()
                     }
                 }
             }

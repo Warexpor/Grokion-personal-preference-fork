@@ -59,6 +59,8 @@ class SharedPreferencesHelper(context: Context) {
         const val LAN_PROVIDER_HERMES_AGENT = "hermes_agent"  // NEW - Hermes Agent provider
         private const val KEY_AUTO_BACK = "auto_back_enabled"
         private const val KEY_AUTO_SAVE_CHATS = "auto_save_chats"
+        private const val KEY_CHAT_FORK_PREFIX = "chat_fork_"
+        private const val KEY_CHAT_FORK_INDEX_PREFIX = "chat_fork_idx_"
         private const val KEY_VOLUME_SCROLL = "volume_scroll_enabled"
         private const val KEY_ENABLED_TOOLS = "enabled_tools"
         private const val KEY_TOOLS_ENABLED = "tools_enabled_preference"
@@ -450,12 +452,33 @@ class SharedPreferencesHelper(context: Context) {
     fun saveAutoBack(enabled: Boolean) {
         mainPrefs.edit { putBoolean(KEY_AUTO_BACK, enabled) }
     }
-    fun getAutoSaveChats(): Boolean {
-        return mainPrefs.getBoolean(KEY_AUTO_SAVE_CHATS, false)
-    }
+    /** Always-on; preference key retained only for migration compatibility. */
+    fun getAutoSaveChats(): Boolean = true
     fun saveAutoSaveChats(enabled: Boolean) {
-        mainPrefs.edit { putBoolean(KEY_AUTO_SAVE_CHATS, enabled) }
+        mainPrefs.edit { putBoolean(KEY_AUTO_SAVE_CHATS, true) }
     }
+
+    /** Stashed alternate message tree for one-chat forks (JSON list of FlexibleMessage). */
+    fun saveChatFork(sessionId: Long, forkIndex: Int, messagesJson: String) {
+        mainPrefs.edit {
+            putInt("$KEY_CHAT_FORK_INDEX_PREFIX$sessionId", forkIndex)
+            putString("$KEY_CHAT_FORK_PREFIX$sessionId", messagesJson)
+        }
+    }
+
+    fun getChatForkIndex(sessionId: Long): Int =
+        mainPrefs.getInt("$KEY_CHAT_FORK_INDEX_PREFIX$sessionId", -1)
+
+    fun getChatForkMessagesJson(sessionId: Long): String? =
+        mainPrefs.getString("$KEY_CHAT_FORK_PREFIX$sessionId", null)
+
+    fun clearChatFork(sessionId: Long) {
+        mainPrefs.edit {
+            remove("$KEY_CHAT_FORK_INDEX_PREFIX$sessionId")
+            remove("$KEY_CHAT_FORK_PREFIX$sessionId")
+        }
+    }
+
     fun setOpenRouterInfoDismissed(dismissed: Boolean) {
         mainPrefs.edit { putBoolean(KEY_INFO_BAR_DISMISSED, dismissed) }
     }

@@ -204,7 +204,7 @@ class SpellCheckActivity : AppCompatActivity() {
         }
 
         if (isReadOnly) {
-            Toast.makeText(this, "Text is read-only. AI cannot replace it here.", Toast.LENGTH_LONG).show()
+            AppToast.makeText(this, "Text is read-only. AI cannot replace it here.", AppToast.LENGTH_LONG).show()
             finish()
             return
         }

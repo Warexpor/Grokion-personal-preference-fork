@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="?attr/colorSurface"
+    android:background="@color/xai_canvas"
     android:fitsSystemWindows="true"
     tools:context=".PresetsListFragment">
 
@@ -13,47 +13,49 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorSurface"
+        android:background="@color/xai_canvas"
         app:navigationIcon="@drawable/is_backarrow"
         app:navigationIconTint="@color/xai_ink"
         app:title="Presets"
-        app:titleTextColor="?android:attr/textColorPrimary" >
+        app:titleTextColor="@color/xai_ink" />
 
-        <!-- Note: If you want the switch to look like the Settings layout,
-             it is best placed inside a LinearLayout within the Toolbar or
-             handled via a Menu. For now, I have kept your structure but themed it. -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="8dp"
+        android:background="@color/xai_canvas">
+
         <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/switchClearChat"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:layout_marginTop="8dp"
-            android:textSize="14sp"
-            android:layout_gravity="end|center_vertical"
             android:text="Clear chat?"
+            android:textColor="@color/xai_ink"
+            android:textSize="14sp"
             android:contentDescription="Toggle to clear chat history when applying a preset"
             app:useMaterialThemeColors="true" />
-    </com.google.android.material.appbar.MaterialToolbar>
-
+    </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewPresets"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:padding="8dp"
+        android:background="@color/xai_canvas"
         android:scrollbars="vertical"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/fabAddPreset"
-        android:layout_width="wrap_content"
+        style="@style/Widget.Grokion.Button.Text"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        android:contentDescription="Add Preset"
-        android:src="@drawable/ic_addmod"
-        app:backgroundTint="@color/xai_ink"
-        app:tint="@color/xai_canvas" />
+        android:text="Add"
+        android:contentDescription="Add Preset" />
 
 </LinearLayout>

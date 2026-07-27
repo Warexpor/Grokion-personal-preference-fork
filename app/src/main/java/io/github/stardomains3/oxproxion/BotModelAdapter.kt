@@ -76,14 +76,14 @@ class BotModelAdapter(
         holder.itemView.setOnLongClickListener {
             val apiIdentifier = model.apiIdentifier
             if (apiIdentifier.startsWith("@preset")) {
-                Toast.makeText(holder.itemView.context, "Presets don't have a web page", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(holder.itemView.context, "Presets don't have a web page", AppToast.LENGTH_SHORT).show()
             } else {
                 val url = "https://openrouter.ai/$apiIdentifier"
                 val intent = Intent(Intent.ACTION_VIEW).setData(url.toUri())
                 try {
                     holder.itemView.context.startActivity(intent)
                 } catch (e: Exception) {
-                    Toast.makeText(holder.itemView.context, "Could not open browser.", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(holder.itemView.context, "Could not open browser.", AppToast.LENGTH_SHORT).show()
                 }
             }
             true
@@ -91,7 +91,7 @@ class BotModelAdapter(
 
         holder.editIcon.setOnClickListener {
             if (model.apiIdentifier == "openrouter/free") {
-                Toast.makeText(holder.itemView.context, "This is the permanent default model and cannot be edited or deleted.", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(holder.itemView.context, "This is the permanent default model and cannot be edited or deleted.", AppToast.LENGTH_SHORT).show()
             } else {
                 showModelPopupWindow(holder.editIcon, model)
             }

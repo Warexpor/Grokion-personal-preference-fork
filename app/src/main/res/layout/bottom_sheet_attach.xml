@@ -20,7 +20,7 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/attachCamera"
-        style="@style/Widget.Material3.Button.TextButton"
+        style="@style/Widget.Grokion.Button.Text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="start|center_vertical"
@@ -32,11 +32,11 @@
         app:iconTint="@color/xai_ink"
         app:iconGravity="start"
         app:iconPadding="16dp"
-        app:rippleColor="@color/xai_canvas_soft" />
+        app:rippleColor="@color/press_ripple_none" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/attachGallery"
-        style="@style/Widget.Material3.Button.TextButton"
+        style="@style/Widget.Grokion.Button.Text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="start|center_vertical"
@@ -48,11 +48,11 @@
         app:iconTint="@color/xai_ink"
         app:iconGravity="start"
         app:iconPadding="16dp"
-        app:rippleColor="@color/xai_canvas_soft" />
+        app:rippleColor="@color/press_ripple_none" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/attachFiles"
-        style="@style/Widget.Material3.Button.TextButton"
+        style="@style/Widget.Grokion.Button.Text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="start|center_vertical"
@@ -64,11 +64,11 @@
         app:iconTint="@color/xai_ink"
         app:iconGravity="start"
         app:iconPadding="16dp"
-        app:rippleColor="@color/xai_canvas_soft" />
+        app:rippleColor="@color/press_ripple_none" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/attachSystemMessage"
-        style="@style/Widget.Material3.Button.TextButton"
+        style="@style/Widget.Grokion.Button.Text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="start|center_vertical"
@@ -80,11 +80,11 @@
         app:iconTint="@color/xai_ink"
         app:iconGravity="start"
         app:iconPadding="16dp"
-        app:rippleColor="@color/xai_canvas_soft" />
+        app:rippleColor="@color/press_ripple_none" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/attachTools"
-        style="@style/Widget.Material3.Button.TextButton"
+        style="@style/Widget.Grokion.Button.Text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="start|center_vertical"
@@ -96,27 +96,11 @@
         app:iconTint="@color/xai_ink"
         app:iconGravity="start"
         app:iconPadding="16dp"
-        app:rippleColor="@color/xai_canvas_soft" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/attachSaveChat"
-        style="@style/Widget.Material3.Button.TextButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="start|center_vertical"
-        android:minHeight="52dp"
-        android:text="@string/grok_save_chat"
-        android:textColor="@color/xai_ink"
-        android:textSize="16sp"
-        app:icon="@drawable/ic_menudot"
-        app:iconTint="@color/xai_ink"
-        app:iconGravity="start"
-        app:iconPadding="16dp"
-        app:rippleColor="@color/xai_canvas_soft" />
+        app:rippleColor="@color/press_ripple_none" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/attachMore"
-        style="@style/Widget.Material3.Button.TextButton"
+        style="@style/Widget.Grokion.Button.Text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="start|center_vertical"
@@ -128,6 +112,6 @@
         app:iconTint="@color/xai_mute"
         app:iconGravity="end"
         app:iconPadding="16dp"
-        app:rippleColor="@color/xai_canvas_soft" />
+        app:rippleColor="@color/press_ripple_none" />
 
 </LinearLayout>

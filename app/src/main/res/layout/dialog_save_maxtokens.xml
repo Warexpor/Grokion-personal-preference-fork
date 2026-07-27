@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Set Max Tokens"
-        android:textColor="@color/xai_body"
+        android:textColor="@color/xai_ink"
         android:textAppearance="?attr/textAppearanceHeadline6"
         android:layout_marginBottom="16dp" />
 
@@ -42,7 +42,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Max tokens limit the length of the AI's response. A higher number allows longer replies but may increase costs. Default is 12000."
-        android:textColor="@color/xai_body"
+        android:textColor="@color/xai_ink"
         android:textSize="14sp"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="16dp" />
@@ -56,18 +56,18 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/button_cancelmaxtokens"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
+            style="@style/Widget.Grokion.Button.Text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/xai_body"
+            android:textColor="@color/xai_ink"
             android:text="Cancel" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/button_savemaxtokens"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
+            style="@style/Widget.Grokion.Button.Text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/xai_body"
+            android:textColor="@color/xai_ink"
             android:layout_marginStart="8dp"
             android:text="Save" />
     </LinearLayout>

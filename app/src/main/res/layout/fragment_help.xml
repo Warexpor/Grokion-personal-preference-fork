@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:fitsSystemWindows="true"
-    android:background="?attr/colorSurface"
+    android:background="@color/xai_canvas"
     tools:context="io.github.stardomains3.oxproxion.HelpFragment">
 
     <com.google.android.material.appbar.MaterialToolbar
@@ -14,15 +14,15 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         app:title="Help"
-        app:titleTextColor="?android:attr/textColorPrimary"
-        android:background="?attr/colorSurface"
+        app:titleTextColor="@color/xai_ink"
+        android:background="@color/xai_canvas"
         app:navigationIcon="@drawable/is_backarrow"
         app:navigationIconTint="@color/xai_ink" />
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="16dp"> <!-- Added padding so text doesn't touch edges -->
+        android:padding="16dp">
 
         <TextView
             android:id="@+id/helpContentTextView"
@@ -31,7 +31,7 @@
             android:linksClickable="true"
             android:textColorHighlight="@color/xai_link"
             android:textColorLink="@color/xai_link"
-            android:textColor="?android:attr/textColorPrimary"
+            android:textColor="@color/xai_ink"
             android:textIsSelectable="true"
             android:textSize="16sp"
             tools:text="Markdown content will be here." />

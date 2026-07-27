@@ -2,8 +2,11 @@ package io.github.stardomains3.oxproxion
 
 import android.app.Dialog
 import android.os.Bundle
-import android.widget.CheckedTextView
-import androidx.core.graphics.toColorInt
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ArrayAdapter
+import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -24,15 +27,28 @@ class ChatMemoryDialogFragment : DialogFragment() {
             else -> {
                 val index = options.indexOfFirst {
                     it.startsWith(currentCount.toString()) &&
-                            (it.length == currentCount.toString().length || it[currentCount.toString().length] == ' ')
+                        (it.length == currentCount.toString().length || it[currentCount.toString().length] == ' ')
                 }
                 if (index >= 0) index else 3
             }
         }
 
-        val dialog = MaterialAlertDialogBuilder(requireContext(), R.style.CustomMaterialAlertDialogTheme)
+        val ink = ContextCompat.getColor(requireContext(), R.color.xai_ink)
+        val adapter = object : ArrayAdapter<String>(
+            requireContext(),
+            android.R.layout.simple_list_item_single_choice,
+            options
+        ) {
+            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+                val view = super.getView(position, convertView, parent)
+                (view as TextView).setTextColor(ink)
+                return view
+            }
+        }
+
+        return MaterialAlertDialogBuilder(requireContext(), R.style.CustomMaterialAlertDialogTheme)
             .setTitle("Chat Memory")
-            .setSingleChoiceItems(options, checkedItem) { dialog, which ->
+            .setSingleChoiceItems(adapter, checkedItem) { dialog, which ->
                 val selectedText = options[which]
                 val count = if (selectedText == "All messages") {
                     Int.MAX_VALUE
@@ -49,21 +65,5 @@ class ChatMemoryDialogFragment : DialogFragment() {
             }
             .setNegativeButton("Cancel", null)
             .create()
-
-        // Override text color after dialog is shown
-        dialog.setOnShowListener {
-            val listView = dialog.listView
-            if (listView != null) {
-                for (i in 0 until listView.childCount) {
-                    val child = listView.getChildAt(i)
-                    if (child is CheckedTextView) {
-                        child.setTextColor("#DADBDF".toColorInt())
-                    }
-                }
-            }
-        }
-
-        return dialog
     }
 }
-

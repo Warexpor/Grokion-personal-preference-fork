@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.1.128-grokion — 2026-07-28
+
+### Changed
+- Secondary UI clearout: Settings detail regrouped into Grok cards (Libraries /
+  Generation / Chat chrome); power tools bar merges Extended Dock + Top Bar.
+- Library / model-catalog / dialog screens restyled to canvas + Grokion buttons
+  (no FABs / CardView shells).
+- Conversations always autosave; History rename for titles; Import/Export visible
+  in History and Data & Privacy.
+
+### Removed
+- Manual Save chat UI (attach row, dead top-bar button, SaveChat dialog).
+- Auto Save Chats settings toggle (behavior is always on).
+
+### Fixed
+- New chat confirm no longer implies data loss; Help matches current Ask / History.
+
 ## 2.1.127-grokion — 2026-07-27
 
 ### Fixed

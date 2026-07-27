@@ -56,10 +56,10 @@ class ChooserActivity : AppCompatActivity() {
         listView.setItemChecked(currentIndex, true)  // Pre-select current
         val titleTextView = TextView(this).apply {
             text = "Choose and Send\nModel: $modelDisplayName"
-            textSize = 20f  // Adjust size as needed
-            setTextColor(ContextCompat.getColor(this@ChooserActivity, R.color.xai_body))
-            gravity = Gravity.CENTER  // Center vertically and horizontally
-            setPadding(24, 16, 24, 16)  // Add padding for better spacing
+            textSize = 20f
+            setTextColor(ContextCompat.getColor(this@ChooserActivity, R.color.xai_ink))
+            gravity = Gravity.CENTER
+            setPadding(24, 16, 24, 16)
         }
         MaterialAlertDialogBuilder(this)
             .setCustomTitle(titleTextView)

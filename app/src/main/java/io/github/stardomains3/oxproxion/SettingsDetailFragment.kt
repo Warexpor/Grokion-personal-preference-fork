@@ -2,26 +2,76 @@ package io.github.stardomains3.oxproxion
 
 import io.github.stardomains3.oxproxion.Motion.withGrokStackAnimations
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.view.ViewGroup
 import android.view.WindowManager
-import android.widget.LinearLayout
-import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.SwitchCompat
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
 import androidx.core.os.bundleOf
-import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.MaterialToolbar
+import kotlinx.coroutines.launch
 
 class SettingsDetailFragment : Fragment(R.layout.fragment_settings_detail) {
 
     private val section: String
         get() = requireArguments().getString(ARG_SECTION) ?: SECTION_APPEARANCE
+
+    private val savedChatsViewModel: SavedChatsViewModel by viewModels()
+
+    private val exportChatsLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.data?.let { uri ->
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        val json = savedChatsViewModel.getChatsAsJson()
+                        requireContext().contentResolver.openOutputStream(uri)?.use { outputStream ->
+                            outputStream.write(json.toByteArray())
+                        }
+                        AppToast.makeText(requireContext(), "Chats exported successfully", AppToast.LENGTH_SHORT).show()
+                    } catch (_: Exception) {
+                        AppToast.makeText(requireContext(), "Error exporting chats", AppToast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+    }
+
+    private val importChatsLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.data?.let { uri ->
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        val json = requireContext().contentResolver.openInputStream(uri)?.use {
+                            it.bufferedReader().readText()
+                        }
+                        if (json != null) {
+                            savedChatsViewModel.importChatsFromJson(json) { importResult ->
+                                when (importResult) {
+                                    is ChatImportResult.Success ->
+                                        AppToast.makeText(requireContext(), "Chats imported successfully", AppToast.LENGTH_SHORT).show()
+                                    is ChatImportResult.Error ->
+                                        AppToast.makeText(requireContext(), importResult.message, AppToast.LENGTH_LONG).show()
+                                }
+                            }
+                        } else {
+                            throw Exception("Failed to read file content.")
+                        }
+                    } catch (_: Exception) {
+                        AppToast.makeText(requireContext(), "Import failed. Check file format.", AppToast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -50,13 +100,11 @@ class SettingsDetailFragment : Fragment(R.layout.fragment_settings_detail) {
 
         val themeToggleGroup = view.findViewById<com.google.android.material.button.MaterialButtonToggleGroup>(R.id.themeToggleGroup)
         val inferenceParamsButton = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.inferenceParamsButton)
-        val watermarkSttSwitch = view.findViewById<SwitchCompat>(R.id.watermarkSttSwitch)
         val chatMemoryButton = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.chatMemoryButton)
         val toolsButton = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.toolsButton)
         val animateBarOnErrorSwitch = view.findViewById<SwitchCompat>(R.id.animateBarOnErrorSwitch)
         val showCitationsSwitch = view.findViewById<SwitchCompat>(R.id.showCitationsSwitch)
-        val autoSaveChatsSwitch = view.findViewById<SwitchCompat>(R.id.autoSaveChatsSwitch)
-        val extendedTopBarSwitch = view.findViewById<SwitchCompat>(R.id.extendedTopBarSwitch)
+        val powerToolsBarSwitch = view.findViewById<SwitchCompat>(R.id.powerToolsBarSwitch)
         val copyOrDismissSwitch = view.findViewById<SwitchCompat>(R.id.copyOrdismissSwitch)
         val expandableInputSwitch = view.findViewById<SwitchCompat>(R.id.expandableInputSwitch)
         val copyOrOpenSwitch = view.findViewById<SwitchCompat>(R.id.copyOropenSwitch)
@@ -67,7 +115,6 @@ class SettingsDetailFragment : Fragment(R.layout.fragment_settings_detail) {
         val scrollButtonsSwitch = view.findViewById<SwitchCompat>(R.id.scrollButtonsSwitch)
         val volumeScrollSwitch = view.findViewById<SwitchCompat>(R.id.volumeScrollSwitch)
         val timeoutButton = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.timeoutButton)
-        val extendedDockSwitch = view.findViewById<SwitchCompat>(R.id.extendedDockSwitch)
         val presetsExtendedSwitch = view.findViewById<SwitchCompat>(R.id.presetsExtendedSwitch)
         val scrollProgressSwitch = view.findViewById<SwitchCompat>(R.id.scrollProgressSwitch)
         val apiKeyButton = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.apiKeyButton)
@@ -79,19 +126,18 @@ class SettingsDetailFragment : Fragment(R.layout.fragment_settings_detail) {
         val creditsButton = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.creditsButton)
         val helpButton = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.helpButton)
         val licensesButton = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.licensesButton)
+        val importHistoryButton = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.importHistoryButton)
+        val exportHistoryButton = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.exportHistoryButton)
         val maxTokensButton = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.maxTokensButton)
         val lanButton = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.lanButton)
         val trustSelfSignedLanSwitch = view.findViewById<SwitchCompat>(R.id.trustSelfSignedLanSwitch)
         val allowDestructiveToolsSwitch = view.findViewById<SwitchCompat>(R.id.allowDestructiveToolsSwitch)
         val openRouterTransformsSwitch = view.findViewById<SwitchCompat>(R.id.openRouterTransformsSwitch)
-        val voiceModelEdit = view.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.voiceInputModelEdit)
-        val voiceProviderToggle = view.findViewById<com.google.android.material.button.MaterialButtonToggleGroup>(R.id.voiceInputProviderToggle)
         val hapticButtonsSwitch = view.findViewById<SwitchCompat>(R.id.hapticButtonsSwitch)
         val hapticRespondingSwitch = view.findViewById<SwitchCompat>(R.id.hapticRespondingSwitch)
 
         biometricsSwitch.isChecked = prefs.getBiometricEnabled()
         notificationsSwitch.isChecked = prefs.getNotiPreference()
-        autoSaveChatsSwitch.isChecked = prefs.getAutoSaveChats()
         val memoryCount = prefs.getChatMemoryCount()
         chatMemoryButton.text = if (memoryCount == Int.MAX_VALUE) "All messages" else "$memoryCount messages"
         val savedMode = prefs.getThemeMode()
@@ -100,17 +146,14 @@ class SettingsDetailFragment : Fragment(R.layout.fragment_settings_detail) {
             SharedPreferencesHelper.THEME_DARK -> themeToggleGroup.check(R.id.btnThemeDark)
             else -> themeToggleGroup.check(R.id.btnThemeSystem)
         }
-        watermarkSttSwitch.isChecked = prefs.getWatermarkSttEnabled()
         keepScreenOnSwitch.isChecked = prefs.getKeepScreenOnPreference()
         copyOrDismissSwitch.isChecked = prefs.getUseCopyButton2()
         animateBarOnErrorSwitch.isChecked = prefs.getAnimateBarOnError()
         scrollButtonsSwitch.isChecked = viewModel.isScrollersEnabled.value ?: false
         volumeScrollSwitch.isChecked = viewModel.isVolumeScrollEnabled.value ?: false
         expandableInputSwitch.isChecked = viewModel.isExpandableInputEnabled.value ?: false
-        extendedDockSwitch.isChecked = viewModel.isExtendedDockEnabled.value ?: false
         presetsExtendedSwitch.isChecked = viewModel.isPresetsExtendedEnabled.value ?: false
         scrollProgressSwitch.isChecked = viewModel.isScrollProgressEnabled.value ?: true
-        extendedTopBarSwitch.isChecked = prefs.getExtendedTopBarEnabled()
         copyOrOpenSwitch.isChecked = prefs.getUseCopyButton()
         autoDisableWebSearchSwitch.isChecked = prefs.getDisableWebSearchAfterSend()
         openRouterTransformsSwitch.isChecked = prefs.getOpenRouterTransformsEnabled()
@@ -119,12 +162,12 @@ class SettingsDetailFragment : Fragment(R.layout.fragment_settings_detail) {
         showCitationsSwitch.isChecked = prefs.getShowCitations()
         hapticButtonsSwitch.isChecked = prefs.getHapticButtons()
         hapticRespondingSwitch.isChecked = prefs.getHapticResponding()
-        voiceModelEdit.setText(prefs.getVoiceInputModel())
-        when (prefs.getVoiceInputProvider()) {
-            "cloud" -> voiceProviderToggle.check(R.id.providerCloudButton)
-            "off" -> voiceProviderToggle.check(R.id.providerOffButton)
-            else -> voiceProviderToggle.check(R.id.providerLanButton)
+
+        fun syncPowerToolsBarSwitch() {
+            powerToolsBarSwitch.isChecked = (viewModel.isExtendedDockEnabled.value ?: false) ||
+                (viewModel.isExtendedTopBarEnabled.value ?: false)
         }
+        syncPowerToolsBarSwitch()
 
         apiKeyButton.setOnClickListener {
             SaveApiDialogFragment().show(childFragmentManager, "SaveApiDialogFragment")
@@ -143,15 +186,14 @@ class SettingsDetailFragment : Fragment(R.layout.fragment_settings_detail) {
         chatMemoryButton.setOnClickListener {
             ChatMemoryDialogFragment().show(childFragmentManager, "ChatMemoryDialogFragment")
         }
-        autoSaveChatsSwitch.setOnCheckedChangeListener { _, isChecked ->
-            prefs.saveAutoSaveChats(isChecked)
+        powerToolsBarSwitch.setOnCheckedChangeListener { _, isChecked ->
+            val dockEnabled = viewModel.isExtendedDockEnabled.value ?: false
+            val topBarEnabled = viewModel.isExtendedTopBarEnabled.value ?: false
+            if (dockEnabled != isChecked) viewModel.toggleExtendedDock()
+            if (topBarEnabled != isChecked) viewModel.toggleExtendedTopBar()
         }
-        extendedDockSwitch.setOnCheckedChangeListener { _, _ ->
-            viewModel.toggleExtendedDock()
-        }
-        watermarkSttSwitch.setOnCheckedChangeListener { _, isChecked ->
-            prefs.saveWatermarkSttEnabled(isChecked)
-        }
+        viewModel.isExtendedDockEnabled.observe(viewLifecycleOwner) { syncPowerToolsBarSwitch() }
+        viewModel.isExtendedTopBarEnabled.observe(viewLifecycleOwner) { syncPowerToolsBarSwitch() }
         copyOrDismissSwitch.setOnCheckedChangeListener { _, isChecked ->
             prefs.saveUseCopyButton2(isChecked)
         }
@@ -212,16 +254,13 @@ class SettingsDetailFragment : Fragment(R.layout.fragment_settings_detail) {
                 .addToBackStack(null)
                 .commit()
         }
-        extendedTopBarSwitch.setOnCheckedChangeListener { _, _ ->
-            viewModel.toggleExtendedTopBar()
-        }
         scrollProgressSwitch.setOnCheckedChangeListener { _, _ -> viewModel.toggleScrollProgress() }
         viewModel.isScrollProgressEnabled.observe(viewLifecycleOwner) { enabled ->
             scrollProgressSwitch.isChecked = enabled
         }
         creditsButton.setOnClickListener {
             if (viewModel.activeChatApiKey.isBlank()) {
-                Toast.makeText(requireContext(), "API Key is not set.", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "API Key is not set.", AppToast.LENGTH_SHORT).show()
             } else {
                 parentFragmentManager.popBackStack()
                 viewModel.checkRemainingCredits()
@@ -250,6 +289,8 @@ class SettingsDetailFragment : Fragment(R.layout.fragment_settings_detail) {
                 .addToBackStack(null)
                 .commit()
         }
+        importHistoryButton.setOnClickListener { importChats() }
+        exportHistoryButton.setOnClickListener { exportChats() }
         licensesButton.setOnClickListener {
             parentFragmentManager.beginTransaction()
                 .withGrokStackAnimations()
@@ -313,7 +354,7 @@ class SettingsDetailFragment : Fragment(R.layout.fragment_settings_detail) {
                     BiometricManager.BIOMETRIC_SUCCESS -> prefs.saveBiometricEnabled(true)
                     else -> {
                         biometricsSwitch.isChecked = false
-                        Toast.makeText(requireContext(), "No biometrics available", Toast.LENGTH_SHORT).show()
+                        AppToast.makeText(requireContext(), "No biometrics available", AppToast.LENGTH_SHORT).show()
                     }
                 }
             } else {
@@ -326,22 +367,8 @@ class SettingsDetailFragment : Fragment(R.layout.fragment_settings_detail) {
         hapticRespondingSwitch.setOnCheckedChangeListener { _, isChecked ->
             prefs.saveHapticResponding(isChecked)
         }
-        voiceModelEdit.doAfterTextChanged { text ->
-            prefs.setVoiceInputModel(text?.toString() ?: "")
-        }
-        voiceProviderToggle.addOnButtonCheckedListener { _, checkedId, isChecked ->
-            if (isChecked) {
-                val provider = when (checkedId) {
-                    R.id.providerCloudButton -> "cloud"
-                    R.id.providerOffButton -> "off"
-                    else -> "lan"
-                }
-                prefs.setVoiceInputProvider(provider)
-            }
-        }
 
         listOf(
-            R.id.watermarkSttSwitch,
             R.id.scrollButtonsSwitch,
             R.id.volumeScrollSwitch,
             R.id.expandableInputSwitch,
@@ -349,14 +376,12 @@ class SettingsDetailFragment : Fragment(R.layout.fragment_settings_detail) {
             R.id.keepScreenOnSwitch,
             R.id.biometricsSwitch,
             R.id.copyOropenSwitch,
-            R.id.extendedDockSwitch,
+            R.id.powerToolsBarSwitch,
             R.id.presetsExtendedSwitch,
             R.id.notificationsSwitch,
             R.id.autoDisableWebSearchSwitch,
-            R.id.extendedTopBarSwitch,
             R.id.showCitationsSwitch,
             R.id.copyOrdismissSwitch,
-            R.id.autoSaveChatsSwitch,
             R.id.openRouterTransformsSwitch,
             R.id.trustSelfSignedLanSwitch,
             R.id.allowDestructiveToolsSwitch,
@@ -369,80 +394,39 @@ class SettingsDetailFragment : Fragment(R.layout.fragment_settings_detail) {
     }
 
     private fun applySectionVisibility(view: View, section: String) {
-        val sectionViewIds = mapOf(
-            SECTION_APPEARANCE to listOf(
-                R.id.appearanceSectionLabel,
-                R.id.appearancePreviewCard,
-                R.id.themeModeRow,
-                R.id.themeToggleGroup,
-                R.id.btnThemeSystem,
-                R.id.btnThemeLight,
-                R.id.btnThemeDark
-            ),
-            SECTION_VOICE to listOf(
-                R.id.voiceSectionHeader,
-                R.id.voiceModelInputLayout,
-                R.id.voiceInputModelEdit,
-                R.id.voiceInputProviderToggle,
-                R.id.providerLanButton,
-                R.id.providerCloudButton,
-                R.id.providerOffButton,
-                R.id.watermarkSttSwitch
-            ),
-            SECTION_HAPTICS to listOf(R.id.hapticsSection),
-            SECTION_MODELS to listOf(
-                R.id.lanButton,
-                R.id.trustSelfSignedLanSwitch,
-                R.id.apiKeyButton,
-                R.id.braveApiKeyButton,
-                R.id.creditsButton
-            ),
-            SECTION_ADVANCED to listOf(
-                R.id.toolsButton,
-                R.id.promptsButton,
-                R.id.presetsButton,
-                R.id.systemMessagesButton,
-                R.id.advancedReasoningButton,
-                R.id.timeoutButton,
-                R.id.maxTokensButton,
-                R.id.inferenceParamsButton,
-                R.id.chatMemoryRow,
-                R.id.chatMemoryButton,
-                R.id.openRouterTransformsSwitch,
-                R.id.autoDisableWebSearchSwitch,
-                R.id.extendedDockSwitch,
-                R.id.extendedTopBarSwitch,
-                R.id.expandableInputSwitch,
-                R.id.scrollButtonsSwitch,
-                R.id.scrollProgressSwitch,
-                R.id.volumeScrollSwitch,
-                R.id.presetsExtendedSwitch,
-                R.id.animateBarOnErrorSwitch,
-                R.id.showCitationsSwitch
-            ),
-            SECTION_DATA to listOf(
-                R.id.biometricsSwitch,
-                R.id.autoSaveChatsSwitch,
-                R.id.notificationsSwitch,
-                R.id.copyOrdismissSwitch,
-                R.id.copyOropenSwitch,
-                R.id.allowDestructiveToolsSwitch,
-                R.id.keepScreenOnSwitch,
-                R.id.helpButton,
-                R.id.licensesButton
-            )
+        val sectionRoots = mapOf(
+            SECTION_APPEARANCE to R.id.appearanceSection,
+            SECTION_HAPTICS to R.id.hapticsSection,
+            SECTION_MODELS to R.id.modelsSection,
+            SECTION_ADVANCED to R.id.advancedSection,
+            SECTION_DATA to R.id.dataSection
         )
-
-        val visibleIds = sectionViewIds[section].orEmpty().toSet()
-        val allIds = sectionViewIds.values.flatten().toSet()
-        allIds.forEach { id ->
-            view.findViewById<View>(id)?.setSectionVisible(id in visibleIds)
+        sectionRoots.forEach { (key, rootId) ->
+            view.findViewById<View>(rootId)?.visibility =
+                if (key == section) View.VISIBLE else View.GONE
         }
     }
 
-    private fun View.setSectionVisible(show: Boolean) {
-        visibility = if (show) View.VISIBLE else View.GONE
-        (parent as? View)?.takeIf { it is LinearLayout && (it as ViewGroup).childCount <= 3 }?.visibility = visibility
+    private fun exportChats() {
+        val sessions = savedChatsViewModel.allSessions.value.orEmpty()
+        if (sessions.isEmpty()) {
+            AppToast.makeText(requireContext(), "No chats to export.", AppToast.LENGTH_SHORT).show()
+            return
+        }
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "application/json"
+            putExtra(Intent.EXTRA_TITLE, "openchat_backup.json")
+        }
+        exportChatsLauncher.launch(intent)
+    }
+
+    private fun importChats() {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "application/json"
+        }
+        importChatsLauncher.launch(intent)
     }
 
     companion object {

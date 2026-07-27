@@ -5,9 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.Toast
 import androidx.appcompat.widget.SearchView
-import androidx.cardview.widget.CardView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -66,7 +64,7 @@ class OpenRouterModelsFragment : Fragment() {
         toolbar.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.action_refresh_models -> {
-                    Toast.makeText(requireContext(), "Refreshing models…", Toast.LENGTH_SHORT).show()
+                    AppToast.makeText(requireContext(), "Refreshing models…", AppToast.LENGTH_SHORT).show()
                     viewModel.fetchOpenRouterModels()
                     true
                 }
@@ -85,7 +83,7 @@ class OpenRouterModelsFragment : Fragment() {
             }
         })
 
-        val infoCard = view.findViewById<CardView>(R.id.infoCard)
+        val infoCard = view.findViewById<View>(R.id.infoCard)
         val closeInfoButton = view.findViewById<ImageView>(R.id.closeInfoButton)
         sortBar = view.findViewById(R.id.sortBar)
         filterBar = view.findViewById(R.id.filterBar)
@@ -229,10 +227,10 @@ class OpenRouterModelsFragment : Fragment() {
 
     private fun addModel(model: LlmModel) {
         if (viewModel.modelExists(model.apiIdentifier)) {
-            Toast.makeText(context, "Model already exists.", Toast.LENGTH_SHORT).show()
+            AppToast.makeText(context, "Model already exists.", AppToast.LENGTH_SHORT).show()
         } else {
             viewModel.addCustomModel(model)
-            Toast.makeText(context, "Model added: ${model.displayName}", Toast.LENGTH_SHORT).show()
+            AppToast.makeText(context, "Model added: ${model.displayName}", AppToast.LENGTH_SHORT).show()
         }
     }
 }

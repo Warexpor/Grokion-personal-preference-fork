@@ -1,0 +1,1 @@
+Secondary UI clearout: settings detail cards, always-on autosave, History import/export, library/dialog canvas restyle. Removed manual Save chat and Auto Save toggle. Chat forks and stream stick-to-bottom fixes retained from 2.1.127.

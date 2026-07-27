@@ -36,9 +36,9 @@ class ToolsFragment : Fragment(R.layout.fragment_tools) {
             ActivityResultContracts.RequestPermission()
         ) { isGranted: Boolean ->
             if (isGranted) {
-                Toast.makeText(requireContext(), "Location permission granted", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Location permission granted", AppToast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(requireContext(), "Location permission is required for this tool", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Location permission is required for this tool", AppToast.LENGTH_SHORT).show()
             }
             refreshUI()
         }
@@ -56,7 +56,7 @@ class ToolsFragment : Fragment(R.layout.fragment_tools) {
                 val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                 requireContext().contentResolver.takePersistableUriPermission(uri, takeFlags)
                 sharedPreferencesHelper.saveSafFolderUri(uri.toString())
-                Toast.makeText(requireContext(), "Folder access granted!", Toast.LENGTH_SHORT).show()
+                AppToast.makeText(requireContext(), "Folder access granted!", AppToast.LENGTH_SHORT).show()
                 refreshUI()
             }
         }

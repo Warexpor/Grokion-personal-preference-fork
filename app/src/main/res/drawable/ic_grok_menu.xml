@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Exact Grok hamburger menu from official ai.x.grok APK -->
+<!-- Grok-style menu: two strokes, top longer (ref screenshot parity) -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:height="24dp"
     android:width="24dp"
@@ -8,11 +8,13 @@
     <path
         android:fillColor="#00000000"
         android:pathData="M3,8L21,8"
-        android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="2"/>
+        android:strokeColor="#FF000000"
+        android:strokeWidth="2"
+        android:strokeLineCap="square"/>
     <path
         android:fillColor="#00000000"
-        android:pathData="M3,16L21,16"
-        android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="2"/>
+        android:pathData="M3,16L15,16"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="2"
+        android:strokeLineCap="square"/>
 </vector>

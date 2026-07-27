@@ -153,11 +153,11 @@ class MarkdownViewerFragment : Fragment() {
                     out.write(currentHtml.toByteArray())
                 } ?: throw Exception("Cannot open output stream")
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "✅ Saved to Downloads: $filename", Toast.LENGTH_LONG).show()
+                    AppToast.makeText(context, "✅ Saved to Downloads: $filename", AppToast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "❌ Save failed: ${e.message}", Toast.LENGTH_LONG).show()
+                    AppToast.makeText(context, "❌ Save failed: ${e.message}", AppToast.LENGTH_LONG).show()
                 }
             }
         }
