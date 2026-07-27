@@ -31,7 +31,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/openSavedChatsButton"
-                style="@style/Widget.Material3.Button.IconButton"
+                style="@style/Widget.Grokion.IconButton"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:contentDescription="History"
@@ -46,7 +46,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/backcopyButton"
-                style="@style/Widget.Material3.Button.IconButton"
+                style="@style/Widget.Grokion.IconButton"
                 android:layout_width="44dp"
                 android:layout_height="44dp"
                 android:visibility="gone"
@@ -71,12 +71,11 @@
                 app:barrierDirection="start"
                 app:constraint_referenced_ids="newChatButton" />
 
-            <!-- Model chip — pinned to top-right -->
+            <!-- Model chip — centered in top bar (Grok parity) -->
             <TextView
                 android:id="@+id/modelNameTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="36dp"
-                android:layout_marginEnd="8dp"
                 android:maxWidth="220dp"
                 android:background="@drawable/bg_model_chip"
                 android:clickable="true"
@@ -85,12 +84,14 @@
                 android:ellipsize="end"
                 android:singleLine="true"
                 android:gravity="center_vertical"
-                android:paddingStart="12dp"
-                android:paddingEnd="10dp"
+                android:paddingStart="14dp"
+                android:paddingEnd="8dp"
                 android:textColor="@color/xai_body"
                 android:textSize="13sp"
-                android:drawablePadding="4dp"
+                android:drawablePadding="2dp"
+                android:drawableTint="@color/xai_body"
                 app:drawableEndCompat="@drawable/ic_expand_more"
+                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -114,25 +115,26 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <!-- New chat moved to history bottom bar; keep ID for wiring -->
+            <!-- New chat — Grok square+pencil -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/newChatButton"
-                style="@style/Widget.Material3.Button.IconButton"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:visibility="gone"
+                style="@style/Widget.Grokion.IconButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:visibility="visible"
                 android:contentDescription="@string/grok_new_conversation"
                 app:icon="@drawable/ic_new_chat"
                 app:iconSize="24dp"
                 app:iconTint="@color/xai_ink"
                 app:backgroundTint="@android:color/transparent"
-                app:rippleColor="@color/xai_canvas_mid"
+                app:rippleColor="@color/press_ripple_none"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/backButton"
-                style="@style/Widget.Material3.Button.IconButton"
+                style="@style/Widget.Grokion.IconButton"
                 android:layout_width="44dp"
                 android:layout_height="44dp"
                 android:visibility="gone"
@@ -145,7 +147,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/homeButton"
-                style="@style/Widget.Material3.Button.IconButton"
+                style="@style/Widget.Grokion.IconButton"
                 android:layout_width="44dp"
                 android:layout_height="44dp"
                 android:visibility="gone"
@@ -180,7 +182,7 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/topReasoningButton"
-                        style="@style/Widget.Material3.Button.IconButton"
+                        style="@style/Widget.Grokion.IconButton"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         app:icon="@drawable/ic_reasoning"
@@ -190,7 +192,7 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/topWebSearchButton"
-                        style="@style/Widget.Material3.Button.IconButton"
+                        style="@style/Widget.Grokion.IconButton"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         app:icon="@drawable/ic_websearch"
@@ -200,7 +202,7 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/topStreamButton"
-                        style="@style/Widget.Material3.Button.IconButton"
+                        style="@style/Widget.Grokion.IconButton"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         app:icon="@drawable/ic_stream"
@@ -211,7 +213,7 @@
                     <!-- kept for id stability; commented in original as topConvo -->
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/topConvoButton"
-                        style="@style/Widget.Material3.Button.IconButton"
+                        style="@style/Widget.Grokion.IconButton"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         android:visibility="gone"
@@ -222,7 +224,7 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/topToolsButton"
-                        style="@style/Widget.Material3.Button.IconButton"
+                        style="@style/Widget.Grokion.IconButton"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         app:icon="@drawable/ic_tools"
@@ -232,7 +234,7 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/topPresetsButton"
-                        style="@style/Widget.Material3.Button.IconButton"
+                        style="@style/Widget.Grokion.IconButton"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         app:icon="@drawable/ic_presets"
@@ -242,7 +244,7 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/topSettingsButton"
-                        style="@style/Widget.Material3.Button.IconButton"
+                        style="@style/Widget.Grokion.IconButton"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         app:icon="@drawable/ic_settings"
@@ -340,7 +342,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/reasoningButton"
-                            style="@style/Widget.Material3.Button.IconButton"
+                            style="@style/Widget.Grokion.IconButton"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
                             android:layout_marginEnd="12dp"
@@ -351,7 +353,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/webSearchButton"
-                            style="@style/Widget.Material3.Button.IconButton"
+                            style="@style/Widget.Grokion.IconButton"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
                             app:icon="@drawable/ic_websearch"
@@ -371,7 +373,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/toolsButton"
-                            style="@style/Widget.Material3.Button.IconButton"
+                            style="@style/Widget.Grokion.IconButton"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
                             android:layout_marginEnd="12dp"
@@ -382,7 +384,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/streamButton"
-                            style="@style/Widget.Material3.Button.IconButton"
+                            style="@style/Widget.Grokion.IconButton"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
                             android:layout_marginEnd="12dp"
@@ -393,7 +395,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/presetsButton"
-                            style="@style/Widget.Material3.Button.IconButton"
+                            style="@style/Widget.Grokion.IconButton"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
                             android:layout_marginEnd="12dp"
@@ -404,7 +406,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/settingsButton"
-                            style="@style/Widget.Material3.Button.IconButton"
+                            style="@style/Widget.Grokion.IconButton"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
                             app:icon="@drawable/ic_settings"
@@ -424,7 +426,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/attachmentButton"
-                            style="@style/Widget.Material3.Button.IconButton"
+                            style="@style/Widget.Grokion.IconButton"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
                             android:layout_marginEnd="12dp"
@@ -436,7 +438,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/plusButton"
-                            style="@style/Widget.Material3.Button.IconButton"
+                            style="@style/Widget.Grokion.IconButton"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
                             android:layout_marginEnd="12dp"
@@ -448,7 +450,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/genButton"
-                            style="@style/Widget.Material3.Button.IconButton"
+                            style="@style/Widget.Grokion.IconButton"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
                             android:layout_marginEnd="12dp"
@@ -461,7 +463,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/resetChatButton"
-                            style="@style/Widget.Material3.Button.IconButton"
+                            style="@style/Widget.Grokion.IconButton"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
                             android:layout_marginEnd="12dp"
@@ -473,7 +475,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/systemMessageButton"
-                            style="@style/Widget.Material3.Button.IconButton"
+                            style="@style/Widget.Grokion.IconButton"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
                             android:layout_marginEnd="12dp"
@@ -485,7 +487,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/utilityButton"
-                            style="@style/Widget.Material3.Button.IconButton"
+                            style="@style/Widget.Grokion.IconButton"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
                             android:layout_marginEnd="12dp"
@@ -498,7 +500,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/clearButton"
-                            style="@style/Widget.Material3.Button.IconButton"
+                            style="@style/Widget.Grokion.IconButton"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
                             android:visibility="gone"
@@ -520,7 +522,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/convoButton"
-                            style="@style/Widget.Material3.Button.IconButton"
+                            style="@style/Widget.Grokion.IconButton"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
                             android:layout_marginEnd="12dp"
@@ -531,7 +533,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/fontsButton"
-                            style="@style/Widget.Material3.Button.IconButton"
+                            style="@style/Widget.Grokion.IconButton"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
                             android:layout_marginEnd="12dp"
@@ -542,7 +544,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/fontSizeButton"
-                            style="@style/Widget.Material3.Button.IconButton"
+                            style="@style/Widget.Grokion.IconButton"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
                             app:icon="@drawable/ic_format"
@@ -564,7 +566,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/copyChatButton"
-                            style="@style/Widget.Material3.Button.IconButton"
+                            style="@style/Widget.Grokion.IconButton"
                             android:layout_width="44dp"
                             android:layout_height="44dp"
                             android:layout_marginEnd="6dp"
@@ -575,7 +577,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/saveMarkdownFileButton"
-                            style="@style/Widget.Material3.Button.IconButton"
+                            style="@style/Widget.Grokion.IconButton"
                             android:layout_width="44dp"
                             android:layout_height="44dp"
                             android:layout_marginEnd="6dp"
@@ -586,7 +588,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/saveHtmlButton"
-                            style="@style/Widget.Material3.Button.IconButton"
+                            style="@style/Widget.Grokion.IconButton"
                             android:layout_width="44dp"
                             android:layout_height="44dp"
                             android:layout_marginEnd="6dp"
@@ -597,7 +599,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/saveEpubButton"
-                            style="@style/Widget.Material3.Button.IconButton"
+                            style="@style/Widget.Grokion.IconButton"
                             android:layout_width="44dp"
                             android:layout_height="44dp"
                             android:layout_marginEnd="6dp"
@@ -608,7 +610,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/printButton"
-                            style="@style/Widget.Material3.Button.IconButton"
+                            style="@style/Widget.Grokion.IconButton"
                             android:layout_width="44dp"
                             android:layout_height="44dp"
                             android:layout_marginEnd="6dp"
@@ -619,7 +621,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/pdfChatButton"
-                            style="@style/Widget.Material3.Button.IconButton"
+                            style="@style/Widget.Grokion.IconButton"
                             android:layout_width="44dp"
                             android:layout_height="44dp"
                             app:icon="@drawable/ic_pdfnew"
@@ -681,7 +683,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/scrollToTopButton"
-                    style="@style/Widget.Material3.Button.IconButton"
+                    style="@style/Widget.Grokion.IconButton"
                     android:layout_width="36dp"
                     android:layout_height="36dp"
                     android:layout_marginBottom="8dp"
@@ -695,7 +697,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/scrollToBottomButton"
-                    style="@style/Widget.Material3.Button.IconButton"
+                    style="@style/Widget.Grokion.IconButton"
                     android:layout_width="36dp"
                     android:layout_height="36dp"
                     android:layout_marginBottom="8dp"
@@ -709,7 +711,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/presetsButton2"
-                    style="@style/Widget.Material3.Button.IconButton"
+                    style="@style/Widget.Grokion.IconButton"
                     android:layout_width="36dp"
                     android:layout_height="36dp"
                     android:layout_gravity="center_horizontal"
@@ -734,7 +736,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnIncreaseFont"
-                    style="@style/Widget.Material3.Button.IconButton"
+                    style="@style/Widget.Grokion.IconButton"
                     android:layout_width="44dp"
                     android:layout_height="44dp"
                     app:icon="@drawable/ic_plus"
@@ -745,7 +747,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnDecreaseFont"
-                    style="@style/Widget.Material3.Button.IconButton"
+                    style="@style/Widget.Grokion.IconButton"
                     android:layout_width="44dp"
                     android:layout_height="44dp"
                     app:icon="@drawable/ic_minus"
@@ -756,7 +758,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnDoneFont"
-                    style="@style/Widget.Material3.Button.IconButton"
+                    style="@style/Widget.Grokion.IconButton"
                     android:layout_width="44dp"
                     android:layout_height="44dp"
                     app:icon="@drawable/ic_check"
@@ -785,6 +787,27 @@
                 android:focusableInTouchMode="false" />
         </FrameLayout>
 
+        <!-- Restore alternate branch (one-chat fork) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/restoreForkButton"
+            style="@style/Widget.Grokion.Button.Text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_marginEnd="14dp"
+            android:layout_marginBottom="2dp"
+            android:minHeight="40dp"
+            android:visibility="gone"
+            android:text="Restore previous messages"
+            android:textAllCaps="false"
+            android:textColor="@color/xai_mute"
+            android:textSize="13sp"
+            app:icon="@drawable/ic_redo"
+            app:iconGravity="textStart"
+            app:iconSize="18dp"
+            app:iconTint="@color/xai_mute"
+            app:rippleColor="@color/press_ripple_none" />
+
         <!-- ── Bottom composer: tall panel, model chip inside ── -->
         <LinearLayout
             android:id="@+id/chatInputContainer"
@@ -801,27 +824,7 @@
             android:paddingBottom="8dp"
             android:background="@drawable/bg_composer_panel"
             android:gravity="center_vertical">
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/restoreForkButton"
-                style="@style/Widget.Grokion.Button.Text"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:layout_marginEnd="4dp"
-                android:layout_marginBottom="4dp"
-                android:visibility="gone"
-                android:text="Restore previous messages"
-                android:textColor="@color/xai_ink"
-                android:textSize="14sp"
-                app:icon="@drawable/ic_redo"
-                app:iconGravity="start"
-                app:iconPadding="8dp"
-                app:iconSize="18dp"
-                app:iconTint="@color/xai_ink"
-                app:rippleColor="@color/press_ripple_none" />
-
-
-            <LinearLayout
+<LinearLayout
                 android:id="@+id/centerInputWrapper"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -845,7 +848,7 @@
                     android:textColorHint="@color/xai_mute"
                     android:importantForAutofill="no"
                     android:textCursorDrawable="@drawable/cursor_c"
-                    android:textColorHighlight="@color/xai_selected"
+                    android:textColorHighlight="@color/xai_text_highlight"
                     android:gravity="top|start"
                     android:scrollbars="vertical"
                     android:fadeScrollbars="true"
@@ -877,18 +880,19 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/menuButton"
-                        style="@style/Widget.Material3.Button.IconButton.Filled"
-                        android:layout_width="44dp"
-                        android:layout_height="44dp"
+                        style="@style/Widget.Grokion.IconButton.Filled"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
                         android:contentDescription="Attach"
-                        app:backgroundTint="@android:color/transparent"
-                        app:rippleColor="@color/xai_canvas_mid"
-                        app:cornerRadius="22dp"
+                        android:background="@drawable/bg_send_disabled"
+                        app:backgroundTint="@null"
+                        app:rippleColor="@color/press_ripple_none"
+                        app:cornerRadius="20dp"
                         app:icon="@drawable/ic_attach_plus"
                         app:iconGravity="textStart"
                         app:iconPadding="0dp"
                         app:iconSize="22dp"
-                        app:iconTint="@color/xai_ink"
+                        app:iconTint="@color/xai_mute"
                         android:insetLeft="0dp"
                         android:insetTop="0dp"
                         android:insetRight="0dp"
@@ -910,7 +914,7 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/speechButton"
-                        style="@style/Widget.Material3.Button.IconButton.Filled"
+                        style="@style/Widget.Grokion.IconButton.Filled"
                         android:layout_width="44dp"
                         android:layout_height="44dp"
                         android:visibility="gone"
@@ -929,7 +933,7 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/sendChatButton"
-                        style="@style/Widget.Material3.Button.IconButton.Filled"
+                        style="@style/Widget.Grokion.IconButton.Filled"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         android:layout_marginStart="4dp"
@@ -952,6 +956,16 @@
         </LinearLayout>
     </LinearLayout>
 
+    <!-- Left edge only, below top bar so History button stays clickable -->
+    <View
+        android:id="@+id/historyEdgeSwipeStrip"
+        android:layout_width="28dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="left"
+        android:layout_marginTop="72dp"
+        android:background="@android:color/transparent"
+        android:elevation="0dp" />
+
     <!-- History slide-over scrim -->
     <View
         android:id="@+id/historyDrawerScrim"
@@ -963,7 +977,7 @@
         android:focusable="true"
         android:alpha="0" />
 
-    <!-- History slide-over panel (SavedChats) — ~84% width, leading-aligned -->
+    <!-- History full-screen overlay (SavedChats) — matches Grok ref coverage -->
     <FrameLayout
         android:id="@+id/historyDrawerContainer"
         android:layout_width="match_parent"
@@ -971,5 +985,7 @@
         android:layout_gravity="start"
         android:visibility="gone"
         android:elevation="12dp"
+        android:clickable="true"
+        android:focusable="true"
         android:background="@color/xai_canvas" />
 </FrameLayout>

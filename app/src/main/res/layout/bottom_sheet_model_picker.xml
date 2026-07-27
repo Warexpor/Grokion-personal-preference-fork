@@ -44,7 +44,8 @@
                 android:text="Alphabetical"
                 app:backgroundTint="@color/toggle_background_selector"
                 app:strokeColor="@color/xai_hairline"
-                style="?attr/materialButtonOutlinedStyle" />
+                style="@style/Widget.Grokion.Button.OutlinedToggle"
+                app:checkedIconVisible="false" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/sortDateButton"
@@ -54,7 +55,8 @@
                 android:text="Newest"
                 app:backgroundTint="@color/toggle_background_selector"
                 app:strokeColor="@color/xai_hairline"
-                style="?attr/materialButtonOutlinedStyle" />
+                style="@style/Widget.Grokion.Button.OutlinedToggle"
+                app:checkedIconVisible="false" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
         <!-- Type Filter Bar -->
@@ -76,7 +78,8 @@
                 android:text="All"
                 app:backgroundTint="@color/toggle_background_selector"
                 app:strokeColor="@color/xai_hairline"
-                style="?attr/materialButtonOutlinedStyle" />
+                style="@style/Widget.Grokion.Button.OutlinedToggle"
+                app:checkedIconVisible="false" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/filterVisionButton"
@@ -86,7 +89,8 @@
                 android:text="Vision"
                 app:backgroundTint="@color/toggle_background_selector"
                 app:strokeColor="@color/xai_hairline"
-                style="?attr/materialButtonOutlinedStyle" />
+                style="@style/Widget.Grokion.Button.OutlinedToggle"
+                app:checkedIconVisible="false" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/filterImageGenButton"
@@ -96,7 +100,8 @@
                 android:text="Image Gen"
                 app:backgroundTint="@color/toggle_background_selector"
                 app:strokeColor="@color/xai_hairline"
-                style="?attr/materialButtonOutlinedStyle" />
+                style="@style/Widget.Grokion.Button.OutlinedToggle"
+                app:checkedIconVisible="false" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/filterTranscriptionButton"
@@ -106,7 +111,8 @@
                 android:text="Transc."
                 app:backgroundTint="@color/toggle_background_selector"
                 app:strokeColor="@color/xai_hairline"
-                style="?attr/materialButtonOutlinedStyle" />
+                style="@style/Widget.Grokion.Button.OutlinedToggle"
+                app:checkedIconVisible="false" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
         <!-- Cost Filter Bar -->
@@ -128,7 +134,8 @@
                 android:text="All"
                 app:backgroundTint="@color/toggle_background_selector"
                 app:strokeColor="@color/xai_hairline"
-                style="?attr/materialButtonOutlinedStyle" />
+                style="@style/Widget.Grokion.Button.OutlinedToggle"
+                app:checkedIconVisible="false" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/costFilterFreeButton"
@@ -138,7 +145,8 @@
                 android:text="Free"
                 app:backgroundTint="@color/toggle_background_selector"
                 app:strokeColor="@color/xai_hairline"
-                style="?attr/materialButtonOutlinedStyle" />
+                style="@style/Widget.Grokion.Button.OutlinedToggle"
+                app:checkedIconVisible="false" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/costFilterPaidButton"
@@ -148,7 +156,8 @@
                 android:text="Paid"
                 app:backgroundTint="@color/toggle_background_selector"
                 app:strokeColor="@color/xai_hairline"
-                style="?attr/materialButtonOutlinedStyle" />
+                style="@style/Widget.Grokion.Button.OutlinedToggle"
+                app:checkedIconVisible="false" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
         <!-- Source Filter Bar -->
@@ -170,7 +179,8 @@
                 android:text="All"
                 app:backgroundTint="@color/toggle_background_selector"
                 app:strokeColor="@color/xai_hairline"
-                style="?attr/materialButtonOutlinedStyle" />
+                style="@style/Widget.Grokion.Button.OutlinedToggle"
+                app:checkedIconVisible="false" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/sourceFilterLanButton"
@@ -180,7 +190,8 @@
                 android:text="LAN"
                 app:backgroundTint="@color/toggle_background_selector"
                 app:strokeColor="@color/xai_hairline"
-                style="?attr/materialButtonOutlinedStyle" />
+                style="@style/Widget.Grokion.Button.OutlinedToggle"
+                app:checkedIconVisible="false" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/sourceFilterCloudButton"
@@ -190,7 +201,8 @@
                 android:text="Cloud"
                 app:backgroundTint="@color/toggle_background_selector"
                 app:strokeColor="@color/xai_hairline"
-                style="?attr/materialButtonOutlinedStyle" />
+                style="@style/Widget.Grokion.Button.OutlinedToggle"
+                app:checkedIconVisible="false" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
     </androidx.constraintlayout.widget.ConstraintLayout>
 

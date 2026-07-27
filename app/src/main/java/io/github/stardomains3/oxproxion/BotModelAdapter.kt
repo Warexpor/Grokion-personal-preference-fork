@@ -1,6 +1,7 @@
 package io.github.stardomains3.oxproxion
 
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
@@ -44,17 +45,6 @@ class BotModelAdapter(
     override fun onBindViewHolder(holder: ModelViewHolder, position: Int) {
         val model = models[position]
         holder.modelName.text = model.displayName
-
-
-                // ... inside onBindViewHolder ...
-                if (model.apiIdentifier == currentModelId) {
-                    val orangeColor = ContextCompat.getColor(holder.itemView.context, R.color.ora)
-                    holder.modelName.setTextColor(orangeColor)
-                } else {
-                    // Pulls the dynamic primary text color from the current theme (Black for light mode, White for dark mode)
-                    val defaultColor = MaterialColors.getColor(holder.itemView, android.R.attr.textColorPrimary)
-                    holder.modelName.setTextColor(defaultColor)
-                }
         val iconRes = when {
             model.isTranscription -> R.drawable.ic_mic
             model.isImageGenerationCapable -> R.drawable.ic_palette
@@ -69,6 +59,28 @@ class BotModelAdapter(
             R.drawable.ic_cloudnew2
         }
         holder.sourceIcon.setImageResource(sourceIconRes)
+        val mute = ContextCompat.getColor(holder.itemView.context, R.color.xai_mute)
+        holder.sourceIcon.imageTintList = ColorStateList.valueOf(mute)
+        holder.modelIcon.imageTintList = ColorStateList.valueOf(mute)
+        holder.editIcon.imageTintList = ColorStateList.valueOf(mute)
+
+        // Selected model: ink checkmark (SRC_IN so fill never stays Material-black)
+        if (model.apiIdentifier == currentModelId) {
+            holder.editIcon.setImageResource(R.drawable.ic_check)
+            val ink = ContextCompat.getColor(holder.itemView.context, R.color.xai_ink)
+            holder.editIcon.clearColorFilter()
+            holder.editIcon.setColorFilter(ink, android.graphics.PorterDuff.Mode.SRC_IN)
+            holder.editIcon.imageTintList = null
+            holder.editIcon.isClickable = false
+            holder.modelName.setTextColor(ink)
+        } else {
+            holder.editIcon.setImageResource(R.drawable.ic_editnote)
+            holder.editIcon.clearColorFilter()
+            holder.editIcon.imageTintList = ColorStateList.valueOf(mute)
+            holder.editIcon.isClickable = true
+            val defaultColor = MaterialColors.getColor(holder.itemView, android.R.attr.textColorPrimary)
+            holder.modelName.setTextColor(defaultColor)
+        }
 
         holder.itemView.setOnClickListener {
             onItemClicked(model)

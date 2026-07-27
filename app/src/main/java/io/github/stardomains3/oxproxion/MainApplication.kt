@@ -11,5 +11,7 @@ class MainApplication : Application() {
         } catch (e: UnsatisfiedLinkError) {
             throw IllegalStateException("SQLCipher native library failed to load", e)
         }
+        // Kill leftover sticky "Running" FGS notifs from older builds
+        ForegroundService.clearLegacyRunningNotification(this)
     }
 }

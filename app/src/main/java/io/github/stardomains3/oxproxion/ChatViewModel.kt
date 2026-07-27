@@ -728,7 +728,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     _activeChatModel.postValue(it.modelUsed)
                     _modelPreferenceToSave.postValue(it.modelUsed)
                    /* withContext(Dispatchers.Main) {
-                        if (ForegroundService.isRunningForeground && sharedPreferencesHelper.getNotiPreference()) {
+                        if (sharedPreferencesHelper.getNotiPreference()) {
                             val apiIdentifier = it.modelUsed ?: "Unknown Model"
                             val displayName = getModelDisplayName(apiIdentifier)
                             ForegroundService.updateNotificationStatusSilently(displayName, "Saved Chat Loaded")
@@ -3442,7 +3442,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                         }
                     }
 
-                    if (ForegroundService.isRunningForeground && sharedPreferencesHelper.getNotiPreference()) {
+                    if (sharedPreferencesHelper.getNotiPreference()) {
                         val apiIdentifier = activeChatModel.value ?: "Unknown Model"
                         val displayName = getModelDisplayName(apiIdentifier)
                         val truncatedResponse = if (accumulatedResponse.length > 3900) {
@@ -3451,13 +3451,13 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                             accumulatedResponse
                         }
                         sharedPreferencesHelper.saveLastAiResponseForChannel(2, truncatedResponse)
-                        ForegroundService.updateNotificationStatus(displayName, "Your answer is ready.")
+                        ForegroundService.updateNotificationStatus(getApplication(), displayName, "Your answer is ready.")
                     }
                 }
             } catch (e: Throwable) {
                 withContext(Dispatchers.Main) {
                     handleError(e, thinkingMessage)
-                    if (ForegroundService.isRunningForeground && sharedPreferencesHelper.getNotiPreference()) {
+                    if (sharedPreferencesHelper.getNotiPreference()) {
                         val apiIdentifier = activeChatModel.value ?: "Unknown Model"
                         val displayName = getModelDisplayName(apiIdentifier)
                         sharedPreferencesHelper.saveLastAiResponseForChannel(2, "Error!")
@@ -3809,7 +3809,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     }
 
                     // --- 7. Notification logic ---
-                    if (ForegroundService.isRunningForeground && sharedPreferencesHelper.getNotiPreference()) {
+                    if (sharedPreferencesHelper.getNotiPreference()) {
                         val apiIdentifier = activeChatModel.value ?: "Unknown Model"
                         val displayName = getModelDisplayName(apiIdentifier)
                         val truncatedResponse = if (accumulatedResponse.length > 3900) {
@@ -3818,13 +3818,13 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                             accumulatedResponse
                         }
                         sharedPreferencesHelper.saveLastAiResponseForChannel(2, truncatedResponse)
-                        ForegroundService.updateNotificationStatus(displayName, "Your answer is ready.")
+                        ForegroundService.updateNotificationStatus(getApplication(), displayName, "Your answer is ready.")
                     }
                 }
             } catch (e: Throwable) {
                 withContext(Dispatchers.Main) {
                     handleError(e, thinkingMessage)
-                    if (ForegroundService.isRunningForeground && sharedPreferencesHelper.getNotiPreference()) {
+                    if (sharedPreferencesHelper.getNotiPreference()) {
                         val apiIdentifier = activeChatModel.value ?: "Unknown Model"
                         val displayName = getModelDisplayName(apiIdentifier)
                         sharedPreferencesHelper.saveLastAiResponseForChannel(2, "Error!")
@@ -3907,7 +3907,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     // You may need to adjust this parser for Ollama/LM Studio specifically
                     val lanError = parseOpenRouterError(errorBody)
 
-                    if (ForegroundService.isRunningForeground && sharedPreferencesHelper.getNotiPreference()) {
+                    if (sharedPreferencesHelper.getNotiPreference()) {
                         val apiIdentifier = activeChatModel.value ?: "Unknown Model"
                         val displayName = getModelDisplayName(apiIdentifier)
                         sharedPreferencesHelper.saveLastAiResponseForChannel(
@@ -4109,7 +4109,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                         "No details"
                     }
                     val openRouterError = parseOpenRouterError(errorBody)  // Use the parser!
-                    if (ForegroundService.isRunningForeground && sharedPreferencesHelper.getNotiPreference()) {
+                    if (sharedPreferencesHelper.getNotiPreference()) {
                         val apiIdentifier = activeChatModel.value ?: "Unknown Model"
                         val displayName = getModelDisplayName(apiIdentifier)
                         sharedPreferencesHelper.saveLastAiResponseForChannel(
@@ -4266,7 +4266,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 list.add(finalAiMessage)
             }
 
-            if (ForegroundService.isRunningForeground && sharedPreferencesHelper.getNotiPreference()) {
+            if (sharedPreferencesHelper.getNotiPreference()) {
                 val apiIdentifier = activeChatModel.value ?: "Unknown Model"
                 val displayName = getModelDisplayName(apiIdentifier)
                 val truncatedResponse = if (finalContent.length > 3900) {
@@ -4275,7 +4275,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     finalContent
                 }
                 sharedPreferencesHelper.saveLastAiResponseForChannel(2, truncatedResponse)
-                ForegroundService.updateNotificationStatus(displayName, "Your answer is ready.")
+                ForegroundService.updateNotificationStatus(getApplication(), displayName, "Your answer is ready.")
             }
         }
     }
@@ -4293,7 +4293,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         updateMessages { list ->
             putAssistantMessage(list, thinkingMessage, errorMessage)
         }
-        if (ForegroundService.isRunningForeground && sharedPreferencesHelper.getNotiPreference()) {
+        if (sharedPreferencesHelper.getNotiPreference()) {
             val apiIdentifier = activeChatModel.value ?: "Unknown Model"
             val displayName = getModelDisplayName(apiIdentifier)
             sharedPreferencesHelper.saveLastAiResponseForChannel(2, detailedMsg)//#ttsnoti

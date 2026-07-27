@@ -21,7 +21,7 @@ Reference: `ai.x.grok` 1.1.97 (`references/grok_decompiled`), [`DESIGN.md`](DESI
 | Advanced | section | Libraries / Generation / Chat chrome (power tools bar) |
 | Data & Privacy | section | Biometrics, notifications, import/export, help, licenses |
 | Model picker | `BotModelPickerFragment` | Primary model entry (chip) |
-| Attach sheet | bottom sheet from `+` | Camera / Gallery / Files (+ system message / tools) |
+| Attach sheet | popup from composer `+` | Camera / Gallery / Files (+ Tools); Gallery always opens system picker |
 | Libraries / catalogs | Advanced children | Tools, prompts, presets, system messages, OR/LAN catalogs — canvas chrome |
 
 Voice settings entry is disabled (STT removed). Conversations always autosave to History.

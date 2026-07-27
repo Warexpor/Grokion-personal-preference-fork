@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Grok history: profile header, list, bottom search | settings | new chat -->
+<!-- Grok history: wordmark header, list, bottom search | settings | new chat -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -13,14 +13,11 @@
     <LinearLayout
         android:id="@+id/historyHeader"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="56dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingStart="16dp"
-        android:paddingEnd="12dp"
-        android:paddingTop="12dp"
-        android:paddingBottom="8dp"
-        android:minHeight="56dp">
+        android:paddingStart="20dp"
+        android:paddingEnd="16dp">
 
         <TextView
             android:id="@+id/historyTitle"
@@ -29,15 +26,15 @@
             android:layout_weight="1"
             android:text="@string/grokion_wordmark"
             android:textColor="@color/xai_ink"
-            android:textSize="22sp"
+            android:textSize="32sp"
             android:textAllCaps="true"
-            android:letterSpacing="0.14"
+            android:letterSpacing="0.12"
             android:textStyle="normal"
+            android:includeFontPadding="false"
             android:maxLines="1"
             android:ellipsize="end"
             style="@style/GrokionBrandWordmark" />
 
-        <!-- Kept for ID stability if anything still resolves it -->
         <ImageView
             android:id="@+id/historyProfileAvatar"
             android:layout_width="0dp"
@@ -76,29 +73,30 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:clipToPadding="false"
+        android:paddingTop="4dp"
         android:paddingBottom="8dp"
         android:scrollbars="none"
         android:overScrollMode="never"
         android:background="@color/xai_canvas"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
-    <!-- Bottom utility: Search | Settings | New chat -->
+    <!-- Bottom: Search | Settings | New chat — Grok ref density -->
     <LinearLayout
         android:id="@+id/historyBottomBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="12dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="16dp"
         android:background="@color/xai_canvas">
 
         <androidx.appcompat.widget.SearchView
             android:id="@+id/historySearchView"
             android:layout_width="0dp"
-            android:layout_height="44dp"
+            android:layout_height="48dp"
             android:layout_weight="1"
             android:background="@drawable/bg_history_search"
             android:queryHint="@string/grok_history_search"
@@ -107,47 +105,25 @@
             app:queryBackground="@android:color/transparent" />
 
         <ImageButton
-            android:id="@+id/historyImportButton"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:layout_marginStart="8dp"
-            android:background="@drawable/bg_circle_soft"
-            android:contentDescription="@string/grok_history_import"
-            android:src="@drawable/ic_import"
-            android:padding="10dp"
-            app:tint="@color/xai_ink" />
-
-        <ImageButton
-            android:id="@+id/historyExportButton"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:layout_marginStart="4dp"
-            android:background="@drawable/bg_circle_soft"
-            android:contentDescription="@string/grok_history_export"
-            android:src="@drawable/ic_export"
-            android:padding="10dp"
-            app:tint="@color/xai_ink" />
-
-        <ImageButton
             android:id="@+id/historySettingsButton"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:layout_marginStart="8dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="10dp"
             android:background="@drawable/bg_circle_soft"
             android:contentDescription="@string/grok_settings"
             android:src="@drawable/ic_settings"
-            android:padding="10dp"
+            android:padding="12dp"
             app:tint="@color/xai_ink" />
 
         <ImageButton
             android:id="@+id/historyNewChatButton"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:layout_marginStart="8dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="10dp"
             android:background="@drawable/bg_circle_soft"
             android:contentDescription="@string/grok_new_conversation"
             android:src="@drawable/ic_new_chat"
-            android:padding="10dp"
+            android:padding="12dp"
             app:tint="@color/xai_ink" />
     </LinearLayout>
 

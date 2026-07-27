@@ -11,9 +11,7 @@ import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.content.pm.ServiceInfo
 import android.graphics.BitmapFactory
-import android.os.Build
 import android.os.IBinder
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
@@ -21,9 +19,12 @@ import androidx.core.app.NotificationCompat
 import org.commonmark.parser.Parser
 import org.commonmark.renderer.text.TextContentRenderer
 
+/**
+ * Hosts answer-ready notification actions (Speak / Dismiss / Copy / Open).
+ * Does **not** keep a sticky "Running" FGS notification — only "Your answer is ready."
+ */
 class ForegroundService : Service(), TextToSpeech.OnInitListener {
 
-    private val FOREGROUND_CHANNEL_ID = "ForegroundChannel"
     private val CHANNEL_ID = "ForegroundServiceChannel"
 
     private val TOGGLE_TTS_ACTION = "TOGGLE_TTS_CHANNEL_2"
@@ -37,18 +38,48 @@ class ForegroundService : Service(), TextToSpeech.OnInitListener {
     private var lastUpdateText: String? = null
 
     companion object {
+        private const val ANSWER_CHANNEL_ID = "ForegroundServiceChannel"
+        private const val ANSWER_NOTIFICATION_ID = 2
+        private const val LEGACY_FGS_NOTIFICATION_ID = 1
+
         private var instance: ForegroundService? = null
 
         fun stopService() {
             instance?.stop()
         }
 
-        fun updateNotificationStatus(title: String, contentText: String) {
-            instance?.updateNotification(title, contentText)
+        /** Drop legacy sticky "Running" FGS chrome if an older build left it up. */
+        fun clearLegacyRunningNotification(context: Context) {
+            val nm = context.getSystemService(NotificationManager::class.java) ?: return
+            nm.cancel(LEGACY_FGS_NOTIFICATION_ID)
+            try {
+                nm.deleteNotificationChannel("ForegroundChannel")
+            } catch (_: Exception) {
+            }
+            stopService()
         }
 
-        fun dismissNotificationIfNotSpeaking() {
-            instance?.dismissIfNotSpeaking()
+        fun updateNotificationStatus(context: Context, title: String, contentText: String) {
+            val app = context.applicationContext
+            if (isAppInForeground(app)) return
+            ensureAnswerChannel(app)
+            instance?.let {
+                it.updateNotification(title, contentText)
+                return
+            }
+            postAnswerNotification(app, title, contentText, ttsActive = false, silent = false)
+        }
+
+        fun dismissNotificationIfNotSpeaking(context: Context? = null) {
+            if (instance != null) {
+                instance?.dismissIfNotSpeaking()
+            } else {
+                context?.getSystemService(NotificationManager::class.java)
+                    ?.cancel(ANSWER_NOTIFICATION_ID)
+            }
+            // Always drop leftover sticky "Running" chrome; do not stopService (may be TTS)
+            context?.getSystemService(NotificationManager::class.java)
+                ?.cancel(LEGACY_FGS_NOTIFICATION_ID)
         }
 
         fun stopTtsSpeaking() {
@@ -58,13 +89,131 @@ class ForegroundService : Service(), TextToSpeech.OnInitListener {
         @Volatile
         var isRunningForeground: Boolean = false
             private set
+
+        private fun ensureAnswerChannel(context: Context) {
+            val nm = context.getSystemService(NotificationManager::class.java) ?: return
+            val channel = NotificationChannel(
+                ANSWER_CHANNEL_ID,
+                "Answers",
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = "Notifies when your answer is ready"
+            }
+            nm.createNotificationChannel(channel)
+            // Leave legacy Connectivity channel disabled-looking if it already exists;
+            // never recreate a sticky FGS notif for it.
+        }
+
+        private fun isAppInForeground(context: Context): Boolean {
+            val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+            val appProcesses = activityManager.runningAppProcesses ?: return false
+            for (appProcess in appProcesses) {
+                if (appProcess.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND &&
+                    appProcess.processName == context.packageName
+                ) {
+                    return true
+                }
+            }
+            return false
+        }
+
+        private fun postAnswerNotification(
+            context: Context,
+            title: String,
+            contentText: String,
+            ttsActive: Boolean,
+            silent: Boolean
+        ) {
+            val nm = context.getSystemService(NotificationManager::class.java) ?: return
+            nm.notify(
+                ANSWER_NOTIFICATION_ID,
+                buildAnswerNotification(context, title, contentText, ttsActive, silent)
+            )
+        }
+
+        private fun buildAnswerNotification(
+            context: Context,
+            title: String,
+            contentText: String,
+            ttsActive: Boolean,
+            silent: Boolean
+        ): Notification {
+            val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply {
+                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                putExtra("from_notification", true)
+            }
+
+            val pendingIntent = PendingIntent.getActivity(
+                context,
+                0,
+                launchIntent ?: Intent(context, MainActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                    putExtra("from_notification", true)
+                },
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val togglePendingIntent = PendingIntent.getService(
+                context, 10,
+                Intent(context, ForegroundService::class.java).setAction("TOGGLE_TTS_CHANNEL_2"),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val dismissPendingIntent = PendingIntent.getService(
+                context, 11,
+                Intent(context, ForegroundService::class.java).setAction("DISMISS_CHANNEL_2"),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val copyPendingIntent = PendingIntent.getService(
+                context, 12,
+                Intent(context, ForegroundService::class.java).setAction("COPY_CHANNEL_2"),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val builder = NotificationCompat.Builder(context, ANSWER_CHANNEL_ID)
+                .setContentTitle(title)
+                .setContentText(contentText)
+                .setLargeIcon(BitmapFactory.decodeResource(context.resources, R.mipmap.ic_launcherrobot))
+                .setSmallIcon(R.drawable.ic_stat_name)
+                .setContentIntent(pendingIntent)
+                .setOngoing(false)
+                .setDeleteIntent(dismissPendingIntent)
+                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                .setAutoCancel(true)
+
+            if (!ttsActive) {
+                builder.addAction(android.R.drawable.ic_media_play, "Speak", togglePendingIntent)
+            } else {
+                builder.addAction(android.R.drawable.ic_media_pause, "Stop", togglePendingIntent)
+            }
+
+            val mainPrefs = context.getSharedPreferences("MainAppPrefs", Context.MODE_PRIVATE)
+            val useCopyButton = mainPrefs.getBoolean("use_copy_button", false)
+            val useCopyButton2 = mainPrefs.getBoolean("use_copy_button2", false)
+
+            if (useCopyButton2) {
+                builder.addAction(android.R.drawable.ic_input_get, "Copy", copyPendingIntent)
+            } else {
+                builder.addAction(android.R.drawable.ic_menu_close_clear_cancel, "Dismiss", dismissPendingIntent)
+            }
+
+            if (useCopyButton) {
+                builder.addAction(android.R.drawable.ic_input_get, "Copy", copyPendingIntent)
+            } else {
+                builder.addAction(android.R.drawable.ic_menu_info_details, "Open", pendingIntent)
+            }
+
+            if (silent) {
+                builder.setSilent(true).setOnlyAlertOnce(true)
+            }
+
+            return builder.build()
+        }
     }
 
     private fun stop() {
         try {
             stopSelf()
-        } catch (e: Exception) {
-            //Log.e("ForegroundService", "Error stopping service", e)
+        } catch (_: Exception) {
         }
     }
 
@@ -101,14 +250,12 @@ class ForegroundService : Service(), TextToSpeech.OnInitListener {
         tts?.stop()
         isTtsActive = false
         if (isAppInForeground()) {
-            val notificationManager = getSystemService(NotificationManager::class.java)
-            notificationManager.cancel(2)
+            getSystemService(NotificationManager::class.java).cancel(ANSWER_NOTIFICATION_ID)
         } else {
-            // Refresh notification to show "Speak" button silently (background)
             lastUpdateTitle?.let { title ->
                 lastUpdateText?.let { text ->
                     isTtsUpdate = true
-                    updateNotificationWithChannel(title, text, CHANNEL_ID)
+                    updateNotificationWithChannel(title, text)
                     isTtsUpdate = false
                 }
             }
@@ -131,8 +278,7 @@ class ForegroundService : Service(), TextToSpeech.OnInitListener {
                     if (isTtsActive) {
                         stopTts(true)
                         if (isAppInForeground()) {
-                            val notificationManager = getSystemService(NotificationManager::class.java)
-                            notificationManager.cancel(2)
+                            getSystemService(NotificationManager::class.java).cancel(ANSWER_NOTIFICATION_ID)
                         }
                     } else {
                         startTtsForChannel2()
@@ -140,65 +286,30 @@ class ForegroundService : Service(), TextToSpeech.OnInitListener {
                     return START_NOT_STICKY
                 }
                 DISMISS_ACTION -> {
-                    val notificationManager = getSystemService(NotificationManager::class.java)
-                    notificationManager.cancel(2)
+                    getSystemService(NotificationManager::class.java).cancel(ANSWER_NOTIFICATION_ID)
                     tts?.stop()
                     isTtsActive = false
+                    stopSelf()
                     return START_NOT_STICKY
                 }
                 COPY_ACTION -> {
                     copyLastResponseToClipboard()
-                    getSystemService(NotificationManager::class.java).cancel(2)
+                    getSystemService(NotificationManager::class.java).cancel(ANSWER_NOTIFICATION_ID)
+                    stopSelf()
                     return START_NOT_STICKY
                 }
             }
         }
 
-        createNotificationChannels()
-
-        val notification = buildNotification("Grokion", "Running", FOREGROUND_CHANNEL_ID)
-
-        val foregroundServiceType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING
-        } else {
-            ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
-        }
-
-        startForeground(1, notification, foregroundServiceType)
-        isRunningForeground = true
+        // No sticky "Running" notification. Ignore bare starts (answer actions handled above).
+        ensureAnswerChannel(this)
+        getSystemService(NotificationManager::class.java).cancel(LEGACY_FGS_NOTIFICATION_ID)
+        isRunningForeground = false
+        stopSelf()
         return START_NOT_STICKY
     }
 
-    override fun onBind(intent: Intent): IBinder? {
-        return null
-    }
-
-    private fun createNotificationChannels() {
-        val notificationManager = getSystemService(NotificationManager::class.java)
-
-        // Sticky FGS chrome only — keep silent/min so it never competes with answer alerts
-        val foregroundChannel = NotificationChannel(
-            FOREGROUND_CHANNEL_ID,
-            "Connectivity Service Channel",
-            NotificationManager.IMPORTANCE_MIN
-        ).apply {
-            description = "Silent persistent service notification"
-            setShowBadge(false)
-            enableVibration(false)
-            setSound(null, null)
-        }
-
-        // Answer-ready alerts only
-        val serviceChannel = NotificationChannel(
-            CHANNEL_ID,
-            "Answers",
-            NotificationManager.IMPORTANCE_DEFAULT
-        ).apply {
-            description = "Notifies when your answer is ready"
-        }
-
-        notificationManager.createNotificationChannels(listOf(foregroundChannel, serviceChannel))
-    }
+    override fun onBind(intent: Intent): IBinder? = null
 
     fun updateNotification(title: String, contentText: String) {
         if (!isAppInForeground()) {
@@ -208,23 +319,22 @@ class ForegroundService : Service(), TextToSpeech.OnInitListener {
                 tts?.stop()
                 isTtsActive = false
             }
-            updateNotificationWithChannel(title, contentText, CHANNEL_ID)
+            updateNotificationWithChannel(title, contentText)
         }
     }
 
     private fun dismissIfNotSpeaking() {
-        if (!isTtsActive && isNotificationActive(2)) {
-            val notificationManager = getSystemService(NotificationManager::class.java)
-            notificationManager.cancel(2)
+        if (!isTtsActive && isNotificationActive(ANSWER_NOTIFICATION_ID)) {
+            getSystemService(NotificationManager::class.java).cancel(ANSWER_NOTIFICATION_ID)
         }
     }
 
     private fun stopTts(updateNotif: Boolean) {
         tts?.stop()
         isTtsActive = false
-        if (updateNotif && lastUpdateTitle != null && lastUpdateText != null && isNotificationActive(2)) {
+        if (updateNotif && lastUpdateTitle != null && lastUpdateText != null && isNotificationActive(ANSWER_NOTIFICATION_ID)) {
             isTtsUpdate = true
-            updateNotificationWithChannel(lastUpdateTitle!!, lastUpdateText!!, CHANNEL_ID)
+            updateNotificationWithChannel(lastUpdateTitle!!, lastUpdateText!!)
             isTtsUpdate = false
         }
     }
@@ -234,157 +344,49 @@ class ForegroundService : Service(), TextToSpeech.OnInitListener {
         val cleanText = stripMarkdownWithCommonMark(lastResponse)
         tts?.speak(cleanText, TextToSpeech.QUEUE_FLUSH, null, "fg_tts")
         isTtsActive = true
-        if (lastUpdateTitle != null && lastUpdateText != null && isNotificationActive(2)) {
+        if (lastUpdateTitle != null && lastUpdateText != null && isNotificationActive(ANSWER_NOTIFICATION_ID)) {
             isTtsUpdate = true
-            updateNotificationWithChannel(lastUpdateTitle!!, lastUpdateText!!, CHANNEL_ID)
+            updateNotificationWithChannel(lastUpdateTitle!!, lastUpdateText!!)
+            isTtsUpdate = false
+        } else if (lastUpdateTitle != null && lastUpdateText != null) {
+            isTtsUpdate = true
+            updateNotificationWithChannel(lastUpdateTitle!!, lastUpdateText!!)
             isTtsUpdate = false
         }
     }
+
     private fun stripMarkdownWithCommonMark(text: String): String {
-        try {
+        return try {
             val parser = Parser.builder().build()
             val document = parser.parse(text)
-            val renderer = TextContentRenderer.builder().build()
-            return renderer.render(document).trim()
-        } catch (e: Exception) {
-            // If parsing fails, remove basic markdown with regex as fallback
-            return text.replace(Regex("\\*\\*|__|`|\\[|\\]"), "")
+            TextContentRenderer.builder().build().render(document).trim()
+        } catch (_: Exception) {
+            text.replace(Regex("\\*\\*|__|`|\\[|\\]"), "")
         }
     }
 
     private fun copyLastResponseToClipboard() {
         val lastResponse = getLastAiResponseForChannel(2) ?: return
         val cleanText = stripMarkdownWithCommonMark(lastResponse)
-
         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        val clip = ClipData.newPlainText("AI Response", cleanText)
-        clipboard.setPrimaryClip(clip)
+        clipboard.setPrimaryClip(ClipData.newPlainText("AI Response", cleanText))
     }
 
-    private fun isAppInForeground(): Boolean {
-        val activityManager = getSystemService(ACTIVITY_SERVICE) as ActivityManager
-        val appProcesses = activityManager.runningAppProcesses ?: return false
-        for (appProcess in appProcesses) {
-            if (appProcess.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND &&
-                appProcess.processName == packageName
-            ) {
-                return true
-            }
-        }
-        return false
-    }
+    private fun isAppInForeground(): Boolean = isAppInForeground(this)
 
     private fun isNotificationActive(notificationId: Int): Boolean {
-        val notificationManager = getSystemService(NotificationManager::class.java)
-        val activeNotifications = notificationManager.activeNotifications
-        return activeNotifications.any { it.id == notificationId }
+        val active = getSystemService(NotificationManager::class.java).activeNotifications
+        return active.any { it.id == notificationId }
     }
 
-    private fun updateNotificationWithChannel(title: String, contentText: String, channelId: String) {
+    private fun updateNotificationWithChannel(title: String, contentText: String) {
         lastUpdateTitle = title
         lastUpdateText = contentText
-        val notification = buildNotification(title, contentText, channelId)
-        val notificationManager = getSystemService(NotificationManager::class.java)
-        notificationManager.notify(2, notification)
+        postAnswerNotification(this, title, contentText, isTtsActive, silent = isTtsUpdate)
     }
 
     private fun getLastAiResponseForChannel(channelId: Int): String? {
         val prefs: SharedPreferences = getSharedPreferences("MainAppPrefs", Context.MODE_PRIVATE)
         return prefs.getString("last_ai_response_channel_$channelId", null)
-    }
-
-    private fun buildNotification(title: String, contentText: String, channelId: String): Notification {
-        val launchIntent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
-            addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            putExtra("from_notification", true)  // <-- Add this
-        }
-
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            launchIntent ?: Intent(this, MainActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            },
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val toggleIntent = Intent(this, ForegroundService::class.java).apply {
-            action = TOGGLE_TTS_ACTION
-        }
-        val togglePendingIntent = PendingIntent.getService(
-            this, 10, toggleIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val dismissIntent = Intent(this, ForegroundService::class.java).apply {
-            action = DISMISS_ACTION
-        }
-        val dismissPendingIntent = PendingIntent.getService(
-            this, 11, dismissIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        // NEW COPY BUTTON CODE - PendingIntent for copy action
-        val copyIntent = Intent(this, ForegroundService::class.java).apply {
-            action = COPY_ACTION
-        }
-        val copyPendingIntent = PendingIntent.getService(
-            this, 12, copyIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val builder = NotificationCompat.Builder(this, channelId)
-            .setContentTitle(title)
-            .setContentText(contentText)
-            .setLargeIcon(BitmapFactory.decodeResource(resources, R.mipmap.ic_launcherrobot))
-            .setSmallIcon(R.drawable.ic_stat_name)
-            .setContentIntent(pendingIntent)
-
-        if (channelId == FOREGROUND_CHANNEL_ID) {
-            builder.setOngoing(true)
-                .setSilent(true)
-                .setOnlyAlertOnce(true)
-                .setCategory(NotificationCompat.CATEGORY_SERVICE)
-        } else {
-            builder.setOngoing(false)
-                .setDeleteIntent(dismissPendingIntent)
-                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-                .setAutoCancel(true)
-
-            if (!isTtsActive) {
-                builder.addAction(android.R.drawable.ic_media_play, "Speak", togglePendingIntent)
-            } else {
-                builder.addAction(android.R.drawable.ic_media_pause, "Stop", togglePendingIntent)
-            }
-           // builder.addAction(android.R.drawable.ic_menu_close_clear_cancel, "Dismiss", dismissPendingIntent)
-
-            // Check preference for Copy vs Open button
-            val mainPrefs = getSharedPreferences("MainAppPrefs", Context.MODE_PRIVATE)
-            val useCopyButton = mainPrefs.getBoolean("use_copy_button", false)
-            val useCopyButton2 = mainPrefs.getBoolean("use_copy_button2", false)
-
-            if (useCopyButton2) {
-                // NEW COPY BUTTON CODE for second slot - Copies the same text that TTS speaks
-                builder.addAction(android.R.drawable.ic_input_get, "Copy", copyPendingIntent)
-            } else {
-                // OLD DISMISS BUTTON CODE - Just dismisses the notification
-                builder.addAction(android.R.drawable.ic_menu_close_clear_cancel, "Dismiss", dismissPendingIntent)
-            }
-
-            if (useCopyButton) {
-                // NEW COPY BUTTON CODE - Copies the same text that TTS speaks
-                builder.addAction(android.R.drawable.ic_input_get, "Copy", copyPendingIntent)
-            } else {
-                // OLD OPEN BUTTON CODE - Opens the app when tapped
-                builder.addAction(android.R.drawable.ic_menu_info_details, "Open", pendingIntent)
-            }
-
-            if (isTtsUpdate) {
-                builder.setSilent(true)
-                    .setOnlyAlertOnce(true)
-            }
-        }
-
-        return builder.build()
     }
 }

@@ -314,11 +314,10 @@ class HelpFragment : Fragment(R.layout.fragment_help) {
             
             ### "History" Screen
             *   **Open**: Tap **History** {{ic_schats}} in the top bar (or the history drawer when embedded in chat).
-            *   **Import/Export**: Use **Import** and **Export** in the History bottom bar, or **Settings → Data & Privacy**.
-            *   **Rename**: Use the overflow menu on a conversation to rename its title.
-            *   **Pin / Delete**: Pin important chats or delete from the row overflow menu.
-            *   **Search**: Use the search field in the History bottom bar.
-            *   **Autosave**: Conversations are saved automatically while you chat. Rename titles from History overflow.
+            *   **Import/Export**: **Settings → Data & Privacy**.
+            *   **Overflow (⋮)**: Bottom sheet with **Delete** (red), **Rename**, **Pin**.
+            *   **Search**: Search field in the History bottom bar (with Settings and New chat).
+            *   **Autosave**: Conversations save automatically; rename via overflow.
             *   **Images**: Attached or generated images may not persist when you reopen a saved conversation.
 
             ### "System Message" Screen
@@ -392,7 +391,7 @@ class HelpFragment : Fragment(R.layout.fragment_help) {
             *   Ollama, LM Studio, llama.cpp, MLX LM, and Hermes Agent endpoint default is plain http, therefore the chat is passed via unencrypted text on your LAN. Unless you have an https endpoint for them.
             *   For HTTPS LAN servers with a self-signed certificate, enable **Trust self-signed LAN TLS** in Settings (off by default). HTTP LAN URLs are limited to private/loopback/`.local` hosts.
             *   Ollama, LM Studio, llama.cpp, MLX LM, and Hermes Agent function is nascent and might not support all capabilities at this time. Furthermore you must set them to be served properly on your LAN.
-            *   Notifications and Connectivity Service: The "Connectivity Service Channel" runs and you can hide that; go into your app settings in the system and go to notifications and you can toggle that notification off. ("Connectivity Service Channel") And the only notifications you will receive(if in the app you have the notification bell active) is if the app is back-grounded and there's either an error or you receive the response from the model. Notifications won't show if app is in the foreground. Notifications are auto-dismissed when returning to the app. Closing the app by swiping it away in Recents will shut down the service properly.
+            *   Notifications: With the bell enabled, you only get **"Your answer is ready."** when a response finishes while the app is backgrounded. Nothing posts while you're in the app. Returning to the app dismisses that notification.
             *   Notifications Buttons: "Dismiss" closes the notification. "Open" will bring Grokion to the foreground. "Speak" will speak aloud the last AI response. You stop the audio here too by pressing stop, dismissing, or swiping the notification away. This is separate from the main app's text-to-speak function.
             *   If you make a preset titled "Digital Assistant"(case-insensitive), and have Grokion as your system digital assistant in your Android settings(Settings->Apps->Default apps), this preset will be applied for when you use it as the system digital assistant.
             *   **Variable Substitution**: Use `{{oxdate}}` (yyyy-MM-dd), `{{oxtime}}` (HH:mm:ss), `{{oxdatetime}}` (ISO), or `{{oxhdt}}` (human-readable) in prompts/system messages. Auto-replaces with current date/time on send.

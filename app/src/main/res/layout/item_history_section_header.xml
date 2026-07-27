@@ -5,10 +5,10 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:paddingStart="16dp"
-    android:paddingEnd="12dp"
-    android:paddingTop="18dp"
-    android:paddingBottom="6dp">
+    android:paddingStart="20dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="14dp"
+    android:paddingBottom="8dp">
 
     <TextView
         android:id="@+id/historySectionHeader"
@@ -16,8 +16,9 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:textColor="@color/xai_mute"
-        android:textSize="13sp"
+        android:textSize="14sp"
         android:textStyle="normal"
+        android:includeFontPadding="false"
         android:letterSpacing="0.01" />
 
     <ImageView

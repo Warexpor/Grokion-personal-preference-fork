@@ -130,8 +130,13 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         })
-        startForegroundService()
-       // if (sharedPreferencesHelper.getNotiPreference()) startForegroundService()
+        // Answer-ready notifications only — no sticky "Running" FGS chrome
+        ForegroundService.clearLegacyRunningNotification(this)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        ForegroundService.clearLegacyRunningNotification(this)
     }
     override fun onKeyLongPress(keyCode: Int, event: KeyEvent?): Boolean {
         val currentFragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
@@ -188,15 +193,6 @@ class MainActivity : AppCompatActivity() {
            // Log.e("MainActivity", "Failed to start foreground service", e)
         }
     }*/
-    private fun startForegroundService() {
-        if (ForegroundService.isRunningForeground) return
-        try {
-            val serviceIntent = Intent(this, ForegroundService::class.java)
-            ContextCompat.startForegroundService(this, serviceIntent)  // ← From startService()
-        } catch (e: Exception) {
-         //   Log.e("MainActivity", "Failed to start foreground service", e)
-        }
-    }
 
     /*private fun startForegroundService() {
         try {

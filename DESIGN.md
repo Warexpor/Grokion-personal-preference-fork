@@ -294,7 +294,7 @@ Centered Grok mark/wordmark, short prompt, **3–4 suggestion chips** (`surfaceN
 | Fill | `surfaceNeutral` (`#181818` dark / `#F2F2F2` light) |
 | Border | 1dp `border` |
 | Hint | `Ask anything` (`grok_input_ask_anything`) — already in Grokion strings |
-| Leading | Attach / `+` menu (Camera, Gallery, Files, …) — idle secondary |
+| Leading | Attach / `+` menu (Camera, Gallery, Files, …) — idle secondary; Gallery uses system photo picker |
 | Trailing send | **32dp circle** (44dp hit) |
 | Send disabled | fill `surfaceBright`/`#242424`, arrow secondary |
 | Send enabled | fill `#FFFFFF`, arrow `#000000` (use APK `ic_send` path: up chevron) |

@@ -23,6 +23,8 @@
     <string name="grok_history_search_empty_text">Try searching for something else.</string>
     <string name="grok_history_pin">Pin</string>
     <string name="grok_history_unpin">Unpin</string>
+    <string name="grok_history_rename">Rename</string>
+    <string name="grok_history_delete">Delete</string>
     <string name="grok_history_import">Import</string>
     <string name="grok_history_export">Export</string>
     <string name="grok_history_more">More</string>

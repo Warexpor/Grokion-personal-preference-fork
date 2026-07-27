@@ -12,6 +12,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.ContentValues
 import android.content.Context
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
@@ -46,12 +47,14 @@ import android.text.style.BackgroundColorSpan
 import android.text.util.Linkify
 import android.util.Base64
 import android.util.TypedValue
+import android.view.GestureDetector
 import android.view.Gravity
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import kotlin.math.abs
 import android.view.ViewTreeObserver
 import android.view.WindowInsets
 import android.view.WindowManager
@@ -64,9 +67,11 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.PopupWindow
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
@@ -236,7 +241,8 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
     private lateinit var localNetworkPermissionLauncher: ActivityResultLauncher<String>
     private lateinit var locationPermissionLauncher: ActivityResultLauncher<String>
     private lateinit var notificationPolicyLauncher: ActivityResultLauncher<Intent>
-    private lateinit var imagePicker: ActivityResultLauncher<Intent>  // Renamed for clarity (gallery picker)
+    private lateinit var galleryPicker: ActivityResultLauncher<PickVisualMediaRequest>
+    private lateinit var legacyGalleryPicker: ActivityResultLauncher<Array<String>>
     private lateinit var folderPickerLauncher: ActivityResultLauncher<Uri?>
     private lateinit var layoutManager: LinearLayoutManager
     private lateinit var pdfPicker: ActivityResultLauncher<Array<String>>
@@ -422,46 +428,11 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
         audioPicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
             uri?.let { processAudioUri(it) }
         }
-        imagePicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                val uri: Uri? = result.data?.data
-                uri?.let { u ->
-                    requireContext().contentResolver.openInputStream(u)?.use { stream ->
-                        val bytes = stream.readBytes()
-                        if (bytes.size > 12_000_000) {
-                            AppToast.makeText(requireContext(), "Image too large (max 12MB)", AppToast.LENGTH_SHORT).show()
-                            return@use
-                        }
-                        val mime = requireContext().contentResolver.getType(u)
-                        when (mime) {
-                            "image/jpeg", "image/png", "image/webp" -> {
-                                // Valid MIME type - proceed
-                            }
-                            else -> {
-                                AppToast.makeText(requireContext(), "Unsupported image format", AppToast.LENGTH_SHORT).show()
-                                return@use
-                            }
-                        }
-                        selectedImageBytes = bytes
-                        selectedImageMime = mime
-                        previewImageView.setImageURI(u)
-                        attachmentPreviewContainer.visibility = View.VISIBLE
-
-                        // NEW: Make URI persistent (no copy/save)
-                        try {
-                            val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-                            requireContext().contentResolver.takePersistableUriPermission(u, takeFlags)
-
-                            // Set pending as string for FlexibleMessage
-                            viewModel.setPendingUserImageUri(u.toString())
-
-                        } catch (e: SecurityException) {
-                            AppToast.makeText(requireContext(), "Image access limited; tap won't open full file", AppToast.LENGTH_SHORT).show()
-                            // Fallback: No Uri set, use base64 display only
-                        }
-                    }
-                }
-            }
+        galleryPicker = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            uri?.let { processPickedImageUri(it) }
+        }
+        legacyGalleryPicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            uri?.let { processPickedImageUri(it) }
         }
         pdfPicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
             uri?.let { processPdfUri(it) }  // Null-safe: Call if non-null
@@ -790,6 +761,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
         historyDrawerContainer = view.findViewById(R.id.historyDrawerContainer)
         historyDrawerScrim = view.findViewById(R.id.historyDrawerScrim)
         historyDrawerScrim?.setOnClickListener { closeHistoryPanel() }
+        setupHistorySwipeGestures(view)
         viewModel.activeChatModel.observe(viewLifecycleOwner) { model ->
             if (model != null) {
                 modelNameTextView.text = viewModel.getModelDisplayName(model)
@@ -3131,64 +3103,136 @@ $cleanContent
         }
     }
 
-    private fun showAttachSheet() {
-        val dialog = BottomSheetDialog(requireContext(), R.style.ThemeOverlay_Grokion_BottomSheet)
-        val sheet = layoutInflater.inflate(R.layout.bottom_sheet_attach, null)
-        dialog.setContentView(sheet)
+    private var attachPopup: PopupWindow? = null
+    private var attachPlusOpen = false
 
-        sheet.findViewById<View>(R.id.attachCamera).setOnClickListener {
-            dialog.dismiss()
-            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-            } else {
-                launchCamera()
+    private fun showAttachSheet() {
+        if (attachPopup?.isShowing == true) {
+            dismissAttachPopup()
+            return
+        }
+        val popupView = layoutInflater.inflate(R.layout.popup_attach, null)
+        val popup = PopupWindow(
+            popupView,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            true
+        ).apply {
+            isOutsideTouchable = true
+            isFocusable = true
+            elevation = 12f * resources.displayMetrics.density
+            setBackgroundDrawable(android.graphics.drawable.ColorDrawable(Color.TRANSPARENT))
+            setOnDismissListener {
+                attachPopup = null
+                setAttachPlusOpen(false)
             }
         }
-        sheet.findViewById<View>(R.id.attachGallery).setOnClickListener {
-            dialog.dismiss()
-            val model = viewModel.activeChatModel.value
-            if (model == null || !viewModel.isVisionModel(model)) {
-                AppToast.makeText(requireContext(), "Image selection not supported for the current model.", AppToast.LENGTH_SHORT).show()
-                return@setOnClickListener
+        attachPopup = popup
+
+        fun dismissThen(action: () -> Unit) {
+            dismissAttachPopup()
+            action()
+        }
+
+        popupView.findViewById<View>(R.id.attachCamera).setOnClickListener {
+            dismissThen {
+                if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                } else {
+                    launchCamera()
+                }
             }
-            val allowedMimeTypes: Array<String> = when {
-                model.lowercase().contains("grok") -> arrayOf("image/jpeg", "image/png")
-                else -> arrayOf("image/jpeg", "image/png", "image/webp")
+        }
+        popupView.findViewById<View>(R.id.attachGallery).setOnClickListener {
+            dismissAttachPopup()
+            menuButton.post { launchGalleryPicker() }
+        }
+        popupView.findViewById<View>(R.id.attachFiles).setOnClickListener {
+            dismissThen { textFilePicker.launch("*/*") }
+        }
+        popupView.findViewById<View>(R.id.attachTools).setOnClickListener {
+            dismissThen {
+                parentFragmentManager.beginTransaction()
+                    .withGrokStackAnimations()
+                    .hide(this)
+                    .add(R.id.fragment_container, ToolsFragment())
+                    .addToBackStack(null)
+                    .commit()
             }
-            val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-                addCategory(Intent.CATEGORY_OPENABLE)
-                type = "image/*"
-                putExtra(Intent.EXTRA_MIME_TYPES, allowedMimeTypes)
+        }
+
+        popupView.measure(
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        )
+        val yOff = -(popupView.measuredHeight + menuButton.height + (8 * resources.displayMetrics.density).toInt())
+        setAttachPlusOpen(true)
+        popup.showAsDropDown(menuButton, 0, yOff)
+    }
+
+    private fun dismissAttachPopup() {
+        attachPopup?.dismiss()
+        attachPopup = null
+        setAttachPlusOpen(false)
+    }
+
+    private fun launchGalleryPicker() {
+        if (!isAdded) return
+        try {
+            galleryPicker.launch(
+                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+            )
+        } catch (e: ActivityNotFoundException) {
+            legacyGalleryPicker.launch(arrayOf("image/*"))
+        }
+    }
+
+    private fun processPickedImageUri(uri: Uri) {
+        val model = viewModel.activeChatModel.value
+        if (model != null && !viewModel.isVisionModel(model)) {
+            AppToast.makeText(
+                requireContext(),
+                "Image attached — switch to a vision-capable model to send it.",
+                AppToast.LENGTH_SHORT
+            ).show()
+        }
+        requireContext().contentResolver.openInputStream(uri)?.use { stream ->
+            val bytes = stream.readBytes()
+            if (bytes.size > 12_000_000) {
+                AppToast.makeText(requireContext(), "Image too large (max 12MB)", AppToast.LENGTH_SHORT).show()
+                return
             }
-            imagePicker.launch(intent)
-        }
-        sheet.findViewById<View>(R.id.attachFiles).setOnClickListener {
-            dialog.dismiss()
-            textFilePicker.launch("*/*")
-        }
-        sheet.findViewById<View>(R.id.attachSystemMessage).setOnClickListener {
-            dialog.dismiss()
-            parentFragmentManager.beginTransaction()
-                .withGrokStackAnimations()
-                .hide(this)
-                .add(R.id.fragment_container, SystemMessageLibraryFragment())
-                .addToBackStack(null)
-                .commit()
-        }
-        sheet.findViewById<View>(R.id.attachTools).setOnClickListener {
-            dialog.dismiss()
-            parentFragmentManager.beginTransaction()
-                .withGrokStackAnimations()
-                .hide(this)
-                .add(R.id.fragment_container, ToolsFragment())
-                .addToBackStack(null)
-                .commit()
-        }
-        sheet.findViewById<View>(R.id.attachMore).setOnClickListener {
-            dialog.dismiss()
-            showMenu()
-        }
-        dialog.show()
+            val mime = requireContext().contentResolver.getType(uri)
+            when (mime) {
+                "image/jpeg", "image/png", "image/webp" -> Unit
+                else -> {
+                    AppToast.makeText(requireContext(), "Unsupported image format", AppToast.LENGTH_SHORT).show()
+                    return
+                }
+            }
+            selectedImageBytes = bytes
+            selectedImageMime = mime
+            previewImageView.setImageURI(uri)
+            attachmentPreviewContainer.visibility = View.VISIBLE
+            try {
+                val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                requireContext().contentResolver.takePersistableUriPermission(uri, takeFlags)
+                viewModel.setPendingUserImageUri(uri.toString())
+            } catch (_: SecurityException) {
+                viewModel.setPendingUserImageUri(uri.toString())
+            }
+        } ?: AppToast.makeText(requireContext(), "Failed to read image", AppToast.LENGTH_SHORT).show()
+    }
+
+    private fun setAttachPlusOpen(open: Boolean) {
+        if (attachPlusOpen == open) return
+        attachPlusOpen = open
+        val target = if (open) 45f else 0f
+        menuButton.animate()
+            .rotation(target)
+            .setDuration(resources.getInteger(R.integer.motion_menu).toLong())
+            .setInterpolator(Motion.easeOut)
+            .start()
     }
 
     private fun hideMenu() {
@@ -3288,19 +3332,7 @@ $cleanContent
                                 launchCamera()
                             }
                         }
-                        1 -> { // Gallery
-                            // Your existing gallery code...
-                            val allowedMimeTypes: Array<String> = when {
-                                model.lowercase().contains("grok") -> arrayOf("image/jpeg", "image/png")
-                                else -> arrayOf("image/jpeg", "image/png", "image/webp")
-                            }
-                            val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-                                addCategory(Intent.CATEGORY_OPENABLE)
-                                type = "image/*"
-                                putExtra(Intent.EXTRA_MIME_TYPES, allowedMimeTypes)
-                            }
-                            imagePicker.launch(intent)
-                        }
+                        1 -> menuButton.post { launchGalleryPicker() }
                         2 -> { // Choose PDF
                             pdfPicker.launch(arrayOf("application/pdf"))  // NEW: Launches document picker with PDF filter
                         }
@@ -3368,14 +3400,14 @@ $cleanContent
     private fun updateModelSourceIndicator() {
         val isLan = viewModel.activeModelIsLan()
         val description = if (isLan) "LAN Model" else "Cloud Model"
-        val endChevron = ContextCompat.getDrawable(requireContext(), R.drawable.ic_expand_more)?.mutate()
-        endChevron?.setBounds(0, 0, endChevron.intrinsicWidth, endChevron.intrinsicHeight)
+        val chevronColor = ContextCompat.getColor(requireContext(), R.color.xai_body)
+        modelNameTextView.compoundDrawableTintList = ColorStateList.valueOf(chevronColor)
         // No leading source glyph — Grok chip is text + chevron only
         modelNameTextView.setCompoundDrawablesRelativeWithIntrinsicBounds(
-            null,
-            null,
-            endChevron,
-            null
+            0,
+            0,
+            R.drawable.ic_expand_more,
+            0
         )
         modelNameTextView.contentDescription = description
     }
@@ -3437,7 +3469,7 @@ $cleanContent
         viewModel.checkAdvancedReasoningStatus()
        // val notificationManager = requireContext().getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         //notificationManager.cancel(2)
-        ForegroundService.dismissNotificationIfNotSpeaking()
+        ForegroundService.dismissNotificationIfNotSpeaking(requireContext())
 
         /*if (viewModel.isChatLoading.value == false) {
             if (viewModel.chatMessages.value.isNullOrEmpty()) {
@@ -3458,6 +3490,74 @@ $cleanContent
         historyDrawerScrim?.animate()?.cancel()
     }
 
+    @SuppressLint("ClickableViewAccessibility")
+    private fun setupHistorySwipeGestures(root: View) {
+        val minDx = 64f * resources.displayMetrics.density
+        // Open: left-edge strip only, finger must move LEFT → RIGHT
+        val openDetector = GestureDetector(requireContext(), object : GestureDetector.SimpleOnGestureListener() {
+            override fun onDown(e: MotionEvent): Boolean = true
+            override fun onFling(
+                e1: MotionEvent?,
+                e2: MotionEvent,
+                velocityX: Float,
+                velocityY: Float
+            ): Boolean {
+                if (e1 == null) return false
+                if (historyDrawerContainer?.visibility == View.VISIBLE) return false
+                val dx = e2.x - e1.x
+                val dy = e2.y - e1.y
+                if (abs(dx) < abs(dy) * 1.5f) return false
+                if (dx > minDx && velocityX > 200f) {
+                    hideKeyboard()
+                    openHistoryPanel()
+                    return true
+                }
+                return false
+            }
+        })
+        // Close: history surface, finger must move RIGHT → LEFT
+        val closeDetector = GestureDetector(requireContext(), object : GestureDetector.SimpleOnGestureListener() {
+            override fun onDown(e: MotionEvent): Boolean = true
+            override fun onFling(
+                e1: MotionEvent?,
+                e2: MotionEvent,
+                velocityX: Float,
+                velocityY: Float
+            ): Boolean {
+                if (e1 == null) return false
+                val dx = e2.x - e1.x
+                val dy = e2.y - e1.y
+                if (abs(dx) < abs(dy) * 1.5f) return false
+                if (dx < -minDx && velocityX < -200f) {
+                    closeHistoryPanel()
+                    return true
+                }
+                return false
+            }
+        })
+
+        root.findViewById<View>(R.id.historyEdgeSwipeStrip)?.let { strip ->
+            // Align under top bar so History control is never covered
+            view?.findViewById<View>(R.id.topBarLayout)?.let { top ->
+                strip.post {
+                    val lp = strip.layoutParams as? FrameLayout.LayoutParams ?: return@post
+                    lp.topMargin = top.bottom
+                    strip.layoutParams = lp
+                }
+            }
+            strip.setOnTouchListener { _, event ->
+                openDetector.onTouchEvent(event)
+                // Consume move/up after a horizontal drag; never steal simple taps
+                event.actionMasked != MotionEvent.ACTION_DOWN
+            }
+        }
+        historyCloseSwipeDetector = closeDetector
+    }
+
+    /** Used by embedded SavedChatsFragment for R→L dismiss. */
+    var historyCloseSwipeDetector: GestureDetector? = null
+        private set
+
     override fun closeHistoryPanel(animated: Boolean) {
         val panel = historyDrawerContainer ?: return
         val scrim = historyDrawerScrim ?: return
@@ -3465,28 +3565,27 @@ $cleanContent
         cancelDrawerAnimation()
         val finishClose = {
             panel.visibility = View.GONE
-            panel.translationX = -panel.width.toFloat().coerceAtMost(0f)
+            panel.translationX = -panel.width.toFloat().coerceAtLeast(0f)
             scrim.visibility = View.GONE
             scrim.alpha = 0f
-            childFragmentManager.findFragmentById(R.id.historyDrawerContainer)?.let { child ->
-                childFragmentManager.beginTransaction().remove(child).commitAllowingStateLoss()
-            }
+            panel.setLayerType(View.LAYER_TYPE_NONE, null)
+            // Keep SavedChatsFragment attached — remounting every open caused stutter
         }
         if (!animated || !Motion.areAnimationsEnabled(requireContext())) {
             finishClose()
             return
         }
         val drawerMs = resources.getInteger(R.integer.motion_drawer).toLong()
-        val scrimMs = resources.getInteger(R.integer.motion_scrim).toLong()
+        panel.setLayerType(View.LAYER_TYPE_HARDWARE, null)
         panel.animate()
-            .translationX(-panel.width.toFloat())
+            .translationX(-panel.width.toFloat().coerceAtLeast(1f))
             .setDuration(drawerMs)
             .setInterpolator(Motion.easeOut)
             .withEndAction { finishClose() }
             .start()
         scrim.animate()
             .alpha(0f)
-            .setDuration(scrimMs)
+            .setDuration(resources.getInteger(R.integer.motion_scrim).toLong())
             .setInterpolator(Motion.easeOut)
             .withEndAction { scrim.visibility = View.GONE }
             .start()
@@ -3502,8 +3601,19 @@ $cleanContent
         }
     }
 
+    override fun openSettingsFromHistory() {
+        // commitNow() cannot pair with addToBackStack — that crashed settings
+        requireActivity().supportFragmentManager.beginTransaction()
+            .withGrokStackAnimations()
+            .add(R.id.fragment_container, SettingsFragment())
+            .addToBackStack("settings")
+            .commit()
+        // Close history after Settings is queued so Ask never flashes
+        view?.post { closeHistoryPanel(animated = false) }
+    }
+
     private fun openHistoryPanel() {
-        // ponytail: slide-over panel instead of DrawerLayout — lighter than restructuring activity_main
+        // Full-screen history overlay (Grok ref: covers Ask entirely; >> / back / swipe dismiss)
         val panel = historyDrawerContainer ?: return
         val scrim = historyDrawerScrim ?: return
         if (panel.visibility == View.VISIBLE) return
@@ -3512,45 +3622,39 @@ $cleanContent
         if (childFragmentManager.findFragmentById(R.id.historyDrawerContainer) == null) {
             childFragmentManager.beginTransaction()
                 .replace(R.id.historyDrawerContainer, SavedChatsFragment.newEmbedded())
-                .commit()
+                .commitNow()
         }
 
         val drawerMs = resources.getInteger(R.integer.motion_drawer).toLong()
-        val scrimMs = resources.getInteger(R.integer.motion_scrim).toLong()
         val anim = Motion.areAnimationsEnabled(requireContext())
 
-        scrim.visibility = View.VISIBLE
-        panel.visibility = View.VISIBLE
-        if (!anim) {
-            scrim.alpha = 0.6f
-            panel.translationX = 0f
-            panel.post {
-                val parentW = (panel.parent as? View)?.width ?: panel.width
-                val targetW = (parentW * 0.84f).toInt().coerceAtLeast(1)
-                val lp = panel.layoutParams as FrameLayout.LayoutParams
-                lp.width = targetW
-                lp.gravity = Gravity.START
-                panel.layoutParams = lp
-            }
-            return
-        }
+        val lp = panel.layoutParams as FrameLayout.LayoutParams
+        lp.width = ViewGroup.LayoutParams.MATCH_PARENT
+        lp.gravity = Gravity.START
+        panel.layoutParams = lp
 
+        // Position off-screen before first draw — avoids flash/stutter of content at x=0
+        panel.visibility = View.INVISIBLE
+        scrim.visibility = View.VISIBLE
         scrim.alpha = 0f
-        scrim.animate().alpha(0.6f).setDuration(scrimMs).setInterpolator(Motion.easeOut).start()
 
         panel.post {
-            // ~84% viewport width, leading-aligned (Grok history drawer)
-            val parentW = (panel.parent as? View)?.width ?: panel.width
-            val targetW = (parentW * 0.84f).toInt().coerceAtLeast(1)
-            val lp = panel.layoutParams as FrameLayout.LayoutParams
-            lp.width = targetW
-            lp.gravity = Gravity.START
-            panel.layoutParams = lp
-            panel.translationX = -targetW.toFloat()
+            val w = panel.width.coerceAtLeast(1)
+            panel.translationX = -w.toFloat()
+            panel.visibility = View.VISIBLE
+            if (!anim) {
+                panel.translationX = 0f
+                return@post
+            }
+            panel.setLayerType(View.LAYER_TYPE_HARDWARE, null)
+            // Full-bleed panel — keep scrim subtle/brief (mostly covered)
+            scrim.animate().alpha(0.35f).setDuration(resources.getInteger(R.integer.motion_scrim).toLong())
+                .setInterpolator(Motion.easeOut).start()
             panel.animate()
                 .translationX(0f)
                 .setDuration(drawerMs)
                 .setInterpolator(Motion.easeOut)
+                .withEndAction { panel.setLayerType(View.LAYER_TYPE_NONE, null) }
                 .start()
         }
     }

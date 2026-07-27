@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.1.129-grokion — 2026-07-28
+
+### Fixed
+- Attach **Gallery** from the composer `+` menu now opens the system photo
+  picker (`PickVisualMedia`, with document-picker fallback) instead of being
+  blocked on non-vision models or failing to launch after the popup dismisses.
+- Model chip chevron in the top bar follows `xai_body` in dark/light themes
+  (no longer hardcoded black on dark).
+
 ## 2.1.128-grokion — 2026-07-28
 
 ### Changed
