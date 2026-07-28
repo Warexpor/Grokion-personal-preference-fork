@@ -1663,7 +1663,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
             if (!hasFolderPermission()) {
                 val folderPath = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "oxproxion")
                 if (!folderPath.exists()) folderPath.mkdirs()
-                AppToast.makeText(requireContext(), "Please select the Download/grokion folder first.", AppToast.LENGTH_LONG).show()
+                AppToast.makeText(requireContext(), "Please select the Download/gradation folder first.", AppToast.LENGTH_LONG).show()
                 folderPickerLauncher.launch(null)
             } else {
                 val folderPath = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "oxproxion")
@@ -1692,7 +1692,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
         toolsButton.setOnClickListener {
             if (!hasFolderPermission()) {
                 WorkspacePaths.ensureWorkspaceExists()
-                AppToast.makeText(requireContext(), "Please select the Download/grokion folder first.", AppToast.LENGTH_LONG).show()
+                AppToast.makeText(requireContext(), "Please select the Download/gradation folder first.", AppToast.LENGTH_LONG).show()
                 folderPickerLauncher.launch(null)
             } else {
                 WorkspacePaths.ensureWorkspaceExists()
@@ -2081,7 +2081,7 @@ $cleanContent
                             e.printStackTrace()
                         }
 
-                        // Grokion workspace folder (read path may fall back to legacy oxproxion)
+                        // GradatiON workspace folder (read path may fall back to legacy folders)
                         val path = WorkspacePaths.workspaceDirForRead()
 
                         // Create intent to view the folder
@@ -3538,7 +3538,7 @@ $cleanContent
     }
     private fun launchCamera() {
         val contentValues = ContentValues().apply {
-            put(MediaStore.Images.Media.DISPLAY_NAME, "grokion_${System.currentTimeMillis()}.jpg")
+            put(MediaStore.Images.Media.DISPLAY_NAME, "gradation_${System.currentTimeMillis()}.jpg")
             put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
             put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_DCIM + "/Camera")
         }

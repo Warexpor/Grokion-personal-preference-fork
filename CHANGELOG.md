@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.1.132-gradation — 2026-07-28
+
+### Added
+- GradatiON brand: app name, history wordmark (Iceland), arc logo watermark, and launcher icon.
+- Workspace writes to `Download/gradation` (legacy `grokion` / `oxproxion` still readable).
+
+### Changed
+- Full rebrand from Grokion/xAI chrome to GradatiON dark monochrome palette (`#050505` / `#E8E8E8`).
+- In-app Help rewritten; README, SHELL.md, DESIGN.md, and store metadata updated.
+- Screenshots and Play listing art refreshed (Ask, History, Models, Settings).
+- `.gitignore` expanded for agent/UI scratch, secrets, and `gradle.properties.local`.
+
+### Removed
+- Unused Grok launcher and watermark PNGs; dead robot launcher vectors.
+
 ## 2.1.131-grokion — 2026-07-28
 
 ### Fixed

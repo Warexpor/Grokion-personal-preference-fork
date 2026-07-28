@@ -1,12 +1,12 @@
-﻿# Grokion ↔ Grok Android UI — 1:1 design contract
+﻿# GradatiON UI design contract
 
-**Status:** Ask shell + secondary settings/library/dialog chrome — implementation source of truth  
-**Target product:** `ai.x.grok` **1.1.97-release.01** (local extract under `references/`)  
-**Secondary refs:** iOS conversation chrome teardown; Play screenshots for Ask / history / voice  
-**Scope:** Ask (chat) surface UI elements — not SuperGrok paywalls, Imagine feed, or LiveKit voice pipeline logic  
-**Out of product scope (document only):** Imagine tab, App Builder, connectors marketplace, X citation live graph
+**Status:** GradatiON product shell — implementation reference for contributors  
+**Lineage:** Ask-style layout forked from oxproxion; dark monochrome + gold accent (`#D4A54A`) after 2026 GradatiON rebrand  
+**Historical reference:** Grok Android `ai.x.grok` 1.1.97 token extract (optional local `references/grok_decompiled`, gitignored)  
+**Scope:** Chat / History / Settings chrome — not cloud paywalls, Imagine feed, or voice pipeline  
+**Brand:** GradatiON wordmark in History (Iceland); empty-state `ic_gradation_mark`; launcher uses GradatiON arc vector
 
-This document is the gap list and the pixel/token contract. Implement against **§9 Gap matrix** until every row is `Done`.
+This document is the token/component contract for the inherited Ask shell. Product naming and user-facing copy are **GradatiON**, not Grokion/xAI.
 
 ---
 
@@ -42,10 +42,10 @@ Do **not** treat x.ai marketing-site tokens (Universal Sans, sunset `#FF7A17`, o
          ▲ history slide-over from left
 ```
 
-**Official Android also has bottom tabs** `Ask` | `Imagine` (`grok_home_chat_tab_title` / `grok_home_image_tab_title`). Grokion ships **Ask-only**; do not add Imagine chrome unless product asks. Voice is an entry from composer / settings, not a third tab in Grokion.
+**Official Android Grok also has bottom tabs** Ask | Imagine. GradatiON ships **Ask-only**. Voice settings are disabled; file transcription models remain.
 
-**History** = left slide-over (~84% width): Search, Pinned, Conversations list, settings entry.  
-**Settings** = pushed stack (Appearance, Haptics, Voice, Data, Usage, …).
+**History** = left slide-over (~84% width): **GradatiON** wordmark, Search, Conversations, settings gear.  
+**Settings** = pushed stack (Appearance, Haptics, Models & API, Advanced, Data & Privacy).
 
 ---
 
@@ -59,7 +59,7 @@ Do **not** treat x.ai marketing-site tokens (Universal Sans, sunset `#FF7A17`, o
 | For You | `DIM` | X-blue night `#15202B` |
 | (internal) | `LIGHTS_OUT` | True void / blacker OLED set |
 
-**Grokion default for parity:** Dark (`#050505`) as primary shipped look. Keep Light. Optional later: For You / Lights Out.
+**GradatiON default:** Dark `#050505` canvas, `#E8E8E8` ink (see `values-night/colors.xml`). Light theme supported. Optional later: For You / Lights Out from Grok palette.
 
 ---
 
@@ -133,22 +133,9 @@ XML also defines `appBackground` `#F8F7F5` (warm light splash/widget). Prefer se
 
 **Rule:** no decorative brand orange/purple on Ask chrome. White (or black on light) is the control accent. Link blue is the only routine chroma.
 
-### 4.4 Grokion token remap (target `colors.xml`)
+### 4.4 Resource IDs (`xai_*` in code)
 
-| Grokion today | Must become (dark) |
-|---------------|--------------------|
-| `xai_canvas` `#0A0A0A` | `#050505` (`backgroundHigh`) |
-| `xai_canvas_soft` `#16181C` | `#181818` (`surfaceNeutral` / `backgroundLow`) |
-| `xai_canvas_card` `#1E2126` | `#242424` (`surfaceBright`) for menus; sheets may stay one step up |
-| `xai_canvas_mid` `#272A2E` | `#242424` / `#363636` pressed |
-| `xai_hairline` `#2F3336` | `border` = white @ 8% (or `#2F3336` only if visual match after side-by-side) |
-| `xai_ink` `#FFFFFF` | `#FCFCFC` |
-| `xai_body` `#DADBDF` | `#FCFCFC` primary / `#9E9E9E` secondary as appropriate |
-| `xai_mute` `#7D8187` | `#9E9E9E` |
-| `xai_accent_sunset` (grey misuse) | **Stop using as chrome accent** → white controls / link blue for links |
-| `xai_link` `#A0C3EC` | `#1D9BF0` |
-| `xai_error` `#B84A3A` | `#FF4245` dark / `#F4212E` light |
-| `xai_progress` grey | `#9E9E9E` or white |
+Gradle/resources still use `xai_*` color names and `Theme.Grokion` style prefixes for compile stability. Map semantically to §4.1 tokens when editing UI. GradatiON adds `gradation_gold` for optional accent use.
 
 ---
 
@@ -283,7 +270,7 @@ Overlays: scrim `#000000` @ ~60%; history leading shadow only if needed for sepa
 
 ### 7.6 Empty state
 
-Centered Grok mark/wordmark, short prompt, **3–4 suggestion chips** (`surfaceNeutral` + border, 14sp, 14dp radius, pad 10×14). No illustrations, no gradients.
+Centered **GradatiON arc mark** (`ic_gradation_mark`), low-alpha watermark, optional suggestion chips (`surfaceNeutral` + border). No Grok eye / xAI wordmarks.
 
 ### 7.7 Composer
 
@@ -348,7 +335,7 @@ Use these exact user-visible phrases where the control exists:
 
 ---
 
-## 9. Gap matrix — Grokion → 1:1
+## 9. Gap matrix — inherited Ask shell
 
 Legend: `Todo` | `Partial` | `Done` | `N/A` (product skip)
 
@@ -359,7 +346,7 @@ Updated after 2026-07-28 secondary UI clearout (settings detail cards, libraries
 | ID | Element | Status |
 |----|---------|--------|
 | F1–F11, F14 | Semantic colors, links, errors, success, borders, sunset demotion | Done |
-| F12 | Inter body metrics (LH 1.55 etc.); Iceland history wordmark | Done |
+| F12 | Inter body metrics (LH 1.55 etc.); **GradatiON** history wordmark (Iceland) | Done |
 | F13 | Light / Dark / System | Done |
 
 ### 9.2 Shell chrome
@@ -375,7 +362,7 @@ Updated after 2026-07-28 secondary UI clearout (settings detail cards, libraries
 
 | ID | Element | Status |
 |----|---------|--------|
-| T1–T4, T6–T10 | Bubble tail, LH, cursor, copy green, empty mark, stubs, reasoning | Done |
+| T1–T4, T6–T10 | Bubble tail, LH, cursor, copy green, empty GradatiON mark, stubs, reasoning | Done |
 | T5 | Action row (user tap-to-reveal; regenerate under assistant) | Done |
 
 ### 9.4 Composer
@@ -470,14 +457,14 @@ Reference-only (gitignored): `references/grok_decompiled`, `references/grok_base
 
 ## 13. Verification
 
-Before calling parity done:
+Before calling a UI pass done:
 
-1. Dark Ask screen screenshot vs `ai.x.grok` on same device (canvas, composer, send, bubble).
-2. Light Ask screen same.
-3. Gap matrix §9 all `Todo`/`Partial` → `Done` or explicit `N/A`.
-4. No remaining `xai_accent_sunset` on interactive chrome.
-5. Link color in markdown = `#1D9BF0`.
+1. Match [`screenshots/`](screenshots/) gates in [`SHELL.md`](SHELL.md) (Ask, History, Settings, models).
+2. Dark canvas `#050505`, ink `#E8E8E8`, GradatiON launcher + history wordmark.
+3. Gap matrix §9: no open `Todo`/`Partial` for shipped surfaces.
+4. No decorative orange/purple chrome accents; links `#1D9BF0`.
+5. Optional: compare layout density to installed Grok only when tuning inherited shell behavior — not a branding requirement.
 
 ---
 
-*Extracted tokens: `GrokSemanticColors` / greyscale from `k9.h`+`k9.i`; Horizon + link/success from `j80`/`e80.e0`; fonts from `res/font`; strings from `values/strings.xml`; package `ai.x.grok` `1.1.97-release.01`.*
+*Token tables below retain Grok APK extract provenance for the inherited shell. GradatiON branding overrides are in app resources (`strings.xml`, `ic_gradation_mark`, launcher vectors) and README.*

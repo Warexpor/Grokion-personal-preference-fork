@@ -23,6 +23,9 @@ build/
 .cxx/
 local.properties
 
+# Machine-local Gradle overrides (SOCKS proxy, JVM flags, etc.) — never commit
+gradle.properties.local
+
 # Android Studio and IntelliJ IDEA files
 .idea/
 .project
@@ -48,6 +51,7 @@ release.properties
 # Misc
 captures/
 .DS_Store
+Thumbs.db
 app/release/
 !app/src/main/res/drawable/.gitkeep
 !app/src/main/res/raw/.gitkeep
@@ -64,22 +68,26 @@ CMakeLists.txt.user
 
 # Android Profiling
 *.prof
+*.hprof
 
 # Gradle Wrapper
 # The `gradle-wrapper.jar` is often committed to ensure consistent Gradle versions.
-# If you *don't* want to commit it, remove the line below.
 !gradle/wrapper/gradle-wrapper.jar
 
 # Other common files to ignore
-.vscode/ # Visual Studio Code settings
+.vscode/
 
 # Local APK extract / decompile dumps (not product source)
 references/
 tools/
 
-# Agent/debug session scratch (never product source)
-.tmp_mat/
+# Agent / UI-automation scratch (adb dumps, screenshot experiments)
+.tmp_*
 /ui.xml
+/ui2.xml
+/ui*.xml
+/history_*.png
+/history_current.png
 /alpha_*.png
 /chip*.png
 /model_*.png
@@ -89,3 +97,13 @@ tools/
 /verify_*.png
 /other_chips.png
 /model_chip_fix.png
+.tmp_mat/
+
+# Cursor / IDE session artifacts (if ever created inside the repo)
+.cursor/
+
+# Env and secrets
+.env
+.env.*
+*.pem
+secrets/

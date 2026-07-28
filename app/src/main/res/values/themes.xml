@@ -221,7 +221,7 @@
     <style name="GrokionBrandWordmark" parent="@android:style/TextAppearance">
         <item name="android:fontFamily">@font/iceland_regular</item>
         <item name="fontFamily">@font/iceland_regular</item>
-        <item name="android:textAllCaps">true</item>
+        <item name="android:textAllCaps">false</item>
         <item name="android:letterSpacing">0.14</item>
         <item name="android:textStyle">normal</item>
     </style>

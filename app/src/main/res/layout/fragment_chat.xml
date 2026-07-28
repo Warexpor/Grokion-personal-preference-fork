@@ -276,7 +276,7 @@
                 android:paddingEnd="4dp"
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
-            <!-- Empty state: large centered Grok mark -->
+            <!-- Empty state: large centered GradatiON mark -->
             <FrameLayout
                 android:id="@+id/emptyStateContainer"
                 android:layout_width="match_parent"
@@ -290,12 +290,13 @@
                     android:layout_width="280dp"
                     android:layout_height="280dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/ic_grok_mark_mono"
+                    android:src="@drawable/ic_gradation_mark"
                     android:alpha="0.12"
                     android:contentDescription="@string/app_name"
                     android:clickable="false"
                     android:focusable="false"
-                    android:scaleType="fitCenter" />
+                    android:scaleType="fitCenter"
+                    app:tint="@color/xai_ink" />
             </FrameLayout>
 
             <View

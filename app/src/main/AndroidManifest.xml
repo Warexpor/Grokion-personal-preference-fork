@@ -117,7 +117,7 @@
         </activity>
         <activity
             android:name=".SpellCheckActivity"
-            android:label="Fix with Grokion"
+            android:label="Fix with GradatiON"
             android:theme="@style/Theme.Grokion.AIFix"
             android:exported="true"
             android:excludeFromRecents="true"

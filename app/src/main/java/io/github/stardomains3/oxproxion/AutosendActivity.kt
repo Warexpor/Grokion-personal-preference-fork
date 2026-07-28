@@ -42,7 +42,7 @@ class AutosendActivity : AppCompatActivity() {
         }
         MaterialAlertDialogBuilder(this)
             .setTitle("Auto Send")
-            .setMessage("Send this text to Grokion now?\n\n$preview")
+            .setMessage("Send this text to GradatiON now?\n\n$preview")
             .setPositiveButton("Send") { _, _ -> forwardToMain(sharedText) }
             .setNegativeButton("Cancel") { _, _ -> finish() }
             .setOnCancelListener { finish() }

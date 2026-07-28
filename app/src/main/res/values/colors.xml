@@ -63,7 +63,8 @@
     <color name="ch">@color/xai_canvas_card</color>
     <color name="tx">@color/xai_body</color>
     <color name="threetwo">@color/xai_canvas_mid</color>
-    <color name="ic_launcherrobot_background">@color/xai_canvas</color>
+    <color name="ic_launcherrobot_background">#FF050505</color>
+    <color name="gradation_gold">#FFD4A54A</color>
     <color name="advanced_reasoning_color">@color/xai_mute</color>
     <color name="gray">@color/xai_mute</color>
 </resources>

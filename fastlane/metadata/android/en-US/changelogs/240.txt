@@ -1,0 +1,1 @@
+GradatiON rebrand: new name, launcher icon, history wordmark, dark palette, and refreshed Help/docs. Workspace folder is now Download/gradation (legacy folders still readable).

@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">Grokion</string>
-    <string name="grokion_wordmark">GROKION</string>
+    <string name="app_name">GradatiON</string>
+    <string name="grokion_wordmark">GradatiON</string>
     <string name="action_settings">Settings</string>
     <!-- Strings used for fragments for navigation -->
     <string name="next">Next</string>
@@ -30,7 +30,7 @@
     <string name="grok_history_more">More</string>
     <string name="grok_ask_tab">Ask</string>
     <string name="settings_group_app">App</string>
-    <string name="settings_group_grok">Grok</string>
+    <string name="settings_group_grok">AI</string>
     <string name="settings_group_voice">Voice</string>
     <string name="grok_history_delete_title">Delete conversation?</string>
     <string name="grok_history_delete_description">This conversation will be deleted. This action can\'t be undone.</string>

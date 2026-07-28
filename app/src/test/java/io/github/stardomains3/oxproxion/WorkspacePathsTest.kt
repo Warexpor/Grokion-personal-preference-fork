@@ -6,18 +6,19 @@ import org.junit.Test
 
 class WorkspacePathsTest {
     @Test
-    fun primaryFolderNameIsGrokion() {
-        assertEquals("grokion", WorkspacePaths.FOLDER_GROKION)
+    fun primaryFolderNameIsGradation() {
+        assertEquals("gradation", WorkspacePaths.FOLDER_GRADATION)
     }
 
     @Test
-    fun legacyFolderNameIsOxproxion() {
+    fun legacyFolderNamesPreserved() {
+        assertEquals("grokion", WorkspacePaths.FOLDER_GROKION)
         assertEquals("oxproxion", WorkspacePaths.FOLDER_LEGACY)
     }
 
     @Test
     fun mediaStoreRelativePathUsesPrimary() {
         val path = WorkspacePaths.mediaStoreRelativePath("")
-        assertTrue(path.contains("grokion"))
+        assertTrue(path.contains("gradation"))
     }
 }

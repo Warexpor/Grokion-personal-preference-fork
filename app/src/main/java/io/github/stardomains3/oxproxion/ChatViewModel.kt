@@ -215,7 +215,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         return HttpClient(OkHttp) {
             install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
             install(DefaultRequest) {
-                header("User-Agent", "Grokion/${BuildConfig.VERSION_NAME}")
+                header("User-Agent", "GradatiON/${BuildConfig.VERSION_NAME}")
             }
             engine {
                 config {
@@ -239,7 +239,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 json(Json { ignoreUnknownKeys = true })
             }
             install(DefaultRequest) {
-                header("User-Agent", "Grokion/${BuildConfig.VERSION_NAME}")
+                header("User-Agent", "GradatiON/${BuildConfig.VERSION_NAME}")
             }
 
             engine {
@@ -1220,7 +1220,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 type = "function",
                 function = FunctionTool(
                     name = "make_file",
-                    description = "Creates a text file (e.g., .txt, .md, .html, .json) and saves it to the Download/grokion workspace. Content should be plain text or structured text. **Important:** Use RAW, UNESCAPED content in the 'content' parameter - it gets written directly to disk as-is via OutputStream. No HTML entities, no escaping needed. Only use when the user specifically asks for a file to be made.",
+                    description = "Creates a text file (e.g., .txt, .md, .html, .json) and saves it to the Download/gradation workspace. Content should be plain text or structured text. **Important:** Use RAW, UNESCAPED content in the 'content' parameter - it gets written directly to disk as-is via OutputStream. No HTML entities, no escaping needed. Only use when the user specifically asks for a file to be made.",
                     parameters = buildJsonObject {
                         put("type", "object")
                         putJsonObject("properties") {
@@ -1238,7 +1238,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                             }
                             putJsonObject("subfolder") {
                                 put("type", "string")
-                                put("description", "Optional subfolder inside the Grokion workspace to save the file into (e.g., 'Skills', 'Notes'). Leave empty to save in the root grokion folder.")
+                                put("description", "Optional subfolder inside the GradatiON workspace to save the file into (e.g., 'Skills', 'Notes'). Leave empty to save in the root gradation folder.")
                             }
                         }
                         putJsonArray("required") {
@@ -1389,7 +1389,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 type = "function",
                 function = FunctionTool(
                     name = "create_folder",
-                    description = "Creates a new subfolder in the Download/grokion workspace. Use this when the user explicitly asks to create a folder or organize files into a new directory.",
+                    description = "Creates a new subfolder in the Download/gradation workspace. Use this when the user explicitly asks to create a folder or organize files into a new directory.",
                     parameters = buildJsonObject {
                         put("type", "object")
                         putJsonObject("properties") {
@@ -1568,7 +1568,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 type = "function",
                 function = FunctionTool(
                     name = "delete_files",
-                    description = "Deletes one or more files(up to 9) from the Download/grokion workspace folder. Use this when the user wants to remove files.",
+                    description = "Deletes one or more files(up to 9) from the Download/gradation workspace folder. Use this when the user wants to remove files.",
                     parameters = buildJsonObject {
                         put("type", "object")
                         putJsonObject("properties") {
@@ -1593,7 +1593,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 type = "function",
                 function = FunctionTool(
                     name = "open_file",
-                    description = "Opens an existing file from the Download/grokion workspace using the system's default app (e.g., opens PDFs in a PDF viewer, images in gallery). Use this when the user wants to view a file.",
+                    description = "Opens an existing file from the Download/gradation workspace using the system's default app (e.g., opens PDFs in a PDF viewer, images in gallery). Use this when the user wants to view a file.",
                     parameters = buildJsonObject {
                         put("type", "object")
                         putJsonObject("properties") {
@@ -1721,14 +1721,14 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             Tool(
                 type = "function",
                 function = FunctionTool(
-                    name = "list_grokion_files",
-                    description = "Lists all files and subfolders in the Download/grokion folder or a specified subfolder. Returns names with relative paths (e.g., 'Skills/data.json'). Use this to find files before reading them.",
+                    name = "list_gradation_files",
+                    description = "Lists all files and subfolders in the Download/gradation folder or a specified subfolder. Returns names with relative paths (e.g., 'Skills/data.json'). Use this to find files before reading them.",
                     parameters = buildJsonObject {
                         put("type", "object")
                         putJsonObject("properties") {
                             putJsonObject("path") {
                                 put("type", "string")
-                                put("description", "Optional subfolder path to list (e.g., 'Skills'). Leave empty or omit to list the root Download/grokion folder.")
+                                put("description", "Optional subfolder path to list (e.g., 'Skills'). Leave empty or omit to list the root Download/gradation folder.")
                             }
                         }
                         putJsonArray("required") {} // Path is optional
@@ -1764,7 +1764,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 type = "function",
                 function = FunctionTool(
                     name = "edit_file",
-                    description = "Overwrites an existing file in the Download/grokion workspace with new content. Use this when the user wants to update, modify, or edit an existing file. IMPORTANT: You must provide the COMPLETE new content of the file, not just the changes. The entire file will be replaced.",
+                    description = "Overwrites an existing file in the Download/gradation workspace with new content. Use this when the user wants to update, modify, or edit an existing file. IMPORTANT: You must provide the COMPLETE new content of the file, not just the changes. The entire file will be replaced.",
                     parameters = buildJsonObject {
                         put("type", "object")
                         putJsonObject("properties") {
@@ -1791,8 +1791,8 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             Tool(
                 type = "function",
                 function = FunctionTool(
-                    name = "read_grokion_file",
-                    description = "Reads the contents of a single text file from the Download/grokion workspace. Only reads text-based files (e.g., .txt, .md, .json). Use list_grokion_files first to see available files and their paths.",
+                    name = "read_gradation_file",
+                    description = "Reads the contents of a single text file from the Download/gradation workspace. Only reads text-based files (e.g., .txt, .md, .json). Use list_gradation_files first to see available files and their paths.",
                     parameters = buildJsonObject {
                         put("type", "object")
                         putJsonObject("properties") {
@@ -2479,7 +2479,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 }
 
 
-                "list_oxproxion_files", "list_grokion_files" -> {
+                "list_oxproxion_files", "list_grokion_files", "list_gradation_files" -> {
                     try {
                         val arguments = json.decodeFromString<JsonObject>(toolCall.function.arguments)
                         val path = arguments["path"]?.jsonPrimitive?.contentOrNull ?: ""
@@ -2489,7 +2489,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 }
 
-                "read_oxproxion_file", "read_grokion_file" -> {
+                "read_oxproxion_file", "read_grokion_file", "read_gradation_file" -> {
                     try {
                         val arguments = json.decodeFromString<JsonObject>(toolCall.function.arguments)
                         val filepath = arguments["filepath"]?.jsonPrimitive?.content
@@ -3573,7 +3573,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 httpClient.preparePost(activeChatUrl) {
                     header("Authorization", "Bearer $activeChatApiKey")
                     header("HTTP-Referer", "https://github.com/Warexpor/oxproxion")
-                    header("X-Title", "Grokion")
+                    header("X-Title", "GradatiON")
                     header(HttpHeaders.Accept, "text/event-stream")
                     contentType(ContentType.Application.Json)
                     setBody(chatRequest)
@@ -4110,7 +4110,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 val response = httpClient.post(activeChatUrl) {
                     header("Authorization", "Bearer $activeChatApiKey")
                     header("HTTP-Referer", "https://github.com/Warexpor/oxproxion")
-                    header("X-Title", "Grokion")
+                    header("X-Title", "GradatiON")
                     contentType(ContentType.Application.Json)
                     setBody(chatRequest)
                 }
@@ -5324,7 +5324,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     |<dc:title>$title</dc:title>
                     |<dc:language>en</dc:language>
                     |<dc:identifier id="BookId" opf:scheme="UUID">$uuid</dc:identifier>
-                    |<dc:creator opf:role="aut">Grokion AI</dc:creator>
+                    |<dc:creator opf:role="aut">GradatiON AI</dc:creator>
                 |</metadata>
                 |<manifest>
                     |<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
@@ -5429,7 +5429,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     <dc:title>$title</dc:title>
                     <dc:language>en</dc:language>
                     <dc:identifier id="BookId" opf:scheme="UUID">$uuid</dc:identifier>
-                    <dc:creator opf:role="aut">Grokion AI</dc:creator>
+                    <dc:creator opf:role="aut">GradatiON AI</dc:creator>
                 </metadata>
                 <manifest>
                     <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>

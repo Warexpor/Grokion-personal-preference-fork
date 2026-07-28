@@ -22,6 +22,6 @@ class ToolExecutorPolicyTest {
     fun marksDestructiveFileTools() {
         assertTrue(ToolExecutorPolicy.isDestructiveFileTool("delete_files"))
         assertTrue(ToolExecutorPolicy.isDestructiveFileTool("edit_file"))
-        assertFalse(ToolExecutorPolicy.isDestructiveFileTool("list_grokion_files"))
+        assertFalse(ToolExecutorPolicy.isDestructiveFileTool("list_gradation_files"))
     }
 }

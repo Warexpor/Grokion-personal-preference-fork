@@ -1,1 +1,1 @@
-Chat with OpenRouter, Ollama, LM Studio, llama.cpp, MLX LM and Hermes Agent
+GradatiON — OpenRouter & LAN LLM chat (Ollama, LM Studio, Hermes)

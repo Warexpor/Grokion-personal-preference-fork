@@ -1,10 +1,11 @@
-# Grokion Ask shell contract
+# GradatiON shell contract
 
-**Goal:** Grok Ask (+ History + Settings) navigation/layout + oxproxion backend for local/LAN/OpenRouter.  
-**Stack:** Views/Fragments. Pref keys unchanged unless migrated.  
-**Rule A:** Real-capability rows only — no SuperGrok / account stubs.
+**Product:** GradatiON — personal Android LLM client (fork of [oxproxion](https://github.com/stardomains3/oxproxion)).  
+**Shell:** Ask-style chat + History drawer + grouped Settings (layout inherited from Grok Ask / oxproxion polish passes).  
+**Stack:** Views/Fragments, MVVM. Pref keys unchanged unless migrated.  
+**Rule:** Real-capability rows only — no cloud account / paywall stubs.
 
-Reference: `ai.x.grok` 1.1.97 (`references/grok_decompiled`), [`DESIGN.md`](DESIGN.md).
+Visual tokens and component specs: [`DESIGN.md`](DESIGN.md).
 
 ---
 
@@ -12,98 +13,60 @@ Reference: `ai.x.grok` 1.1.97 (`references/grok_decompiled`), [`DESIGN.md`](DESI
 
 | Screen | Host | Notes |
 |--------|------|-------|
-| Ask | `ChatFragment` | Top: menu · model chip · new chat · more; composer pill; empty mark |
-| History drawer | `SavedChatsFragment` embedded | ~84% width; Search; Pinned; Conversations; Settings gear |
-| Settings root | `SettingsFragment` | Section list → push sub-screens |
-| Appearance | `SettingsDetailFragment` (appearance) | Theme + preview |
-| Haptics | section | Button + responding toggles |
-| Models & API | section | LAN, keys, credits, trust TLS |
-| Advanced | section | Libraries / Generation / Chat chrome (power tools bar) |
-| Data & Privacy | section | Biometrics, notifications, import/export, help, licenses |
-| Model picker | `BotModelPickerFragment` | Primary model entry (chip) |
-| Attach sheet | popup from composer `+` | Camera / Gallery / Files (+ Tools); Gallery always opens system picker |
-| Libraries / catalogs | Advanced children | Tools, prompts, presets, system messages, OR/LAN catalogs — canvas chrome |
+| Ask | `ChatFragment` | Top: history · model chip · new chat; composer pill; empty GradatiON mark |
+| History | `SavedChatsFragment` embedded | ~84% width; **GradatiON** wordmark (Iceland); Search; Conversations; settings gear |
+| Settings root | `SettingsFragment` | App + AI section cards → push detail screens |
+| Appearance | `SettingsDetailFragment` | Theme + preview |
+| Haptics | detail section | Button + responding toggles |
+| Models & API | detail section | LAN, keys, credits, trust TLS |
+| Advanced | detail section | Libraries, generation, chat chrome (power tools bar) |
+| Data & Privacy | detail section | Biometrics, notifications, import/export, **Help**, licenses |
+| Model picker | `BotModelPickerFragment` | Primary entry via model chip |
+| Attach sheet | composer `+` | Camera / Gallery / Files (+ Tools) |
 
-Voice settings entry is disabled (STT removed). Conversations always autosave to History.
+Voice settings entry is disabled (live STT removed). Conversations always autosave to History.
 
 ---
 
-## 2. Remap table (oxproxion → Grok sections)
+## 2. Settings remap (legacy prefs → sections)
 
 ### Appearance
-| Pref / UI | Destination |
-|-----------|-------------|
-| `themeToggleGroup` | Appearance |
-| `appearancePreviewCard` | Appearance |
-| In-chat font ± (`getFontSize`) | Appearance (display) + existing chat controls |
-
-### Voice
-| Pref / UI | Destination |
-|-----------|-------------|
-| (disabled) | STT removed from product |
+Theme toggle, appearance preview, in-chat font size controls.
 
 ### Haptics
-| Pref / UI | Destination |
-|-----------|-------------|
-| `haptic_buttons` (new) | Haptics |
-| `haptic_responding` (new) | Haptics |
+`haptic_buttons`, `haptic_responding`.
 
 ### Models & API
-| Pref / UI | Destination |
-|-----------|-------------|
-| `lanButton` / `SaveLANDialogFragment` | Models & API |
-| `trustSelfSignedLanSwitch` | Models & API |
-| `apiKeyButton` | Models & API |
-| `braveApiKeyButton` | Models & API |
-| `creditsButton` | Models & API |
-| Model catalogs | Chip primary; optional row → picker |
+LAN dialog, trust self-signed TLS, OpenRouter / Brave keys, credits, model catalogs (chip + picker).
 
 ### Advanced
-| Pref / UI | Destination |
-|-----------|-------------|
-| `toolsButton` / `ToolsFragment` | Advanced |
-| `promptsButton` / Prompt library | Advanced |
-| Presets list | Advanced |
-| System messages | Advanced (or attach sheet) |
-| `inferenceParamsButton` | Advanced |
-| `maxTokensButton` | Advanced |
-| `timeoutButton` | Advanced |
-| `chatMemoryButton` | Advanced |
-| Advanced Reasoning | Advanced + long-press |
-| `openRouterTransformsSwitch` | Advanced |
-| `autoDisableWebSearchSwitch` | Advanced |
-| `extendedDockSwitch` / `extendedTopBarSwitch` | Advanced → **Show power tools bar** (single switch drives both) |
-| `expandableInputSwitch` | Advanced |
-| `scrollButtonsSwitch`, `scrollProgressSwitch`, `volumeScrollSwitch` | Advanced |
-| `presetsExtendedSwitch`, `animateBarOnErrorSwitch`, `showCitationsSwitch` | Advanced |
+Tools, prompt library, presets, system messages, inference params, max tokens, timeout, chat memory, advanced reasoning, OpenRouter transforms, web-search auto-off, power tools bar (extended dock + top bar), scroll helpers, presets-on-chat, citations, etc.
 
 ### Data & Privacy
-| Pref / UI | Destination |
-|-----------|-------------|
-| `biometricsSwitch` | Data & Privacy |
-| Autosave (always on; no toggle) | Data & Privacy (behavior only) |
-| `notificationsSwitch`, copy/open/dismiss | Data & Privacy |
-| `allowDestructiveToolsSwitch` | Data & Privacy |
-| `keepScreenOnSwitch` | Data & Privacy |
-| Help, licenses | Data & Privacy |
-| History import/export buttons | Data & Privacy (+ History bottom bar) |
+Biometrics, notifications, destructive file tools, keep screen on, History import/export, **Help**, third-party licenses.
 
 ---
 
-## 3. Omit list (Grok cloud / non-local)
+## 3. Omit list (never ship)
 
-SuperGrok, Sign out, Delete Account, Kids Mode, Connectors, Skills marketplace, Usage billing, Shared Conversations, NSFW Preferences, cloud Memory, Automations/Tasks, Imagine tab, LiveKit pipeline, Team workspace.
+SuperGrok, sign-out, billing, connectors marketplace, Imagine tab, LiveKit pipeline, cloud memory, team workspace, kids mode, and other Grok-cloud-only surfaces.
 
 ---
 
-## 4. Screenshot gates (done criteria)
+## 4. Screenshot gates (release checklist)
 
-1. Empty Ask — dark + light  
-2. Streaming reply + action row  
-3. History open (search + list + settings gear)  
-4. Settings root  
-5. Appearance / Advanced / Data sub-screens (card IA)  
-6. Model picker sheet  
-7. Composer attach sheet  
+Use [`screenshots/`](screenshots/) as the canonical set; mirror to `fastlane/.../phoneScreenshots/` for Play uploads.
 
-Plus: LAN/local select → stream → stop → new chat → pin/search → theme change → History import/export.
+1. Empty Ask (dark; light optional)  
+2. History open (wordmark + list + bottom bar)  
+3. Settings root (App / AI cards)  
+4. Model picker  
+5. Streaming reply + action row (optional fifth shot)
+
+Smoke path: pick LAN or OpenRouter model → stream → stop → new chat → pin/search in History → theme toggle → import/export.
+
+---
+
+## 5. Local reference material (not in git)
+
+Optional Grok APK decompile for historical token extraction lives under `references/` (gitignored). GradatiON branding and behavior are defined by this repo + app Help, not by side-by-side parity with `ai.x.grok`.

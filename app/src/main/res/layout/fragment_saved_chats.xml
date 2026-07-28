@@ -29,7 +29,7 @@
             android:includeFontPadding="false"
             android:maxLines="1"
             android:text="@string/grokion_wordmark"
-            android:textAllCaps="true"
+            android:textAllCaps="false"
             android:textColor="@color/xai_ink"
             android:textSize="28sp"
             android:letterSpacing="0.12" />
