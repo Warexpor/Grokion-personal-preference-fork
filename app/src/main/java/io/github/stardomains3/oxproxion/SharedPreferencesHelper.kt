@@ -61,6 +61,7 @@ class SharedPreferencesHelper(context: Context) {
         private const val KEY_AUTO_SAVE_CHATS = "auto_save_chats"
         private const val KEY_CHAT_FORK_PREFIX = "chat_fork_"
         private const val KEY_CHAT_FORK_INDEX_PREFIX = "chat_fork_idx_"
+        private const val KEY_CHAT_FORK_ANCHOR_PREFIX = "chat_fork_anchor_"
         private const val KEY_VOLUME_SCROLL = "volume_scroll_enabled"
         private const val KEY_ENABLED_TOOLS = "enabled_tools"
         private const val KEY_TOOLS_ENABLED = "tools_enabled_preference"
@@ -459,9 +460,10 @@ class SharedPreferencesHelper(context: Context) {
     }
 
     /** Stashed alternate message tree for one-chat forks (JSON list of FlexibleMessage). */
-    fun saveChatFork(sessionId: Long, forkIndex: Int, messagesJson: String) {
+    fun saveChatFork(sessionId: Long, forkIndex: Int, anchorIndex: Int, messagesJson: String) {
         mainPrefs.edit {
             putInt("$KEY_CHAT_FORK_INDEX_PREFIX$sessionId", forkIndex)
+            putInt("$KEY_CHAT_FORK_ANCHOR_PREFIX$sessionId", anchorIndex)
             putString("$KEY_CHAT_FORK_PREFIX$sessionId", messagesJson)
         }
     }
@@ -469,12 +471,16 @@ class SharedPreferencesHelper(context: Context) {
     fun getChatForkIndex(sessionId: Long): Int =
         mainPrefs.getInt("$KEY_CHAT_FORK_INDEX_PREFIX$sessionId", -1)
 
+    fun getChatForkAnchor(sessionId: Long): Int =
+        mainPrefs.getInt("$KEY_CHAT_FORK_ANCHOR_PREFIX$sessionId", -1)
+
     fun getChatForkMessagesJson(sessionId: Long): String? =
         mainPrefs.getString("$KEY_CHAT_FORK_PREFIX$sessionId", null)
 
     fun clearChatFork(sessionId: Long) {
         mainPrefs.edit {
             remove("$KEY_CHAT_FORK_INDEX_PREFIX$sessionId")
+            remove("$KEY_CHAT_FORK_ANCHOR_PREFIX$sessionId")
             remove("$KEY_CHAT_FORK_PREFIX$sessionId")
         }
     }

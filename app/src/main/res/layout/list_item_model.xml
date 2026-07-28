@@ -1,68 +1,114 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/modelRowRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:background="?android:attr/selectableItemBackground"
+    android:layout_marginBottom="8dp"
+    android:background="@drawable/bg_model_picker_row"
     android:clickable="true"
-    android:focusable="true">
+    android:focusable="true"
+    android:foreground="?android:attr/selectableItemBackground">
 
     <LinearLayout
+        android:id="@+id/modelRowContent"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="16dp"
-        android:paddingEnd="4dp"
+        android:paddingStart="12dp"
         android:paddingTop="12dp"
+        android:paddingEnd="8dp"
         android:paddingBottom="12dp">
 
-        <ImageView
-            android:id="@+id/iconModelType"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+        <FrameLayout
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:layout_marginEnd="12dp"
-            app:srcCompat="@drawable/ic_vision"
-            app:tint="@color/xai_mute" />
+            android:background="@drawable/bg_model_icon_circle">
 
-        <TextView
-            android:id="@+id/textModelName"
+            <ImageView
+                android:id="@+id/iconModelType"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_gravity="center"
+                app:srcCompat="@drawable/ic_vision"
+                app:tint="@color/xai_ink"
+                tools:ignore="ContentDescription" />
+        </FrameLayout>
+
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="@color/xai_ink"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:gravity="center_vertical"
-            tools:text="Model Name (e.g., GPT-4o)" />
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/textModelName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/xai_ink"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                tools:text="Grok 3 Mini" />
+
+            <TextView
+                android:id="@+id/textModelSubtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/xai_mute"
+                android:textSize="13sp"
+                tools:text="x-ai/grok-3-mini" />
+
+            <TextView
+                android:id="@+id/textModelBadges"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/xai_mute"
+                android:textSize="12sp"
+                android:visibility="gone"
+                tools:text="Free · Vision"
+                tools:visibility="visible" />
+        </LinearLayout>
 
         <ImageView
             android:id="@+id/iconModelSource"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:layout_marginStart="8dp"
-            android:contentDescription="Model source type"
+            android:contentDescription="@string/model_picker_source"
             tools:src="@drawable/ic_lan2" />
+
+        <ImageView
+            android:id="@+id/iconSelected"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="4dp"
+            android:contentDescription="@string/model_picker_active"
+            android:padding="4dp"
+            android:src="@drawable/ic_check"
+            android:visibility="gone"
+            app:tint="@color/xai_ink"
+            tools:visibility="visible" />
 
         <ImageView
             android:id="@+id/iconEdit"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:layout_marginStart="4dp"
+            android:layout_marginStart="2dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Edit model"
+            android:contentDescription="@string/model_picker_more"
             android:padding="8dp"
-            android:src="@drawable/ic_editnote"
+            android:src="@drawable/ic_more_vert"
             app:tint="@color/xai_mute" />
-
     </LinearLayout>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/xai_hairline" />
-
-</LinearLayout>
+</FrameLayout>

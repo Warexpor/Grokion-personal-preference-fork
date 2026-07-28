@@ -87,6 +87,6 @@
         android:contentDescription="Added to your models"
         android:src="@drawable/ic_check"
         android:visibility="gone"
-        app:tint="@color/xai_success" />
+        app:tint="@color/xai_ink" />
 
 </LinearLayout>

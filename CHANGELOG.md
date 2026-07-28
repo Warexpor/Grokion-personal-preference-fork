@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.1.131-grokion — 2026-07-28
+
+### Fixed
+- History → Settings fades in over the drawer without flashing the main chat.
+- Fork branches anchor to the correct AI message; swap/regenerate no longer
+  duplicates or misplaces the navigator.
+- History search close button no longer crashes (`ImageView` vs `ImageButton`).
+- Copy feedback ticks use ink (white) instead of green success tint.
+
+### Changed
+- History screen Grok parity: wordmark scale, section/row typography, APK icons,
+  44dp touch targets.
+- Delete/rename confirmations use centered M3 dialogs (`GrokConfirmDialog` /
+  `GrokInputDialog`); alert theme upgraded for destructive actions.
+- New chat starts immediately (no confirmation dialog).
+- Streaming no longer auto-scrolls / sticks the list to the bottom.
+- Model picker sheet layout and row styling refreshed.
+
 ## 2.1.130-grokion — 2026-07-28
 
 ### Fixed

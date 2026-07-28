@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Grok history row: title + timestamp + ⋮ -->
+<!-- Grok history row: title + timestamp + overflow -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:gravity="center_vertical"
     android:background="?android:attr/selectableItemBackground"
+    android:gravity="center_vertical"
     android:minHeight="56dp"
-    android:paddingStart="20dp"
-    android:paddingEnd="12dp"
+    android:orientation="horizontal"
+    android:paddingStart="16dp"
     android:paddingTop="10dp"
+    android:paddingEnd="8dp"
     android:paddingBottom="10dp">
 
     <LinearLayout
@@ -24,32 +24,33 @@
             android:id="@+id/savedChatTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/xai_ink"
-            android:textSize="16sp"
-            android:maxLines="1"
             android:ellipsize="end"
-            android:includeFontPadding="false" />
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:textColor="@color/xai_ink"
+            android:textSize="17sp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/savedChatTimestamp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="@color/xai_mute"
-            android:textSize="12sp"
-            android:maxLines="1"
+            android:layout_marginTop="3dp"
             android:ellipsize="end"
-            android:includeFontPadding="false" />
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:textColor="@color/xai_mute"
+            android:textSize="13sp" />
     </LinearLayout>
 
     <ImageButton
         android:id="@+id/iconEditt"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
         android:background="@android:color/transparent"
         android:contentDescription="@string/grok_history_more"
+        android:padding="10dp"
         android:src="@drawable/ic_more_vert"
-        android:padding="8dp"
         app:tint="@color/xai_mute" />
 
 </LinearLayout>

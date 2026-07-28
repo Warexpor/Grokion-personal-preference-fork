@@ -1,5 +1,6 @@
 package io.github.stardomains3.oxproxion
 
+import io.github.stardomains3.oxproxion.Motion.withGrokFadeAnimations
 import io.github.stardomains3.oxproxion.Motion.withGrokStackAnimations
 
 import android.graphics.Color
@@ -8,9 +9,10 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.appcompat.widget.SearchView
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -21,7 +23,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -84,8 +85,14 @@ class SavedChatsFragment : Fragment() {
         }
 
         searchView.queryHint = getString(R.string.grok_history_search)
-        // Quiet SearchView chrome
         searchView.findViewById<View>(androidx.appcompat.R.id.search_plate)?.setBackgroundColor(Color.TRANSPARENT)
+        searchView.findViewById<TextView>(androidx.appcompat.R.id.search_src_text)?.apply {
+            textSize = 16f
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.xai_ink))
+            setHintTextColor(ContextCompat.getColor(requireContext(), R.color.xai_mute))
+        }
+        searchView.findViewById<ImageView>(androidx.appcompat.R.id.search_close_btn)
+            ?.setColorFilter(ContextCompat.getColor(requireContext(), R.color.xai_mute))
         var searchJob: Job? = null
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean = true
@@ -140,7 +147,7 @@ class SavedChatsFragment : Fragment() {
             (parentFragment as? HistoryPanelHost)?.openSettingsFromHistory()
         } else {
             parentFragmentManager.beginTransaction()
-                .withGrokStackAnimations()
+                .withGrokFadeAnimations()
                 .hide(this)
                 .add(R.id.fragment_container, SettingsFragment())
                 .addToBackStack(null)
@@ -212,32 +219,30 @@ class SavedChatsFragment : Fragment() {
     }
 
     private fun showRenameDialog(session: ChatSession) {
-        val editText = EditText(requireContext()).apply {
-            setText(session.title)
-            setSelection(session.title.length)
-        }
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Rename")
-            .setView(editText)
-            .setPositiveButton("Rename") { _, _ ->
-                val newTitle = editText.text.toString()
+        GrokInputDialog.show(
+            fragment = this,
+            title = getString(R.string.grok_history_rename),
+            hint = getString(R.string.grok_history_rename),
+            initialText = session.title,
+            confirmText = getString(R.string.grok_history_rename),
+            onConfirm = { newTitle ->
                 if (newTitle.isNotBlank()) {
                     savedChatsViewModel.updateSessionTitle(session.id, newTitle)
                 }
             }
-            .setNegativeButton("Cancel", null)
-            .show()
+        )
     }
 
     private fun showDeleteConfirmationDialog(session: ChatSession) {
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle(R.string.grok_history_delete_title)
-            .setMessage(R.string.grok_history_delete_description)
-            .setPositiveButton("Delete") { _, _ ->
+        GrokConfirmDialog.show(
+            fragment = this,
+            title = getString(R.string.grok_history_delete_title),
+            message = getString(R.string.grok_history_delete_description),
+            confirmText = getString(R.string.grok_history_delete),
+            onConfirm = {
                 prefs.setSessionPinned(session.id, false)
                 savedChatsViewModel.deleteSession(session.id)
             }
-            .setNegativeButton("Cancel", null)
-            .show()
+        )
     }
 }

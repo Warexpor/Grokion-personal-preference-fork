@@ -59,15 +59,17 @@ class PresetsListFragment : Fragment() {
                     .commit()
             },
             onItemDelete = { preset ->
-                MaterialAlertDialogBuilder(requireContext())
-                    .setMessage("Delete \"${preset.title}\"?")
-                    .setPositiveButton("Delete") { _, _ ->
+                GrokConfirmDialog.show(
+                    fragment = this@PresetsListFragment,
+                    title = getString(R.string.delete_preset_title),
+                    message = getString(R.string.delete_preset_body, preset.title),
+                    confirmText = getString(R.string.delete_message_confirm),
+                    onConfirm = {
                         repository.deleteById(preset.id)
                         refresh()
                         AppToast.makeText(requireContext(), "Preset deleted", AppToast.LENGTH_SHORT).show()
                     }
-                    .setNegativeButton("Cancel", null)
-                    .show()
+                )
             }
         )
 

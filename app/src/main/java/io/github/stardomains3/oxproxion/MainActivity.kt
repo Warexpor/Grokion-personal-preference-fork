@@ -118,15 +118,14 @@ class MainActivity : AppCompatActivity() {
         }
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
+                if (supportFragmentManager.backStackEntryCount > 0) {
+                    supportFragmentManager.popBackStack()
+                    return
+                }
                 val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
                 val handled = (fragment as? ChatFragment)?.onBackPressed() ?: false
                 if (!handled) {
-                    if (supportFragmentManager.backStackEntryCount == 0) moveTaskToBack(true)
-                    else {
-                        isEnabled = false
-                        onBackPressedDispatcher.onBackPressed()
-                        isEnabled = true
-                    }
+                    moveTaskToBack(true)
                 }
             }
         })

@@ -4,14 +4,14 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
-import androidx.fragment.app.Fragment
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.textfield.TextInputEditText
+import androidx.fragment.app.Fragment
 
 class EditMessageFragment : Fragment() {
 
-
-    private lateinit var contentEditText: EditText
+    private lateinit var contentEditText: TextInputEditText
 
     companion object {
         private const val ARG_POSITION = "position"
@@ -38,47 +38,32 @@ class EditMessageFragment : Fragment() {
 
         val toolbar = view.findViewById<MaterialToolbar>(R.id.toolbar)
         contentEditText = view.findViewById(R.id.edit_text_message_content)
+        val saveButton = view.findViewById<MaterialButton>(R.id.btnSaveEdit)
+        val cancelButton = view.findViewById<MaterialButton>(R.id.btnCancelEdit)
 
-        // 1. Setup Toolbar
-        toolbar.title = "Edit Message"
         toolbar.setNavigationOnClickListener {
-            // Back button acts as Cancel (just pop back)
+            parentFragmentManager.popBackStack()
+        }
+        cancelButton.setOnClickListener {
             parentFragmentManager.popBackStack()
         }
 
-        // 2. Get Arguments
-        //  val position = arguments?.getInt(ARG_POSITION) ?: -1
         val content = arguments?.getString(ARG_CONTENT) ?: ""
-
-        // 3. Pre-fill data
         contentEditText.setText(content)
-        contentEditText.setSelection(content.length) // Cursor at end
+        contentEditText.setSelection(content.length)
 
-        // 4. Handle Save
-        toolbar.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.action_save_message -> {
-                    val newContent = contentEditText.text.toString().trim()
-                    // Make sure you look up the position from arguments again
-                    val position = arguments?.getInt(ARG_POSITION) ?: -1
-
-                    if (newContent.isNotBlank() && position != -1) {
-
-                        // 1. Bundle the result
-                        val resultBundle = Bundle().apply {
-                            putInt("position", position)
-                            putString("content", newContent)
-                        }
-
-                        // 2. Send result to ChatFragment
-                        parentFragmentManager.setFragmentResult("edit_request_key", resultBundle)
-
-                        // 3. Close this fragment
-                        parentFragmentManager.popBackStack()
+        saveButton.setOnClickListener {
+            val newContent = contentEditText.text?.toString()?.trim().orEmpty()
+            val position = arguments?.getInt(ARG_POSITION) ?: -1
+            if (newContent.isNotBlank() && position != -1) {
+                parentFragmentManager.setFragmentResult(
+                    "edit_request_key",
+                    Bundle().apply {
+                        putInt("position", position)
+                        putString("content", newContent)
                     }
-                    true
-                }
-                else -> false
+                )
+                parentFragmentManager.popBackStack()
             }
         }
     }

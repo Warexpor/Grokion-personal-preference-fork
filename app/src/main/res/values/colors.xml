@@ -27,6 +27,7 @@
     <color name="xai_icon">#FF636363</color>
     <color name="xai_icon_active">#FF000000</color>
     <color name="xai_selected">#FFF2F2F2</color>
+    <color name="xai_row_selected">#FFDFDFDF</color>
     <!-- Text selection wash — brighter light gray than soft fill -->
     <color name="xai_text_highlight">#FFD9D9D9</color>
     <color name="xai_error">#FFF4212E</color>

@@ -60,7 +60,9 @@ class ChatAdapter(
     private val onSaveHtml: (String) -> Unit,
     private val onSaveText: (Int, String) -> Unit,
     private val onCollapse: () -> Unit,
-    private val onSaveAsFile: (String) -> Unit
+    private val onSaveAsFile: (String) -> Unit,
+    private val forkNavStateForPosition: (Int) -> ChatViewModel.ForkNavState?,
+    private val onForkNavigate: (Int) -> Unit
 
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
@@ -85,7 +87,7 @@ class ChatAdapter(
     private var currentFontScale: Int = 100
     private var streamRevealBoundHolder: AssistantViewHolder? = null
     private var pendingStreamFinalize: Boolean = false
-    /** Invoked when the stream reveal paints a new frame (for stick-to-bottom follow). */
+    /** Invoked when the stream reveal paints a new frame. */
     var onStreamVisualUpdate: (() -> Unit)? = null
     private val streamReveal = StreamRevealAnimator(
         onFrame = { displayed, fadeFrom ->
@@ -114,12 +116,12 @@ class ChatAdapter(
                 if (messages.isNotEmpty()) {
                     messages[messages.size - 1] = newMessage
                     val text = getMessageText(newMessage.content)
-                    if (text != "working..." && text.isNotBlank()) {
+                    if (!ThinkingPlaceholder.matches(text) && text.isNotBlank()) {
                         streamReveal.setTarget(text)
                     }
                     // Holder already painting via Choreographer — skip notify. Rebind+markwon
                     // every token races stick-to-bottom scrollBy and flashes the UI.
-                    if (streamRevealBoundHolder == null || text == "working..." || text.isBlank()) {
+                    if (streamRevealBoundHolder == null || ThinkingPlaceholder.matches(text) || text.isBlank()) {
                         notifyItemChanged(messages.size - 1, "STREAMING")
                     }
                 }
@@ -151,7 +153,7 @@ class ChatAdapter(
 
     fun finalizeStreaming() {
         val text = getLatestPlainText().orEmpty()
-        if (text.isBlank() || text == "working...") {
+        if (text.isBlank() || ThinkingPlaceholder.matches(text)) {
             pendingStreamFinalize = false
             streamReveal.reset()
             if (messages.isNotEmpty()) notifyItemChanged(messages.size - 1)
@@ -358,7 +360,7 @@ class ChatAdapter(
         return when (message.role) {
             "user" -> VIEW_TYPE_USER
             "assistant" -> {
-                if (contentText == "working...") VIEW_TYPE_THINKING else VIEW_TYPE_ASSISTANT
+                if (ThinkingPlaceholder.matches(contentText)) VIEW_TYPE_THINKING else VIEW_TYPE_ASSISTANT
             }
             else -> VIEW_TYPE_ASSISTANT
         }
@@ -612,6 +614,7 @@ class ChatAdapter(
                 val clipboard = itemView.context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val clip = ClipData.newPlainText("Copied Text", rawUserContent)
                 clipboard.setPrimaryClip(clip)
+                CopyFeedbackAnimator.play(copyButtonuser)
             }
             copyButtonuser.setOnLongClickListener {
                 val clipboard = itemView.context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -661,8 +664,72 @@ class ChatAdapter(
         private val reasoningChevron: ImageView = itemView.findViewById(R.id.reasoningChevron)
         private val reasoningTitle: TextView = itemView.findViewById(R.id.reasoningTitle)
         private val reasoningTextView: TextView = itemView.findViewById(R.id.reasoningTextView)
+        private val thinkingRow: View = itemView.findViewById(R.id.thinkingRow)
+        private val thinkingBar1: View = itemView.findViewById(R.id.thinkingBar1)
+        private val thinkingBar2: View = itemView.findViewById(R.id.thinkingBar2)
+        private val thinkingBar3: View = itemView.findViewById(R.id.thinkingBar3)
+        private val forkNavigator: View = itemView.findViewById(R.id.forkNavigator)
+        private val forkPrev: ImageButton = itemView.findViewById(R.id.forkPrev)
+        private val forkNext: ImageButton = itemView.findViewById(R.id.forkNext)
+        private val forkLabel: TextView = itemView.findViewById(R.id.forkLabel)
+        private var thinkingBarAnimators: List<ObjectAnimator>? = null
         // Configuration for "Long Message" detection
         private val CHAR_THRESHOLD = 350
+
+        private fun startThinkingBars() {
+            stopThinkingBars()
+            val bars = listOf(thinkingBar1, thinkingBar2, thinkingBar3)
+            bars.forEach { bar ->
+                bar.pivotY = bar.height.toFloat().takeIf { it > 0f } ?: 12f
+            }
+            thinkingBarAnimators = bars.mapIndexed { index, bar ->
+                ObjectAnimator.ofFloat(bar, View.SCALE_Y, 0.2f, 1f).apply {
+                    duration = 520
+                    repeatCount = ObjectAnimator.INFINITE
+                    repeatMode = ObjectAnimator.REVERSE
+                    startDelay = index * 130L
+                    start()
+                }
+            }
+        }
+
+        private fun stopThinkingBars() {
+            thinkingBarAnimators?.forEach { it.cancel() }
+            thinkingBarAnimators = null
+            listOf(thinkingBar1, thinkingBar2, thinkingBar3).forEach { it.scaleY = 1f }
+        }
+
+        private fun bindThinkingState(isThinking: Boolean) {
+            if (isThinking) {
+                thinkingRow.visibility = View.VISIBLE
+                messageContainer.visibility = View.GONE
+                startThinkingBars()
+            } else {
+                thinkingRow.visibility = View.GONE
+                messageContainer.visibility = View.VISIBLE
+                stopThinkingBars()
+            }
+        }
+
+        private fun bindForkNavigator(position: Int) {
+            val forkNav = forkNavStateForPosition(position)
+            if (forkNav == null) {
+                forkNavigator.visibility = View.GONE
+                return
+            }
+            forkNavigator.visibility = View.VISIBLE
+            forkLabel.text = "${forkNav.variantIndex} / ${forkNav.totalVariants}"
+            forkPrev.isEnabled = forkNav.canGoPrev
+            forkNext.isEnabled = forkNav.canGoNext
+            forkPrev.alpha = if (forkNav.canGoPrev) 1f else 0.35f
+            forkNext.alpha = if (forkNav.canGoNext) 1f else 0.35f
+            forkPrev.setOnClickListener {
+                if (forkNav.canGoPrev) onForkNavigate(-1)
+            }
+            forkNext.setOnClickListener {
+                if (forkNav.canGoNext) onForkNavigate(1)
+            }
+        }
 
         private fun bindReasoning(message: FlexibleMessage, streaming: Boolean) {
             val reasoning = reasoningSource(message)
@@ -765,30 +832,23 @@ class ChatAdapter(
             attachStreamRevealHolder(this)
             val text = getMessageText(message.content)
 
-            if (text == "working..." || text.isBlank()) {
+            if (ThinkingPlaceholder.matches(text) || text.isBlank()) {
                 bindReasoning(message, streaming = true)
-                if (text == "working...") {
+                if (ThinkingPlaceholder.matches(text)) {
                     streamReveal.reset()
-                    messageTextView.text = " "
-                    if (pulseAnimator == null || !pulseAnimator!!.isRunning) {
-                        pulseAnimator = ObjectAnimator.ofFloat(messageContainer, "alpha", 0.35f, 1f).apply {
-                            duration = 900
-                            repeatCount = ObjectAnimator.INFINITE
-                            repeatMode = ObjectAnimator.REVERSE
-                        }
-                        pulseAnimator?.start()
-                    }
+                    messageTextView.text = ""
+                    bindThinkingState(true)
+                    pulseAnimator?.cancel()
+                    pulseAnimator = null
+                    messageContainer.alpha = 1f
                 } else {
+                    bindThinkingState(false)
                     messageTextView.text = ""
                 }
                 return
             }
 
-            // Live stream: only push target. Choreographer frames paint — sync rebind here
-            // fights stick-to-bottom and causes flash.
-            pulseAnimator?.cancel()
-            pulseAnimator = null
-            messageContainer.alpha = 1f
+            bindThinkingState(false)
             streamReveal.setTarget(text)
             if (streamReveal.displayed().isEmpty()) {
                 bindReasoning(message, streaming = true)
@@ -807,16 +867,18 @@ class ChatAdapter(
 
             bindReasoning(message, streaming = false)
 
-            // 1. DISPLAY TEXT (Optimized: Uses Cache)
-            val finalContent = getPreRenderedContent(message)
-            // messageTextView.text = finalContent
-            markwon.setParsedMarkdown(messageTextView, finalContent as android.text.Spanned)
-
-            // 2. LOGIC TEXT (Fast extraction)
             val text = if (message.role == "assistant" && message.toolCalls != null && getMessageText(message.content).isBlank()) {
                 "Tool Call: ${message.toolCalls.map { it.function.name }.distinct().joinToString()}"
             } else {
                 getMessageText(message.content)
+            }
+            val isThinking = ThinkingPlaceholder.matches(text)
+
+            if (!isThinking) {
+                val finalContent = getPreRenderedContent(message)
+                markwon.setParsedMarkdown(messageTextView, finalContent as android.text.Spanned)
+            } else {
+                messageTextView.text = ""
             }
 
             // --- NEW COLLAPSE LOGIC (INSTANT, NO POST DELAY) ---
@@ -855,10 +917,11 @@ class ChatAdapter(
             ttsButton.visibility = if (ttsAvailable) View.VISIBLE else View.GONE
 
             val isError = message.role == "assistant" && text.startsWith("**Error:**")
-            val isThinking = text == "working..."
 
             itemView.findViewById<View>(R.id.aiActionRow).visibility =
                 if (isThinking) View.GONE else View.VISIBLE
+
+            bindThinkingState(isThinking)
 
             messageContainer.setBackgroundResource(R.drawable.bg_ai_message)
             if (isError) {
@@ -868,23 +931,12 @@ class ChatAdapter(
                 messageTextView.setTextColor(ContextCompat.getColor(itemView.context, R.color.xai_ink))
             }
 
-            // 4. ANIMATIONS
+            // 4. ANIMATIONS — thinking bars handled in bindThinkingState
             pulseAnimator?.cancel()
             bgColorAnimator?.cancel()
             pulseAnimator = null
             bgColorAnimator = null
-
-            if (isThinking && Motion.areAnimationsEnabled(itemView.context)) {
-                // Grok-like: soft alpha pulse on flat text, no heavy bubble flash
-                val alphaAnimator = ObjectAnimator.ofFloat(messageContainer, "alpha", 0.35f, 1f).apply {
-                    duration = 1200
-                    repeatCount = ObjectAnimator.INFINITE
-                    repeatMode = ObjectAnimator.REVERSE
-                }
-                alphaAnimator.start()
-                pulseAnimator = alphaAnimator
-                bgColorAnimator = null
-            } else {
+            if (!isThinking) {
                 messageContainer.alpha = 1f
             }
 
@@ -956,16 +1008,7 @@ class ChatAdapter(
                 val clipboard = itemView.context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val clip = ClipData.newPlainText("Copied Text", messageTextView.text.toString().trimEnd('\u258C'))
                 clipboard.setPrimaryClip(clip)
-                val previous = copyButton.drawable
-                val previousTint = copyButton.imageTintList
-                copyButton.setImageResource(R.drawable.ic_check)
-                copyButton.imageTintList = ColorStateList.valueOf(
-                    ContextCompat.getColor(itemView.context, R.color.xai_success)
-                )
-                copyButton.postDelayed({
-                    copyButton.setImageDrawable(previous)
-                    copyButton.imageTintList = previousTint
-                }, 1200L)
+                CopyFeedbackAnimator.play(copyButton)
             }
 
             copyButton.setOnLongClickListener {
@@ -1105,6 +1148,7 @@ class ChatAdapter(
                 //  onSaveAsFile.invoke(messageTextView.text.toString())
                 onSaveAsFile.invoke(text)
             }
+            bindForkNavigator(position)
         }
 
         internal fun stopPulse() {
@@ -1114,6 +1158,9 @@ class ChatAdapter(
             bgColorAnimator?.cancel()
             pulseAnimator = null
             bgColorAnimator = null
+            stopThinkingBars()
+            thinkingRow.visibility = View.GONE
+            messageContainer.visibility = View.VISIBLE
             messageContainer.alpha = 1f
             messageContainer.clearAnimation()
             messageContainer.background = ContextCompat.getDrawable(itemView.context, R.drawable.bg_ai_message)

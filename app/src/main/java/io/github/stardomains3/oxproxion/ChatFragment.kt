@@ -1,5 +1,6 @@
 package io.github.stardomains3.oxproxion
 
+import io.github.stardomains3.oxproxion.Motion.withGrokFadeAnimations
 import io.github.stardomains3.oxproxion.Motion.withGrokStackAnimations
 
 import android.Manifest
@@ -255,39 +256,6 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
     private var isScrollersEnabled = false     // 🔥 Cache → NO prefs/VM in onScroll
     private var isScrollProgressEnabled = false
     private var lastContentLength = 0
-    private var hasScrolled = false
-    /** When true during SSE, keep the viewport glued to the growing bottom of the reply. */
-    private var stickToBottomDuringStream = false
-    private var followStreamPending = false
-    /** True while we apply a programmatic follow scroll — ignore stick arm/disarm from it. */
-    private var isProgrammaticStreamFollow = false
-    private val followStreamRunnable = Runnable {
-        followStreamPending = false
-        if (!stickToBottomDuringStream) return@Runnable
-        if (viewModel.isAwaitingResponse.value != true) return@Runnable
-        val last = chatAdapter.itemCount - 1
-        if (last < 0) return@Runnable
-        val vh = chatRecyclerView.findViewHolderForAdapterPosition(last) ?: run {
-            isProgrammaticStreamFollow = true
-            try {
-                layoutManager.scrollToPosition(last)
-            } finally {
-                chatRecyclerView.post { isProgrammaticStreamFollow = false }
-            }
-            return@Runnable
-        }
-        val excess = vh.itemView.bottom -
-            (chatRecyclerView.height - chatRecyclerView.paddingBottom)
-        // Larger threshold + single scrollBy avoids micro-jitter thrash while text grows.
-        if (excess > 24) {
-            isProgrammaticStreamFollow = true
-            try {
-                chatRecyclerView.scrollBy(0, excess)
-            } finally {
-                chatRecyclerView.post { isProgrammaticStreamFollow = false }
-            }
-        }
-    }
     private var mediaRecorder: MediaRecorder? = null
     private var voiceRecordFile: File? = null
     private var isRecording = false
@@ -484,17 +452,10 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
         printButton =   view.findViewById(R.id.printButton)
         buttonsRow2 = view.findViewById(R.id.buttonsRow2)
         chatInputContainer = view.findViewById(R.id.chatInputContainer)
-        val restoreForkButton = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.restoreForkButton)
-        restoreForkButton.setOnClickListener {
-            viewModel.restoreChatFork()
-            chatRecyclerView.post {
-                if (chatAdapter.itemCount > 0) {
-                    layoutManager.scrollToPosition(chatAdapter.itemCount - 1)
-                }
+        viewModel.hasChatFork.observe(viewLifecycleOwner) {
+            if (::chatAdapter.isInitialized) {
+                chatAdapter.notifyDataSetChanged()
             }
-        }
-        viewModel.hasChatFork.observe(viewLifecycleOwner) { hasFork ->
-            restoreForkButton.visibility = if (hasFork == true) View.VISIBLE else View.GONE
         }
         expandedButtonContainer = view.findViewById(R.id.expandedButtonContainer)
         leftButtonContainer = view.findViewById(R.id.leftButtonContainer)
@@ -861,9 +822,8 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                 if (lastMessage.role == "assistant" && lastMessage.content is JsonPrimitive) {
                     val contentStr = lastMessage.content.content
                     val currentLen = contentStr.length
-                    if (contentStr == "working...") {
+                    if (ThinkingPlaceholder.matches(contentStr)) {
                         lastContentLength = 0
-                        stickToBottomDuringStream = false
                         // Grok-style: pin the user message near the top; leave room below for the reply.
                         pinUserMessageForReply()
                     } else if (currentLen > lastContentLength) {
@@ -873,8 +833,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                             backcopyButton.visibility = View.VISIBLE
                             isShare = false
                         }
-                        // Stick follow is driven only by onStreamVisualUpdate — not here —
-                        // to avoid a second scroll race with Choreographer frames.
+                        // Stream text reveal is handled in ChatAdapter; viewport stays where the user left it.
                     } else {
                         lastContentLength = currentLen
                     }
@@ -917,7 +876,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                 if (messages.isNotEmpty()) {
                     val lastMessage = messages.last()
                     if (lastMessage.role == "assistant" &&
-                        viewModel.getMessageText(lastMessage.content) != "working...") {
+                        !ThinkingPlaceholder.matches(viewModel.getMessageText(lastMessage.content))) {
                         chatRecyclerView.post {
                             val position = messages.size - 1
                             val holder = chatRecyclerView.findViewHolderForAdapterPosition(position) as? ChatAdapter.AssistantViewHolder
@@ -1490,33 +1449,6 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
         }
     }
 
-    /** Keep the last assistant row's bottom edge in view while stick-to-bottom is armed. */
-    private fun followStreamBottom() {
-        if (!stickToBottomDuringStream) return
-        if (followStreamPending) return
-        followStreamPending = true
-        chatRecyclerView.removeCallbacks(followStreamRunnable)
-        chatRecyclerView.postOnAnimation(followStreamRunnable)
-    }
-
-    private fun updateStickToBottomFromScroll() {
-        if (isProgrammaticStreamFollow) return
-        if (viewModel.isAwaitingResponse.value != true) return
-        // Hysteresis: arm only when truly at bottom; disarm once user scrolls up a bit.
-        val atBottom = !chatRecyclerView.canScrollVertically(1)
-        if (atBottom) {
-            stickToBottomDuringStream = true
-        } else {
-            val offset = chatRecyclerView.computeVerticalScrollOffset()
-            val range = chatRecyclerView.computeVerticalScrollRange() -
-                chatRecyclerView.computeVerticalScrollExtent()
-            val distanceFromBottom = (range - offset).coerceAtLeast(0)
-            if (distanceFromBottom > 120) {
-                stickToBottomDuringStream = false
-            }
-        }
-    }
-
     private fun setupRecyclerView() {
         layoutManager = NonScrollingOnFocusLayoutManager(requireContext()).apply {
             stackFromEnd = false
@@ -1529,58 +1461,36 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
             { text, position -> synthesizeToWavFile(text, position) },
             ttsAvailable,
             onEditMessage = { position, text ->
-                MaterialAlertDialogBuilder(requireContext())
-                    .setTitle("Edit this message?")
-                    .setMessage("This loads the message into the prompt box and continues from here. The previous messages after this point are kept as an alternate branch you can restore anytime.\n\nProceed?")
-                    .setNegativeButton("Cancel") { dialog, _ ->
-                        dialog.dismiss()
-                    }
-                    .setPositiveButton("Edit") { _, _ ->
-                        selectedImageBytes = null
-                        selectedImageMime = null
-                        attachmentPreviewContainer.visibility = View.GONE
-                        viewModel.setPendingUserImageUri(null)
-                        viewModel.stashAndTruncateFrom(position)
-                        chatEditText.setText(text)
-                        chatEditText.setSelection(text.length)
-                        hideMenu()
-                        chatEditText.showKeyboard()
-                        viewModel.autoSaveChat()
-                    }
-                    .setCancelable(true)
-                    .show()
+                selectedImageBytes = null
+                selectedImageMime = null
+                attachmentPreviewContainer.visibility = View.GONE
+                viewModel.setPendingUserImageUri(null)
+                viewModel.stashAndTruncateFrom(position, anchorAssistantIndex = -1)
+                chatEditText.setText(text)
+                chatEditText.setSelection(text.length)
+                hideMenu()
+                chatEditText.showKeyboard()
+                viewModel.autoSaveChat()
             },
-            onRedoMessage = { position, originalContent ->
-                MaterialAlertDialogBuilder(requireContext())
-                    .setTitle("Resend this message?")
-                    .setMessage("This regenerates from this prompt. Messages after it are kept as an alternate branch you can restore anytime.\n\nProceed?")
-                    .setNegativeButton("Cancel") { dialog, _ ->
-                        dialog.dismiss()
+            onRedoMessage = { position, _ ->
+                val systemMessage = sharedPreferencesHelper.getSelectedSystemMessage().prompt
+                viewModel.resendExistingPrompt(position, systemMessage)
+                hideMenu()
+                chatRecyclerView.post {
+                    if (chatAdapter.itemCount > 0) {
+                        layoutManager.scrollToPosition(chatAdapter.itemCount - 1)
                     }
-                    .setPositiveButton("Resend") { _, _ ->
-                        viewModel.stashAndTruncateFrom(position + 1)
-                        val systemMessage = sharedPreferencesHelper.getSelectedSystemMessage().prompt
-                        viewModel.resendExistingPrompt(position, systemMessage)
-                        hideMenu()
-                        chatRecyclerView.post {
-                            if (chatAdapter.itemCount > 0) {
-                                layoutManager.scrollToPosition(chatAdapter.itemCount - 1)
-                            }
-                        }
-                    }
-                    .setCancelable(true)
-                    .show()
+                }
             },
             onDeleteMessage = { position ->
-                MaterialAlertDialogBuilder(requireContext())
-                    .setTitle("Delete this message?")
-                    .setMessage("This removes the message and everything after it. The removed tree is kept as an alternate branch you can restore anytime.\n\nProceed?")
-                    .setNegativeButton("Cancel") { dialog, _ ->
-                        dialog.dismiss()
-                    }
-                    .setPositiveButton("Delete") { _, _ ->
+                hideMenu()
+                GrokConfirmDialog.show(
+                    fragment = this@ChatFragment,
+                    title = getString(R.string.delete_message_title),
+                    message = getString(R.string.delete_message_body),
+                    confirmText = getString(R.string.delete_message_confirm),
+                    onConfirm = {
                         viewModel.deleteMessageAt(position)
-                        hideMenu()
                         chatRecyclerView.post {
                             if (chatAdapter.itemCount > 0) {
                                 layoutManager.scrollToPosition(chatAdapter.itemCount - 1)
@@ -1588,8 +1498,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                         }
                         viewModel.autoSaveChat()
                     }
-                    .setCancelable(true)
-                    .show()
+                )
             },
             onEditAssistantMessage = { position, currentRawText ->
                 val editFragment = EditMessageFragment.newInstance(position, currentRawText)
@@ -1638,6 +1547,17 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
             },
             onSaveAsFile = { content ->
                 showSaveFileDialog(content)
+            },
+            forkNavStateForPosition = { position ->
+                viewModel.getForkNavForMessage(position)
+            },
+            onForkNavigate = { direction ->
+                viewModel.navigateFork(direction)
+                chatRecyclerView.post {
+                    if (chatAdapter.itemCount > 0) {
+                        layoutManager.scrollToPosition(chatAdapter.itemCount - 1)
+                    }
+                }
             }
 
         )
@@ -1646,20 +1566,6 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
             layoutManager = this@ChatFragment.layoutManager
         }
         chatRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                if (isProgrammaticStreamFollow) return
-                if (viewModel.isAwaitingResponse.value == true) {
-                    if (newState == RecyclerView.SCROLL_STATE_DRAGGING ||
-                        newState == RecyclerView.SCROLL_STATE_IDLE
-                    ) {
-                        updateStickToBottomFromScroll()
-                    }
-                    if (newState == RecyclerView.SCROLL_STATE_DRAGGING && !hasScrolled) {
-                        hasScrolled = true
-                        viewModel.setUserScrolledDuringStream(true)
-                    }
-                }
-            }
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
                 if (isScrollProgressEnabled) {
@@ -1674,12 +1580,6 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                     }
             }
         })
-        chatAdapter.onStreamVisualUpdate = {
-            if (stickToBottomDuringStream && viewModel.isAwaitingResponse.value == true) {
-                followStreamBottom()
-            }
-        }
-        // Stick-to-bottom arms only when the user scrolls to the end during a stream.
 
         // Smooth fade-in for new list items
         (chatRecyclerView.itemAnimator as? androidx.recyclerview.widget.SimpleItemAnimator)?.apply {
@@ -1705,9 +1605,6 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
         }
     }
     override fun onDestroyView() {
-        if (::chatRecyclerView.isInitialized) {
-            chatRecyclerView.removeCallbacks(followStreamRunnable)
-        }
         if (::textToSpeech.isInitialized) {
             textToSpeech.stop()
             textToSpeech.shutdown()
@@ -1725,6 +1622,19 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
         notificationManager.cancel(2)
 
     }
+    private fun performNewChat() {
+        if (viewModel.chatMessages.value.isNullOrEmpty()) return
+        viewModel.startNewChat()
+        currentTempImageFile?.delete()
+        currentTempImageFile = null
+        selectedAudioBytes = null
+        selectedAudioFormat = null
+        previewImageView.setImageBitmap(null)
+        pendingFiles.clear()
+        updateAttachmentButton()
+        chatAdapter.clearCache()
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     private fun setupClickListeners() {
         removeAttachmentButton.setOnClickListener {
@@ -1795,7 +1705,6 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                 sendChatButton.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
             }
             if (viewModel.isAwaitingResponse.value == true) {
-                hasScrolled = false
                 viewModel.cancelCurrentRequest()
                 //   viewModel.playCancelTone()
             } else {
@@ -1818,7 +1727,6 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                 }
                 if (viewModel.isTranscriptionModel(viewModel.activeChatModel.value) && selectedAudioBytes != null) {
                     hideKeyboard()
-                    hasScrolled = false
 
                     val audioBytes = selectedAudioBytes!!
                     val audioFormat = selectedAudioFormat ?: "wav"
@@ -1837,8 +1745,6 @@ class ChatFragment : Fragment(R.layout.fragment_chat), OnKeyboardShortcutListene
                     return@setOnClickListener
                 }
                 hideKeyboard()
-                hasScrolled = false
-                stickToBottomDuringStream = false
                 var prompt = chatEditText.text.toString().trim()
                 if (pendingFiles.isNotEmpty()) {
                     val fileSections = pendingFiles.mapIndexed { index, file ->  // Explicit -> String
@@ -2013,57 +1919,11 @@ $cleanContent
                 .commit()
         }
         resetChatButton.setOnLongClickListener {
-           /* if (ForegroundService.isRunningForeground && sharedPreferencesHelper.getNotiPreference()) {
-                val apiIdentifier = viewModel.activeChatModel.value ?: "Unknown Model"
-                val displayName = viewModel.getModelDisplayName(apiIdentifier)
-                ForegroundService.updateNotificationStatusSilently(displayName, "Grokion is Ready.")
-            }*/
-            viewModel.startNewChat()
-            currentTempImageFile?.delete()
-            currentTempImageFile = null
-            selectedAudioBytes = null
-            selectedAudioFormat = null
-            previewImageView.setImageBitmap(null)
-            // Add to reset logic
-            pendingFiles.clear()
-            chatAdapter.clearCache()
-            updateAttachmentButton()
+            performNewChat()
             true
         }
         resetChatButton.setOnClickListener {
-            if (viewModel.chatMessages.value.isNullOrEmpty()) {
-                return@setOnClickListener
-            }
-
-            MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Start New Chat?")
-                .setMessage("Clear the composer and start fresh? Your conversation stays in History.")
-                .setNegativeButton("Cancel") { dialog, which ->
-                    dialog.dismiss()
-                }
-                .setPositiveButton("Reset") { dialog, which ->
-                   /* if (ForegroundService.isRunningForeground && sharedPreferencesHelper.getNotiPreference()) {
-                        val apiIdentifier = viewModel.activeChatModel.value ?: "Unknown Model"
-                        val displayName = viewModel.getModelDisplayName(apiIdentifier)
-                        ForegroundService.updateNotificationStatusSilently(displayName, "Grokion is Ready.")
-                    }*/
-                    /*if (ForegroundService.isRunningForeground) {
-                        stopForegroundService()
-                    }
-                    else{
-                        ChatServiceGate.shouldRunService = false
-                    }*/
-            viewModel.startNewChat()
-                    currentTempImageFile?.delete()
-                    currentTempImageFile = null
-                    selectedAudioBytes = null
-                    selectedAudioFormat = null
-                    previewImageView.setImageBitmap(null)
-                    pendingFiles.clear()
-                    updateAttachmentButton()
-                    chatAdapter.clearCache()
-                }
-                .show()
+            performNewChat()
         }
         // STT disabled — watermark hold-to-talk
         centerWatermarkIcon.setOnTouchListener { _, _ -> false }
@@ -3602,14 +3462,13 @@ $cleanContent
     }
 
     override fun openSettingsFromHistory() {
-        // commitNow() cannot pair with addToBackStack — that crashed settings
-        requireActivity().supportFragmentManager.beginTransaction()
-            .withGrokStackAnimations()
+        // Fade settings over the history panel — do not hide chat or close history first,
+        // or the chat layer flashes through during the exit animation.
+        parentFragmentManager.beginTransaction()
+            .withGrokFadeAnimations()
             .add(R.id.fragment_container, SettingsFragment())
             .addToBackStack("settings")
             .commit()
-        // Close history after Settings is queued so Ask never flashes
-        view?.post { closeHistoryPanel(animated = false) }
     }
 
     private fun openHistoryPanel() {

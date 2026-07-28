@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:paddingStart="6dp"
@@ -80,6 +81,57 @@
                 android:textIsSelectable="true" />
         </LinearLayout>
 
+        <!-- Tech-style thinking indicator (shown while awaiting response) -->
+        <LinearLayout
+            android:id="@+id/thinkingRow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:visibility="gone"
+            android:layout_marginBottom="4dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/reasoningBlock">
+
+            <LinearLayout
+                android:id="@+id/thinkingBars"
+                android:layout_width="wrap_content"
+                android:layout_height="16dp"
+                android:orientation="horizontal"
+                android:gravity="bottom"
+                android:layout_marginEnd="10dp">
+
+                <View
+                    android:id="@+id/thinkingBar1"
+                    android:layout_width="2dp"
+                    android:layout_height="12dp"
+                    android:layout_marginEnd="3dp"
+                    android:background="@drawable/bg_thinking_bar" />
+
+                <View
+                    android:id="@+id/thinkingBar2"
+                    android:layout_width="2dp"
+                    android:layout_height="12dp"
+                    android:layout_marginEnd="3dp"
+                    android:background="@drawable/bg_thinking_bar" />
+
+                <View
+                    android:id="@+id/thinkingBar3"
+                    android:layout_width="2dp"
+                    android:layout_height="12dp"
+                    android:background="@drawable/bg_thinking_bar" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/thinkingLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/thinking_label"
+                android:textColor="@color/xai_mute"
+                android:textSize="14sp"
+                android:letterSpacing="0.02" />
+        </LinearLayout>
+
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/messageContainer"
             android:layout_width="0dp"
@@ -91,7 +143,7 @@
             android:paddingBottom="4dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/reasoningBlock"
+            app:layout_constraintTop_toBottomOf="@id/thinkingRow"
             app:layout_constraintHorizontal_bias="0.0">
 
             <!-- NEW: ImageView for generated images -->
@@ -131,17 +183,26 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <!-- Equal-gap action row (Grok order: copy, share, tts, regenerate + local extras) -->
+        <!-- Action row + fork navigator (Grok-style < n/m > on the right) -->
         <LinearLayout
             android:id="@+id/aiActionRow"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:layout_marginTop="2dp"
             android:layout_marginBottom="2dp"
             app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@id/messageContainer">
+
+            <LinearLayout
+                android:id="@+id/aiActionButtons"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
             <ImageButton
                 android:id="@+id/copyButton"
@@ -259,6 +320,47 @@
                 android:src="@drawable/ic_expand_more"
                 android:visibility="visible"
                 app:tint="@color/xai_icon" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/forkNavigator"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:visibility="gone"
+                android:layout_marginStart="8dp">
+
+                <ImageButton
+                    android:id="@+id/forkPrev"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/fork_prev"
+                    android:padding="6dp"
+                    android:src="@drawable/ic_chevron_left"
+                    app:tint="@color/xai_mute" />
+
+                <TextView
+                    android:id="@+id/forkLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:textColor="@color/xai_mute"
+                    android:textSize="13sp"
+                    tools:text="1 / 2" />
+
+                <ImageButton
+                    android:id="@+id/forkNext"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/fork_next"
+                    android:padding="6dp"
+                    android:src="@drawable/ic_chevron_right"
+                    app:tint="@color/xai_mute" />
+            </LinearLayout>
         </LinearLayout>
 
         <!-- Stub sources/citations (GONE). Layouts: item_sources_strip / item_citation_card -->

@@ -27,6 +27,7 @@
     <color name="xai_icon">#FF9E9E9E</color>
     <color name="xai_icon_active">#FFFCFCFC</color>
     <color name="xai_selected">#FF242424</color>
+    <color name="xai_row_selected">#FF242424</color>
     <color name="xai_text_highlight">#FF3A3A3A</color>
     <color name="xai_error">#FFFF4245</color>
     <color name="xai_success">#FF00BA7C</color>

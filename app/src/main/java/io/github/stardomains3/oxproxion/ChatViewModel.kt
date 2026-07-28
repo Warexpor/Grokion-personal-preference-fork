@@ -330,7 +330,16 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     private val _hasChatFork = MutableLiveData(false)
     val hasChatFork: LiveData<Boolean> = _hasChatFork
     private var forkIndex: Int = -1
+    private var forkAnchorAssistantIndex: Int = -1
     private var stashedForkTail: List<FlexibleMessage> = emptyList()
+    private var forkDisplayVariant: Int = 1
+
+    data class ForkNavState(
+        val variantIndex: Int,
+        val totalVariants: Int = 2,
+        val canGoPrev: Boolean,
+        val canGoNext: Boolean
+    )
     private var networkJob: Job? = null
     /** Index of the in-flight assistant placeholder / streaming bubble in `_chatMessages`. */
     private var streamingAssistantIndex: Int = -1
@@ -352,7 +361,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     private fun isAssistantPlaceholder(message: FlexibleMessage): Boolean {
         if (message.role != "assistant") return false
         val text = (message.content as? JsonPrimitive)?.contentOrNull ?: return false
-        return text == "working..." || text.isBlank()
+        return ThinkingPlaceholder.matches(text) || text.isBlank()
     }
 
     private fun resolveAssistantSlot(list: List<FlexibleMessage>, thinkingMessage: FlexibleMessage?): Int {
@@ -473,7 +482,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
       //  private const val TIMEOUT_MS = 300_000L
         val THINKING_MESSAGE = FlexibleMessage(
             role = "assistant",
-            content = JsonPrimitive("working...")
+            content = JsonPrimitive(ThinkingPlaceholder.TOKEN)
         )
 
         private val ALLOWED_SETTINGS_ACTIONS = ToolExecutorPolicy.ALLOWED_SETTINGS_ACTIONS
@@ -748,7 +757,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     fun getFormattedChatHistoryTxt(): String {
         val messages = _chatMessages.value?.filter { message ->
             val contentText = getMessageText(message.content).trim()
-            contentText.isNotEmpty() && contentText != "working..."
+            contentText.isNotEmpty() && !ThinkingPlaceholder.matches(contentText)
         } ?: return ""
 
         val currentModel = _activeChatModel.value ?: "Unknown"
@@ -796,7 +805,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     fun getFormattedChatHistory(): String {
         return _chatMessages.value?.mapNotNull { message ->
             val contentText = getMessageText(message.content).trim()
-            if (contentText.isEmpty() || contentText == "working...") null
+            if (contentText.isEmpty() || ThinkingPlaceholder.matches(contentText)) null
             else when (message.role) {
                 "user" -> "User: $contentText"
                 "assistant" -> "AI: $contentText"
@@ -807,7 +816,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     fun getFormattedChatHistoryPlainText(): String {
         return _chatMessages.value?.mapNotNull { message ->
             val contentText = getMessageText(message.content).trim()
-            if (contentText.isEmpty() || contentText == "working...") null
+            if (contentText.isEmpty() || ThinkingPlaceholder.matches(contentText)) null
             else {
                 val plainText = stripMarkdown(contentText)  // Strip Markdown here
                 when (message.role) {
@@ -898,6 +907,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         uiMessages.add(userMessage)
         uiMessages.add(thinkingMessage)
         streamingAssistantIndex = uiMessages.lastIndex
+        markForkAnchorIfPending(streamingAssistantIndex)
 
         _chatMessages.value = uiMessages
         _isAwaitingResponse.value = true
@@ -949,6 +959,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         val uiMessages = _chatMessages.value?.toMutableList() ?: mutableListOf()
         uiMessages.add(thinkingMessage)
         streamingAssistantIndex = uiMessages.lastIndex
+        markForkAnchorIfPending(streamingAssistantIndex)
         _chatMessages.value = uiMessages
         _isAwaitingResponse.value = true
 
@@ -1017,6 +1028,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         val uiMessages = _chatMessages.value?.toMutableList() ?: mutableListOf()
         uiMessages.add(thinkingMessage)
         streamingAssistantIndex = uiMessages.lastIndex
+        markForkAnchorIfPending(streamingAssistantIndex)
         _chatMessages.value = uiMessages
         _isAwaitingResponse.value = true
 
@@ -1113,7 +1125,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             userMessage
         }
 
-        truncateHistory(userMessageIndex + 1)
+        truncateHistory(userMessageIndex + 1, anchorAssistantIndex = userMessageIndex + 1)
 
         val messagesForApiRequest = mutableListOf<FlexibleMessage>()
         if (systemMessage != null) {
@@ -1143,6 +1155,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         val uiMessages = _chatMessages.value?.toMutableList() ?: mutableListOf()
         uiMessages.add(THINKING_MESSAGE)
         streamingAssistantIndex = uiMessages.lastIndex
+        markForkAnchorIfPending(streamingAssistantIndex)
         _chatMessages.value = uiMessages
 
         _isAwaitingResponse.value = true
@@ -2551,7 +2564,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
         val toolThinkingMessage = FlexibleMessage(
             role = "assistant",
-            content = JsonPrimitive("working...")
+            content = JsonPrimitive(ThinkingPlaceholder.TOKEN)
         )
 
         withContext(Dispatchers.Main) {
@@ -4381,7 +4394,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
      * Stash messages from [startIndex] as the alternate branch, then truncate.
      * One fork per chat: restoring swaps the active tail with the stash.
      */
-    fun stashAndTruncateFrom(startIndex: Int) {
+    fun stashAndTruncateFrom(startIndex: Int, anchorAssistantIndex: Int = startIndex) {
         val current = _chatMessages.value?.toMutableList() ?: return
         if (startIndex < 0 || startIndex >= current.size) return
         val discarded = current.subList(startIndex, current.size)
@@ -4390,6 +4403,8 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         if (discarded.isNotEmpty()) {
             forkIndex = startIndex
             stashedForkTail = discarded
+            forkDisplayVariant = 2
+            forkAnchorAssistantIndex = anchorAssistantIndex
             _hasChatFork.value = true
             persistForkToPrefs()
         }
@@ -4397,15 +4412,49 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         _chatMessages.value = current
     }
 
-    fun truncateHistory(startIndex: Int) {
-        stashAndTruncateFrom(startIndex)
+    fun truncateHistory(startIndex: Int, anchorAssistantIndex: Int = startIndex) {
+        stashAndTruncateFrom(startIndex, anchorAssistantIndex)
+    }
+
+    private fun markForkAnchorIfPending(assistantIndex: Int) {
+        if (_hasChatFork.value != true || forkAnchorAssistantIndex >= 0) return
+        forkAnchorAssistantIndex = assistantIndex
+        persistForkToPrefs()
     }
 
     fun deleteMessageAt(index: Int) {
-        stashAndTruncateFrom(index)
+        val current = _chatMessages.value?.toMutableList() ?: return
+        if (index < 0 || index >= current.size) return
+        current.subList(index, current.size).clear()
+        _chatMessages.value = current
+        autoSaveChat()
     }
 
-    /** Swap the active post-fork tail with the stashed alternate tree. */
+    fun getForkNavForMessage(position: Int): ForkNavState? {
+        if (_hasChatFork.value != true || forkAnchorAssistantIndex < 0) return null
+        if (position != forkAnchorAssistantIndex) return null
+        return ForkNavState(
+            variantIndex = forkDisplayVariant,
+            canGoPrev = forkDisplayVariant > 1,
+            canGoNext = forkDisplayVariant < 2
+        )
+    }
+
+    fun navigateFork(direction: Int) {
+        if (_hasChatFork.value != true) return
+        when {
+            direction < 0 && forkDisplayVariant > 1 -> restoreChatFork()
+            direction > 0 && forkDisplayVariant < 2 -> restoreChatFork()
+        }
+    }
+
+    private fun clearForkMemory() {
+        forkIndex = -1
+        forkAnchorAssistantIndex = -1
+        stashedForkTail = emptyList()
+        forkDisplayVariant = 1
+        _hasChatFork.value = false
+    }
     fun restoreChatFork() {
         if (_hasChatFork.value != true || forkIndex < 0 || stashedForkTail.isEmpty()) return
         val current = _chatMessages.value?.toMutableList() ?: return
@@ -4417,16 +4466,15 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         val restoredTail = stashedForkTail.map { it.copy() }
         stashedForkTail = activeTail
         forkIndex = safeIndex
-        _chatMessages.value = prefix + restoredTail
+        forkDisplayVariant = 3 - forkDisplayVariant
+        val merged = prefix + restoredTail
+        _chatMessages.value = merged
+        forkAnchorAssistantIndex = merged.indices.firstOrNull { i ->
+            i >= safeIndex && merged[i].role == "assistant" && !isAssistantPlaceholder(merged[i])
+        } ?: forkAnchorAssistantIndex
         _hasChatFork.value = stashedForkTail.isNotEmpty()
         persistForkToPrefs()
         autoSaveChat()
-    }
-
-    private fun clearForkMemory() {
-        forkIndex = -1
-        stashedForkTail = emptyList()
-        _hasChatFork.value = false
     }
 
     private fun persistForkToPrefs() {
@@ -4440,7 +4488,12 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 kotlinx.serialization.builtins.ListSerializer(FlexibleMessage.serializer()),
                 stashedForkTail
             )
-            sharedPreferencesHelper.saveChatFork(sessionId, forkIndex, encoded)
+            sharedPreferencesHelper.saveChatFork(
+                sessionId,
+                forkIndex,
+                forkAnchorAssistantIndex,
+                encoded
+            )
         } catch (_: Exception) {
             // ponytail: fork persist best-effort
         }
@@ -4459,6 +4512,14 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             if (decoded.isNotEmpty()) {
                 forkIndex = idx
                 stashedForkTail = decoded
+                forkDisplayVariant = 2
+                forkAnchorAssistantIndex = sharedPreferencesHelper.getChatForkAnchor(sessionId)
+                if (forkAnchorAssistantIndex < 0) {
+                    val msgs = _chatMessages.value.orEmpty()
+                    forkAnchorAssistantIndex = msgs.indices.firstOrNull { i ->
+                        i >= idx && msgs[i].role == "assistant" && !isAssistantPlaceholder(msgs[i])
+                    } ?: idx
+                }
                 _hasChatFork.postValue(true)
             }
         } catch (_: Exception) {
@@ -5075,7 +5136,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     suspend fun getFormattedChatHistoryEpubHtml(): String = withContext(Dispatchers.IO) {
         val messages = _chatMessages.value?.filter { message ->
             val contentText = getMessageText(message.content).trim()
-            val hasText = contentText.isNotEmpty() && contentText != "working..."
+            val hasText = contentText.isNotEmpty() && !ThinkingPlaceholder.matches(contentText)
             val hasImage = when (message.role) {
                 "user" -> (message.content as? JsonArray)?.any {
                     it.jsonObject["type"]?.jsonPrimitive?.content == "image_url"
@@ -6112,7 +6173,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     suspend fun getFormattedChatHistoryStyledHtml(): String = withContext(Dispatchers.IO) {
         val messages = _chatMessages.value?.filter { message ->
             val contentText = getMessageText(message.content).trim()
-            val hasText = contentText.isNotEmpty() && contentText != "working..."
+            val hasText = contentText.isNotEmpty() && !ThinkingPlaceholder.matches(contentText)
             val hasImage = when (message.role) {
                 "user" -> (message.content as? JsonArray)?.any {
                     it.jsonObject["type"]?.jsonPrimitive?.content == "image_url"
@@ -6184,7 +6245,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     fun getFormattedChatHistoryMarkdownandPrint(): String {
         val messages = _chatMessages.value?.filter { message ->
             val contentText = getMessageText(message.content).trim()
-            contentText.isNotEmpty() && contentText != "working..."
+            contentText.isNotEmpty() && !ThinkingPlaceholder.matches(contentText)
         } ?: return ""
 
         val currentModel = _activeChatModel.value ?: "Unknown"

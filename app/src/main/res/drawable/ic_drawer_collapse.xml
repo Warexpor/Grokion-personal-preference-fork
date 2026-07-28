@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Grok APK: double ic_vector_chevron_right — collapse history drawer -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- Double chevron >> to collapse history drawer -->
     <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M5.59,7.41L7,6l6,6 -6,6 -1.41,-1.41L10.17,12zM11.59,7.41L13,6l6,6 -6,6 -1.41,-1.41L16.17,12z" />
+        android:fillColor="@color/xai_ink"
+        android:pathData="M17.4141 12L10 19.4141L8.58594 18L14.5859 12L8.58594 6L10 4.58594L17.4141 12Z" />
+    <path
+        android:fillColor="@color/xai_ink"
+        android:pathData="M11.4141 12L4 19.4141L2.58594 18L8.58594 12L2.58594 6L4 4.58594L11.4141 12Z" />
 </vector>

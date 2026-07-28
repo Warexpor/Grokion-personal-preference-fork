@@ -317,12 +317,13 @@ class PromptLibraryFragment : Fragment() {
     }
 
     private fun showDeleteConfirmationDialog(prompt: Prompt) {
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Delete Prompt")
-            .setMessage("Are you sure you want to delete this prompt?")
-            .setPositiveButton("Delete") { _, _ -> deletePrompt(prompt) }
-            .setNegativeButton("Cancel", null)
-            .show()
+        GrokConfirmDialog.show(
+            fragment = this,
+            title = getString(R.string.delete_prompt_title),
+            message = getString(R.string.delete_prompt_body),
+            confirmText = getString(R.string.delete_message_confirm),
+            onConfirm = { deletePrompt(prompt) }
+        )
     }
 
     private fun deletePrompt(prompt: Prompt) {

@@ -787,27 +787,6 @@
                 android:focusableInTouchMode="false" />
         </FrameLayout>
 
-        <!-- Restore alternate branch (one-chat fork) -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/restoreForkButton"
-            style="@style/Widget.Grokion.Button.Text"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="14dp"
-            android:layout_marginEnd="14dp"
-            android:layout_marginBottom="2dp"
-            android:minHeight="40dp"
-            android:visibility="gone"
-            android:text="Restore previous messages"
-            android:textAllCaps="false"
-            android:textColor="@color/xai_mute"
-            android:textSize="13sp"
-            app:icon="@drawable/ic_redo"
-            app:iconGravity="textStart"
-            app:iconSize="18dp"
-            app:iconTint="@color/xai_mute"
-            app:rippleColor="@color/press_ripple_none" />
-
         <!-- ── Bottom composer: tall panel, model chip inside ── -->
         <LinearLayout
             android:id="@+id/chatInputContainer"

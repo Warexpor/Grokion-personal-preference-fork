@@ -93,6 +93,27 @@
         <item name="materialThemeOverlay">@style/ThemeOverlay.Grokion.ToggleButton</item>
     </style>
 
+    <!-- Model picker filter chips — compact horizontal pills -->
+    <style name="Widget.Grokion.Button.FilterChip" parent="Widget.Grokion.Button.OutlinedToggle">
+        <item name="android:textSize">13sp</item>
+        <item name="android:minHeight">36dp</item>
+        <item name="android:paddingStart">14dp</item>
+        <item name="android:paddingEnd">14dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="cornerRadius">18dp</item>
+    </style>
+
+    <style name="Widget.Grokion.ModelCapabilityBadge" parent="Widget.AppCompat.TextView">
+        <item name="android:background">@drawable/bg_capability_badge</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingTop">3dp</item>
+        <item name="android:paddingEnd">8dp</item>
+        <item name="android:paddingBottom">3dp</item>
+        <item name="android:textColor">@color/xai_mute</item>
+        <item name="android:textSize">11sp</item>
+    </style>
+
     <style name="ThemeOverlay.Grokion.ToggleButton" parent="">
         <item name="colorPrimary">@color/xai_ink</item>
         <item name="colorOnPrimary">@color/xai_canvas</item>
@@ -107,8 +128,8 @@
         <item name="buttonIconTint">@color/button_icon_tint</item>
     </style>
 
-    <style name="CustomMaterialAlertDialogTheme" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
-        <item name="android:backgroundDimAmount">0.6</item>
+    <style name="CustomMaterialAlertDialogTheme" parent="ThemeOverlay.Material3.MaterialAlertDialog.Centered">
+        <item name="android:backgroundDimAmount">0.72</item>
         <item name="shapeAppearanceMediumComponent">@style/XaiShapeCard</item>
         <item name="android:textColorPrimary">@color/xai_body</item>
         <item name="colorPrimary">@color/xai_ink</item>
@@ -138,6 +159,10 @@
         <item name="android:textColor">@color/xai_ink</item>
         <item name="android:textAllCaps">false</item>
         <item name="android:letterSpacing">0</item>
+    </style>
+
+    <style name="XaiDialogButton.Destructive" parent="XaiDialogButton">
+        <item name="android:textColor">@color/xai_error</item>
     </style>
 
     <style name="CustomDialogTheme" parent="ThemeOverlay.Material3.Dialog.Alert">

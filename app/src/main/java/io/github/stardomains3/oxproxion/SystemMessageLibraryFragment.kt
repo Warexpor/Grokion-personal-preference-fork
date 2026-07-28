@@ -436,16 +436,13 @@ class SystemMessageLibraryFragment : Fragment() {
 
 
     private fun showDeleteConfirmationDialog(systemMessage: SystemMessage) {
-        // MaterialAlertDialogBuilder(requireContext(), R.style.MyCustomAlertDialogTheme)
-        MaterialAlertDialogBuilder(requireContext())
-            // AlertDialog.Builder(requireContext())
-            .setTitle("Delete System Message")
-            .setMessage("Are you sure you want to delete this system message?")
-            .setPositiveButton("Delete") { _, _ ->
-                deleteSystemMessage(systemMessage)
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
+        GrokConfirmDialog.show(
+            fragment = this,
+            title = getString(R.string.delete_system_message_title),
+            message = getString(R.string.delete_system_message_body),
+            confirmText = getString(R.string.delete_message_confirm),
+            onConfirm = { deleteSystemMessage(systemMessage) }
+        )
     }
     private fun deleteSystemMessage(systemMessage: SystemMessage) {
         val customMessages = sharedPreferencesHelper.getCustomSystemMessages().toMutableList()
